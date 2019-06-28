@@ -1,0 +1,10 @@
+This document serves to document changes to the Mozilla source code.
+
+Favor C99 features in C based code.
+- e.g. Overhaul to LONG LONG to use uint64_t
+- Replace PL_snprintf with snprintf (C99 feature)
+
+C++
+We typically don't care for operator::new
+
+On Windows, __declspec(thread) doesn't exist for Mingw. So change to just __thread

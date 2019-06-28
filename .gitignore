@@ -1,0 +1,9 @@
+*.d
+*.o
+*.exe
+*.a
+*.so
+*.bak
+*.log
+*.swp
+*.dll

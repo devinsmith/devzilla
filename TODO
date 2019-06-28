@@ -1,0 +1,8 @@
+get mkicons working. icon_extern is a stub.
+TODO: get libimg built.
+
+widget/nsWindow createwindow
+gfx/DeviceContext -- likely done
+gfx/FontMetics -- maybe done.
+
+widget/Child, child window kChildIID
