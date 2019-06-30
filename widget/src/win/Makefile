@@ -4,7 +4,7 @@
 
 #C_SRCS = motif/nsXtManageWidget.c
 
-SRCS = nsWinWidgetFactory.cpp
+SRCS = nsAppShell.cpp nsWinWidgetFactory.cpp
 
 OBJS = $(C_SRCS:.c=.o) $(SRCS:.cpp=.o)
 DEPS = $(C_SRCS:.c=.d) $(SRCS:.cpp=.d)
@@ -12,7 +12,7 @@ DEPS = $(C_SRCS:.c=.d) $(SRCS:.cpp=.d)
 INCLUDES = -I../../../nsprpub/lib/libc/include -I../../../nsprpub/pr/include \
 					 -I../../../xpcom/public -I../../public -I../../../base/src \
 					 -I../../../gfx/public -I../../../nsprpub/lib/ds
-CFLAGS = -Wall -g3 -D_IMPL_NS_WIDGET
+CFLAGS = -Wall -g3 -D_IMPL_NS_WIDGET -DXP_PC
 
 CC = gcc
 AR? = ar

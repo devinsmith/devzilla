@@ -21,7 +21,7 @@ EXE = widget
 
 ifeq ($(OS),Windows_NT)
 	DEFINES += -D_IMPL_NS_COM -DWIN32_LEAN_AND_MEAN
-	EXE += .exe
+	EXE = widget.exe
 	SHARED_LIB = xpcom.dll
 	LD_FLAGS += -L../../nsprpub/pr/src -L../../nsprpub/lib/libc/src \
 		-L../../nsprpub/lib/ds -Wl,--out-implib,$(LIB).a \
