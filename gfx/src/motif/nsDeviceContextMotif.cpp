@@ -603,3 +603,11 @@ NS_IMETHODIMP nsDeviceContextMotif::EndPage(void)
 {
   return NS_OK;
 }
+
+/* Not implemented */
+NS_IMETHODIMP nsDeviceContextMotif::GetSystemAttribute(nsSystemAttrID anID, SystemAttrStruct * aInfo) const
+{
+  printf("nsDeviceContextMotif::GetSystemAttribute - Not implemented\n");
+  return NS_OK;
+}
+

@@ -38,7 +38,7 @@ PLATFORM_LIB = $(TOOLKIT)/libgfxplatform.a
 build: $(PLATFORM_LIB) $(SHARED_LIB)
 
 $(PLATFORM_LIB):
-	@(cd $(PLATFORM) && $(MAKE))
+	@(cd $(TOOLKIT) && $(MAKE))
 
 $(SHARED_LIB): $(OBJS)
 	$(CXX) -shared -o $@ $(OBJS)

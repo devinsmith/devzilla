@@ -57,7 +57,7 @@ public:
   NS_IMETHOD  GetMaxDescent(nscoord &aDescent);
   NS_IMETHOD  GetMaxAdvance(nscoord &aAdvance);
 
-  NS_IMETHOD  GetFont(nsFont*& aFont);
+  NS_IMETHOD  GetFont(const nsFont*& aFont);
   NS_IMETHOD  GetFontHandle(nsFontHandle &aHandle);
 
 protected:
