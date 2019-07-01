@@ -645,7 +645,7 @@ nsresult nsFontCache :: GetMetricsFor(const nsFont& aFont, nsIFontMetrics *&aMet
   {
     aMetrics = (nsIFontMetrics*) mFontMetrics.ElementAt(cnt);
 
-    nsFont* font;
+    const nsFont* font;
     aMetrics->GetFont(font);
     if (aFont.Equals(*font))
     {

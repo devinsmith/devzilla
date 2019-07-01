@@ -329,7 +329,7 @@ NS_IMETHODIMP nsFontMetricsMotif :: GetMaxAdvance(nscoord &aAdvance)
   return NS_OK;
 }
 
-NS_IMETHODIMP nsFontMetricsMotif :: GetFont(nsFont*& aFont)
+NS_IMETHODIMP nsFontMetricsMotif::GetFont(const nsFont*& aFont)
 {
   aFont = mFont;
   return NS_OK;

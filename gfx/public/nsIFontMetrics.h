@@ -125,7 +125,7 @@ public:
   /**
    * Returns the font associated with these metrics
    */
-  NS_IMETHOD  GetFont(nsFont *&aFont) = 0;
+  NS_IMETHOD  GetFont(const nsFont *&aFont) = 0;
 
   /**
    * Returns the font handle associated with these metrics

@@ -4,15 +4,10 @@
 
 SRCS = nsColor.cpp nsColorNames.cpp nsColorNamesRGB.cpp nsFont.cpp \
 			 nsRect.cpp nsDeviceContext.cpp \
-			 nsTransform2D.cpp nsImageRenderer.cpp nsImageRequest.cpp 
-#			 nsImageNetContextSync.cpp
+			 nsTransform2D.cpp nsImageRenderer.cpp nsImageRequest.cpp
 
-MOTIF = motif/nsFontMetricsMotif.cpp motif/nsGfxFactoryMotif.cpp \
-			 motif/nsDeviceContextMotif.cpp motif/nsRenderingContextMotif.cpp \
-			 motif/nsImageMotif.cpp motif/nsRegionMotif.cpp
-
-OBJS = $(SRCS:.cpp=.o) $(MOTIF:.cpp=.o)
-DEPS = $(SRCS:.cpp=.d) $(MOTIF:.cpp=.d)
+OBJS = $(SRCS:.cpp=.o)
+DEPS = $(SRCS:.cpp=.d)
 
 INCLUDES = -I../../nsprpub/lib/libc/include -I../../nsprpub/pr/include \
 					 -I../../xpcom/public -I../public -I. -I../../base/src \
@@ -25,21 +20,25 @@ CC? = gcc
 AR? = ar
 RM = rm -f
 
+TOOLKIT = motif
+DEFINES = -D_IMPL_NS_GFX
+
 ifeq ($(OS),Windows_NT)
 	CC = gcc
 	RM = del /Q 2>NUL
+	TOOLKIT = win32
+	DEFINES += -DXP_WIN -DXP_PC -D_IMPL_NS_GFXNONXP
 endif
 
-LIB = libgfxmotif
+LIB = libraptorgfx
 SHARED_LIB = $(LIB).so
 STATIC_LIB = $(LIB).a
+PLATFORM_LIB = $(TOOLKIT)/libgfxplatform.a
 
-all: $(SHARED_LIB)
+build: $(PLATFORM_LIB) $(SHARED_LIB)
 
-$(STATIC_LIB): $(OBJS)
-	$(RM) $(STATIC_LIB)
-	$(AR) cru $(STATIC_LIB) $(OBJS)
-	ranlib $(STATIC_LIB)
+$(PLATFORM_LIB):
+	@(cd $(PLATFORM) && $(MAKE))
 
 $(SHARED_LIB): $(OBJS)
 	$(CXX) -shared -o $@ $(OBJS)
@@ -48,7 +47,7 @@ $(SHARED_LIB): $(OBJS)
 	$(CC) $(CFLAGS) $(INCLUDES) -MMD -MP -MT $@ -o $@ -c $<
 
 .cpp.o:
-	$(CXX) $(CFLAGS) $(INCLUDES) -fpic -MMD -MP -MT $@ -o $@ -c $<
+	$(CXX) $(CFLAGS) $(INCLUDES) $(DEFINES) -fpic -MMD -MP -MT $@ -o $@ -c $<
 
 clean:
 	$(RM) $(OBJS)
