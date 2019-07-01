@@ -35,11 +35,15 @@ typedef PRUint16 PRUcs2;
 /** ucs4 datatype for 4 byte unicode characters */
 typedef PRUint32 PRUcs4;
 
+#ifdef _WIN32
+typedef wchar_t PRUnichar;
+#else // Non win32
 #ifdef NS_UCS4
 typedef PRUcs4 PRUnichar;
 #else
 typedef PRUcs2 PRUnichar;
 #endif
+#endif // WIN32
 
 /// The preferred symbol for null.
 #define nsnull 0
