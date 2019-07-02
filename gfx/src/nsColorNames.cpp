@@ -4,6 +4,8 @@
 ** genhash.pl
 */
 
+#include <string.h>
+
 #include "plstr.h"
 #include "nsColorNames.h"
 #define TOTAL_KEYWORDS 147
@@ -499,7 +501,7 @@ PRInt32 nsColorNames::LookupName(const char* str)
     };
 
   if (str != NULL) {
-    int len = PL_strlen(str);
+    int len = strlen(str);
     if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH) {
   register int hval = len;
 

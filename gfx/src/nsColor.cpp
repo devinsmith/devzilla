@@ -16,6 +16,8 @@
  * Reserved.
  */
 
+#include <string.h>
+
 #include "plstr.h"
 #include "nsColor.h"
 #include "nsColorNames.h"
@@ -53,7 +55,7 @@ static PRBool HexToRGB(const char* aColorSpec, PRBool aStrict, nscolor* aResult)
     aColorSpec++;
   }
 
-  int nameLen = PL_strlen(aColorSpec);
+  int nameLen = strlen(aColorSpec);
   if (((PR_TRUE == aStrict) && ((nameLen == 3) || (nameLen == 6) || (nameLen == 9))) ||
       ((0 < nameLen) && (nameLen < 10))) {
     // Make sure the digits are legal

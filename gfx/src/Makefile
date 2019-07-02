@@ -22,18 +22,22 @@ RM = rm -f
 
 TOOLKIT = motif
 DEFINES = -D_IMPL_NS_GFX
-
-ifeq ($(OS),Windows_NT)
-	CC = gcc
-	RM = del /Q 2>NUL
-	TOOLKIT = win32
-	DEFINES += -DXP_WIN -DXP_PC -D_IMPL_NS_GFXNONXP
-endif
-
 LIB = libraptorgfx
 SHARED_LIB = $(LIB).so
 STATIC_LIB = $(LIB).a
 PLATFORM_LIB = $(TOOLKIT)/libgfxplatform.a
+
+ifeq ($(OS),Windows_NT)
+	CC = gcc
+	RM = del /Q 2>NUL
+	SHARED_LIB = $(LIB).dll
+	TOOLKIT = win32
+	DEFINES += -DXP_WIN -DXP_PC -D_IMPL_NS_GFXNONXP
+	LDFLAGS += -Wl,--out-implib,$(LIB).a -L../../base/src -lraptorbase
+else
+	CFLAGS += -fpic
+endif
+
 
 build: $(PLATFORM_LIB) $(SHARED_LIB)
 
@@ -41,13 +45,13 @@ $(PLATFORM_LIB):
 	@(cd $(TOOLKIT) && $(MAKE))
 
 $(SHARED_LIB): $(OBJS)
-	$(CXX) -shared -o $@ $(OBJS)
+	$(CXX) -shared -o $@ $(OBJS) $(LDFLAGS)
 
 .c.o:
 	$(CC) $(CFLAGS) $(INCLUDES) -MMD -MP -MT $@ -o $@ -c $<
 
 .cpp.o:
-	$(CXX) $(CFLAGS) $(INCLUDES) $(DEFINES) -fpic -MMD -MP -MT $@ -o $@ -c $<
+	$(CXX) $(CFLAGS) $(INCLUDES) $(DEFINES) -MMD -MP -MT $@ -o $@ -c $<
 
 clean:
 	$(RM) $(OBJS)
