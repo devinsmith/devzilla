@@ -33,19 +33,16 @@
 extern int MK_OUT_OF_MEMORY;
 #endif /* STANDALONE_IMAGE_LIB */
 
-typedef struct Observer
-{
-	struct PRCListStr	mLink;
-	XP_ObserverProc	mCallback;
-	void*				mClosure;
-
+typedef struct Observer {
+	struct PRCListStr mLink;
+	XP_ObserverProc mCallback;
+	void* mClosure;
 } Observer;
 
 #define	NextObserver(_obsptr_)	((Observer*)(_obsptr_)->mLink.next)
 #define ObserverLinks(_obsptr_)	(&((_obsptr_)->mLink))
 
-struct OpaqueObserverList
-{
+struct OpaqueObserverList {
 	Observer*		mObserverList;
 	XP_Observable	mObservable;
 	PRBool		mNotificationEnabled;	
@@ -307,8 +304,5 @@ XP_IsObserverNotificationEnabled(
         XP_ObserverList   inObserverList    )
 {
 	return inObserverList->mNotificationEnabled;
-}                      
-        
-        
-       
-       
+}
+
