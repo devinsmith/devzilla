@@ -33,7 +33,12 @@ ifeq ($(OS),Windows_NT)
 	SHARED_LIB = $(LIB).dll
 	TOOLKIT = win32
 	DEFINES += -DXP_WIN -DXP_PC -D_IMPL_NS_GFXNONXP
-	LDFLAGS += -Wl,--out-implib,$(LIB).a -L../../base/src -lraptorbase
+	LDFLAGS += -Wl,--out-implib,$(LIB).a -L../../base/src -lraptorbase \
+		-L../../modules/libimg/src -L../../modules/libutil/src \
+		-L../../nsprpub/pr/src -L../../nsprpub/lib/libc/src \
+		-L../../xpcom/src \
+		-L../../nsprpub/lib/ds -limg -lmozutil -lplds -lnsprc \
+		-lxpcom -lnspr -lwsock32
 else
 	CFLAGS += -fpic
 endif
