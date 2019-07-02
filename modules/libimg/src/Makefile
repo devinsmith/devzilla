@@ -20,9 +20,15 @@ STATIC_LIB = $(LIB).a
 ifeq ($(OS),Windows_NT)
 	CC = gcc
 	SHARED_LIB = $(LIB).dll
-	LD_FLAGS += -L../../../nsprpub/lib/libc/src -L../../../nsprpub/pr/src \
+	DEFINES += -DXP_WIN
+	LD_FLAGS += -Wl,--out-implib,$(LIB).a -L../../../nsprpub/lib/libc/src \
+		-L../../../nsprpub/pr/src \
 		-L../../libutil/src \
 		-lnsprc -lnspr -lmozutil -lwsock32 -lwinmm
+	ifeq ($(SHELL),sh.exe)
+		# Executing under cmd.exe
+		RM = del /Q 2>NUL
+	endif
 else
 	DEFINES += -D_PR_PTHREADS -DLINUX
 endif
