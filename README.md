@@ -6,3 +6,6 @@ the various components of a web browser work together.
 
 The source code in this repository is under the Mozilla Public License 2.0,
 although some portions are older and date back to the Netscape Public Library.
+
+# Requirements
+libjpeg - http://libjpeg.sourceforge.net/
