@@ -18,6 +18,7 @@ SRCS = io/prio.c io/priometh.c io/prlog.c io/prfdcach.c \
 CC? = gcc
 AR? = ar
 RM = rm -f
+FixPath = $1
 
 DEFINES =
 
@@ -38,6 +39,7 @@ ifeq ($(OS),Windows_NT)
 	ifeq ($(SHELL),sh.exe)
 		# Executing under cmd.exe
 		RM = del /Q 2>NUL
+		FixPath = $(subst /,\,$1)
 	endif
 else
 	DEFINES += -D_PR_PTHREADS -DLINUX -Dlinux -DXP_UNIX -DPR_LOGGING
@@ -66,8 +68,8 @@ $(STATIC_LIB): $(OBJS)
 	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDES) -MMD -MP -MT $@ -o $@ -c $<
 
 clean:
-	$(RM) $(OBJS)
-	$(RM) $(DEPS)
+	$(RM) $(call FixPath,$(OBJS))
+	$(RM) $(call FixPath,$(DEPS))
 	$(RM) $(STATIC_LIB)
 
 # Include automatically generated dependency files
