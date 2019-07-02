@@ -24,6 +24,12 @@ ifeq ($(OS),Windows_NT)
 	SHARED_LIB = $(LIB).dll
 	DEFINES += -D_IMPL_NS_BASE -DWIN32_LEAN_AND_MEAN
 	LDFLAGS += -Wl,--out-implib,$(LIB).a -lwsock32 -lwinmm
+	ifeq ($(SHELL),sh.exe)
+		# Executing under cmd.exe
+		RM = del /Q 2>NUL
+	endif
+else
+	CFLAGS += -fPIC
 endif
 
 
@@ -38,10 +44,10 @@ $(SHARED_LIB): $(OBJS)
 	$(CXX) -shared -o $@ $(OBJS) $(LDFLAGS)
 
 .c.o:
-	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDES) -fPIC -MMD -MP -MT $@ -o $@ -c $<
+	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDES) -MMD -MP -MT $@ -o $@ -c $<
 
 .cpp.o:
-	$(CXX) $(CFLAGS) $(DEFINES) $(INCLUDES) -fPIC -MMD -MP -MT $@ -o $@ -c $<
+	$(CXX) $(CFLAGS) $(DEFINES) $(INCLUDES) -MMD -MP -MT $@ -o $@ -c $<
 
 clean:
 	$(RM) $(OBJS)
