@@ -130,7 +130,7 @@ protected:
       NS_DECL_ISUPPORTS
 
       Enumerator();
-      ~Enumerator();
+      virtual ~Enumerator();
 
       virtual nsresult First();
       virtual nsresult Last();

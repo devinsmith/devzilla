@@ -132,7 +132,9 @@ public:
     virtual nsIToolkit*     GetToolkit();
 #if 0
     NS_IMETHOD            SetBorderStyle(nsBorderStyle aBorderStyle); 
-    NS_IMETHOD            SetTitle(const nsString& aTitle); 
+#endif
+    NS_IMETHOD            SetTitle(const nsString& aTitle);
+#if 0
     NS_IMETHOD            SetTooltips(PRUint32 aNumberOfTips,nsRect* aTooltipAreas[]);   
     NS_IMETHOD            RemoveTooltips();
     NS_IMETHOD            UpdateTooltips(nsRect* aNewTips[]);
