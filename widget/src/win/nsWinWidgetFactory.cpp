@@ -26,9 +26,13 @@
 #include "nscore.h"
 #include "nsWidgetsCID.h"
 
+#include "nsToolkit.h"
+#include "nsWindow.h"
 #include "nsAppShell.h"
 
+static NS_DEFINE_IID(kCWindow,        NS_WINDOW_CID);
 static NS_DEFINE_IID(kCAppShell,      NS_APPSHELL_CID);
+static NS_DEFINE_IID(kCToolkit,       NS_TOOLKIT_CID);
 
 static NS_DEFINE_IID(kISupportsIID,   NS_ISUPPORTS_IID);
 static NS_DEFINE_IID(kIFactoryIID,    NS_IFACTORY_IID);
@@ -105,10 +109,10 @@ nsresult nsWidgetFactory::CreateInstance( nsISupports* aOuter,
   }
 
   nsISupports *inst = nsnull;
-#if 0
   if (mClassID.Equals(kCWindow)) {
     inst = (nsISupports*)new nsWindow();
   }
+#if 0
   else if (mClassID.Equals(kCChild)) {
     inst = (nsISupports*)new ChildWindow();
   }
@@ -151,15 +155,14 @@ nsresult nsWidgetFactory::CreateInstance( nsISupports* aOuter,
   else if (mClassID.Equals(kCTooltipWidget)) {
     inst = (nsISupports*)(nsWindow*)new nsTooltipWidget();
   }
-  else
 #endif
-  if (mClassID.Equals(kCAppShell)) {
+  else if (mClassID.Equals(kCAppShell)) {
     inst = (nsISupports*)new nsAppShell();
   }
-#if 0
   else if (mClassID.Equals(kCToolkit)) {
     inst = (nsISupports*)new nsToolkit();
   }
+#if 0
   else if (mClassID.Equals(kCLookAndFeel)) {
     inst = (nsISupports*)new nsLookAndFeel();
   }
