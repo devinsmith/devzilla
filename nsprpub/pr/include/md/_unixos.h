@@ -65,7 +65,6 @@
 #define PR_PATH_SEPARATOR		':'
 #define PR_PATH_SEPARATOR_STR		":"
 #define GCPTR
-typedef int (*FARPROC)();
 
 /*
  * intervals at which GLOBAL threads wakeup to check for pending interrupt

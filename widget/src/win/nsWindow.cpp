@@ -419,13 +419,8 @@ LRESULT CALLBACK nsWindow::WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM
         }
     }
 
-#if defined(STRICT)
     return ::CallWindowProc((WNDPROC)someWindow->GetPrevWindowProc(), hWnd, 
                             msg, wParam, lParam);
-#else
-    return ::CallWindowProc((FARPROC)someWindow->GetPrevWindowProc(), hWnd, 
-                            msg, wParam, lParam);
-#endif
 }
 
 

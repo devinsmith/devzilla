@@ -178,10 +178,6 @@
     typedef char XP_Bool;
 #endif
 
-#if !defined(XP_WIN)
-typedef int (*FARPROC)();
-#endif
-
 #if defined(XP_WIN)
 #ifndef BOOL
 #define BOOL Bool
