@@ -29,7 +29,7 @@
 #include "nsIWidget.h"
 
 #ifdef XP_UNIX
-#define WIDGET_DLL "libwidgetmotif.so"
+#define WIDGET_DLL "libraptorwidget.so"
 #else
 #define WIDGET_DLL "raptorwidget.dll"
 #endif
@@ -73,6 +73,8 @@ nsresult WidgetTest(int * argc, char **argv)
   } else {
     printf("AppShell is null!\n");
   }
+  appShell->Create(argc, argv); // Necessary on motif?
+
 
   //
   // create the main window
