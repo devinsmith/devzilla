@@ -18,10 +18,49 @@
 
 #include "nsDebug.h"
 #include "prlog.h"
+#include "prinit.h"
+
+#if defined(XP_UNIX)
+/* for abort() */
+#include <stdlib.h>
+#endif
 
 #if defined(_WIN32)
 #include <windows.h>
+#elif defined(XP_MAC)
+   #define TEMP_MAC_HACK
+   
+   //------------------------
+   #ifdef TEMP_MAC_HACK
+	   #include <MacTypes.h>
+	   #include <Processes.h>
+
+	   // TEMPORARY UNTIL WE HAVE MACINTOSH ENVIRONMENT VARIABLES THAT CAN TURN ON
+	   // LOGGING ON MACINTOSH
+	   // At this moment, NSPR's logging is a no-op on Macintosh.
+
+	   #include <stdarg.h>
+	   #include <stdio.h>
+	 
+	   #undef PR_LOG
+	   #define PR_LOG(module,level,args) dprintf args
+	   static void dprintf(const char *format, ...)
+	   {
+	      va_list ap;
+	      Str255 buffer;
+	      
+	      va_start(ap, format);
+	      buffer[0] = vsnprintf((char *)buffer + 1, sizeof(buffer) - 1, format, ap);
+	      va_end(ap);
+	      
+	      DebugStr(buffer);
+	   }
+   #endif // TEMP_MAC_HACK
+   //------------------------
+#elif defined(XP_UNIX)
+#include<stdlib.h>
 #endif
+
 
 /**
  * Implementation of the nsDebug methods. Note that this code is
@@ -48,11 +87,16 @@ NS_COM void nsDebug::Abort(const char* aFile, PRIntn aLine)
 #if defined(_WIN32)
   long* __p = (long*) 0x7;
   *__p = 0x7;
+#elif defined(XP_MAC)
+  ExitToShell();
+#elif defined(XP_UNIX)
+  PR_Abort();
 #endif
 }
 
 NS_COM void nsDebug::Break(const char* aFile, PRIntn aLine)
 {
+#ifndef TEMP_MAC_HACK
   InitLog();
   PR_LOG(gDebugLog, PR_LOG_ERROR,
          ("Break: at file %s, line %d", aFile, aLine));
@@ -63,6 +107,7 @@ NS_COM void nsDebug::Break(const char* aFile, PRIntn aLine)
 #else
   Abort(aFile, aLine);
 #endif
+#endif // TEMP_MAC_HACK
 }
 
 NS_COM void nsDebug::PreCondition(const char* aStr, const char* aExpr,

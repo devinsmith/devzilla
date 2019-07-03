@@ -23,18 +23,6 @@
 #include "nsISupports.h"
 
 /*
- * Datatypes and helper macros
- */
-
-typedef nsID nsCID;
-
-// Define an CID
-#define NS_DEFINE_CID(_name, _cidspec) \
-  const nsCID _name = _cidspec
-
-#define REFNSCID const nsCID&
-
-/*
  * nsIFactory interface
  */
 
@@ -45,7 +33,7 @@ typedef nsID nsCID;
 
 class nsIFactory: public nsISupports {
 public:
-  static const nsIID& IID() { static nsIID iid = NS_IFACTORY_IID; return iid; }
+  static const nsIID& GetIID() { static nsIID iid = NS_IFACTORY_IID; return iid; }
 
   NS_IMETHOD CreateInstance(nsISupports *aOuter,
                             REFNSIID aIID,
@@ -54,6 +42,8 @@ public:
   NS_IMETHOD LockFactory(PRBool aLock) = 0;
 };
 
+#if 0
+/* Excluding IFactory2 until there is proof of its use - dp */
 /**
  * nsIFactory2 allows passing in a signature token when creating an
  * instance. This allows instance recycling.
@@ -66,12 +56,13 @@ public:
 
 class nsIFactory2: public nsIFactory {
 public:
-  static const nsIID& IID() { static nsIID iid = NS_IFACTORY2_IID; return iid; }
+  static const nsIID& GetIID() { static nsIID iid = NS_IFACTORY2_IID; return iid; }
 
   NS_IMETHOD CreateInstance2(nsISupports *aOuter,
                              REFNSIID aIID,
                              void *aSignature,
                              void **aResult) = 0;
 };
+#endif /* 0 */
 
 #endif

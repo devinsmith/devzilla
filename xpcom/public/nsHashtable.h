@@ -51,32 +51,114 @@ public:
   void *Remove(nsHashKey *aKey);
   nsHashtable *Clone();
   void Enumerate(nsHashtableEnumFunc aEnumFunc, void* closure = NULL);
+  void Reset();
 };
 
 ////////////////////////////////////////////////////////////////////////////////
+// nsISupportsKey: Where keys are nsISupports objects that get refcounted.
+
+#include "nsISupports.h"
+
+class nsISupportsKey : public nsHashKey {
+private:
+  nsISupports* mKey;
+
+public:
+  nsISupportsKey(nsISupports* key) {
+    mKey = key;
+    NS_IF_ADDREF(mKey);
+  }
+
+  ~nsISupportsKey(void) {
+    NS_IF_RELEASE(mKey);
+  }
+
+  PRUint32 HashValue(void) const {
+    return (PRUint32)(uintptr_t)mKey;
+  }
+
+  PRBool Equals(const nsHashKey *aKey) const {
+    return (mKey == ((nsISupportsKey *) aKey)->mKey);
+  }
+
+  nsHashKey *Clone(void) const {
+    return new nsISupportsKey(mKey);
+  }
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// nsVoidKey: Where keys are void* objects that don't get refcounted.
+
+class nsVoidKey : public nsHashKey {
+private:
+  const void* mKey;
+
+public:
+  nsVoidKey(const void* key) {
+    mKey = key;
+  }
+
+  PRUint32 HashValue(void) const {
+    return (PRUint32)(uintptr_t)mKey;
+  }
+
+  PRBool Equals(const nsHashKey *aKey) const {
+    return (mKey == ((const nsVoidKey *) aKey)->mKey);
+  }
+
+  nsHashKey *Clone(void) const {
+    return new nsVoidKey(mKey);
+  }
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// nsIDKey: Where keys are nsIDs (e.g. nsIID, nsCID).
 
 #include "nsID.h"
 
-class nsIDKey: public nsHashKey {
+class nsIDKey : public nsHashKey {
 private:
-    nsID id;
+  nsID mID;
   
 public:
-    nsIDKey(const nsID &aID) {
-        id = aID;
-    }
+  nsIDKey(const nsID &aID) {
+    mID = aID;
+  }
   
-    PRUint32 HashValue(void) const {
-        return id.m0;
-    }
+  PRUint32 HashValue(void) const {
+    return mID.m0;
+  }
 
-    PRBool Equals(const nsHashKey *aKey) const {
-        return (id.Equals(((const nsIDKey *) aKey)->id));
-    }
+  PRBool Equals(const nsHashKey *aKey) const {
+    return (mID.Equals(((const nsIDKey *) aKey)->mID));
+  }
 
-    nsHashKey *Clone(void) const {
-        return new nsIDKey(id);
-    }
+  nsHashKey *Clone(void) const {
+    return new nsIDKey(mID);
+  }
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// nsProgIDKey: Where keys are ProgIDs (char[64])
+// This same thing is used for hashing filenames too in nsComponentManager.cpp
+
+#include "plstr.h"
+
+class nsProgIDKey : public nsHashKey {
+private:
+  char  mProgIDBuf[64];
+  char* mProgID;
+
+public:
+  nsProgIDKey(const char* aProgID);
+
+  virtual ~nsProgIDKey(void);
+
+  virtual PRUint32 HashValue(void) const;
+
+  virtual PRBool Equals(const nsHashKey* aKey) const;
+
+  virtual nsHashKey* Clone() const;
 };
 
 #endif

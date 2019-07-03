@@ -1,4 +1,4 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*-
  *
  * The contents of this file are subject to the Netscape Public License
  * Version 1.0 (the "NPL"); you may not use this file except in
@@ -19,9 +19,18 @@
 #ifndef nsIServiceManager_h___
 #define nsIServiceManager_h___
 
-#include "nsRepository.h"
+#include "nsIComponentManager.h"
+#include "nsID.h"
 
 class nsIShutdownListener;
+
+#define NS_ISERVICEMANAGER_IID                       \
+{ /* cf0df3b0-3401-11d2-8163-006008119d7a */         \
+    0xcf0df3b0,                                      \
+    0x3401,                                          \
+    0x11d2,                                          \
+    {0x81, 0x63, 0x00, 0x60, 0x08, 0x11, 0x9d, 0x7a} \
+}
 
 /**
  * The nsIServiceManager manager interface provides a means to obtain
@@ -67,14 +76,16 @@ class nsIShutdownListener;
 class nsIServiceManager : public nsISupports {
 public:
 
-    NS_IMETHOD
-    GetService(const nsCID& aClass, const nsIID& aIID,
-               nsISupports* *result,
-               nsIShutdownListener* shutdownListener = NULL) = 0;
+    NS_DEFINE_STATIC_IID_ACCESSOR(NS_ISERVICEMANAGER_IID);
 
+    /**
+     * RegisterService may be called explicitly to register a service
+     * with the service manager. If a service is not registered explicitly,
+     * the component manager will be used to create an instance according
+     * to the class ID specified.
+     */
     NS_IMETHOD
-    ReleaseService(const nsCID& aClass, nsISupports* service,
-                   nsIShutdownListener* shutdownListener = NULL) = 0;
+    RegisterService(const nsCID& aClass, nsISupports* aService) = 0;
 
     /**
      * Requests a service to be shut down, possibly unloading its DLL.
@@ -87,30 +98,32 @@ public:
      *          a shutdown listener.
      */
     NS_IMETHOD
-    ShutdownService(const nsCID& aClass) = 0;
+    UnregisterService(const nsCID& aClass) = 0;
+
+    NS_IMETHOD
+    GetService(const nsCID& aClass, const nsIID& aIID,
+               nsISupports* *result,
+               nsIShutdownListener* shutdownListener = NULL) = 0;
+
+    NS_IMETHOD
+    ReleaseService(const nsCID& aClass, nsISupports* service,
+                   nsIShutdownListener* shutdownListener = NULL) = 0;
+
+    NS_IMETHOD
+    GetService(const char* aProgID, const nsIID& aIID,
+               nsISupports* *result,
+               nsIShutdownListener* shutdownListener = NULL) = 0;
+
+    NS_IMETHOD
+    ReleaseService(const char* aProgID, nsISupports* service,
+                   nsIShutdownListener* shutdownListener = NULL) = 0;
 
 };
-
-#define NS_ISERVICEMANAGER_IID                       \
-{ /* cf0df3b0-3401-11d2-8163-006008119d7a */         \
-    0xcf0df3b0,                                      \
-    0x3401,                                          \
-    0x11d2,                                          \
-    {0x81, 0x63, 0x00, 0x60, 0x08, 0x11, 0x9d, 0x7a} \
-}
 
 #define NS_ERROR_SERVICE_NOT_FOUND      NS_ERROR_GENERATE_SUCCESS(NS_ERROR_MODULE_XPCOM, 22)
 #define NS_ERROR_SERVICE_IN_USE         NS_ERROR_GENERATE_SUCCESS(NS_ERROR_MODULE_XPCOM, 23)
 
 ////////////////////////////////////////////////////////////////////////////////
-
-class nsIShutdownListener : public nsISupports {
-public:
-
-    NS_IMETHOD
-    OnShutdown(const nsCID& aClass, nsISupports* service) = 0;
-
-};
 
 #define NS_ISHUTDOWNLISTENER_IID                     \
 { /* 56decae0-3406-11d2-8163-006008119d7a */         \
@@ -120,11 +133,26 @@ public:
     {0x81, 0x63, 0x00, 0x60, 0x08, 0x11, 0x9d, 0x7a} \
 }
 
+class nsIShutdownListener : public nsISupports {
+public:
+
+    NS_DEFINE_STATIC_IID_ACCESSOR(NS_ISHUTDOWNLISTENER_IID);
+
+    NS_IMETHOD
+    OnShutdown(const nsCID& aClass, nsISupports* service) = 0;
+
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 // Interface to Global Services
 
 class NS_COM nsServiceManager {
 public:
+
+    static nsresult RegisterService(const nsCID& aClass, nsISupports* aService);
+
+    static nsresult UnregisterService(const nsCID& aClass);
+
     static nsresult GetService(const nsCID& aClass, const nsIID& aIID,
                                nsISupports* *result,
                                nsIShutdownListener* shutdownListener = NULL);
@@ -132,16 +160,176 @@ public:
     static nsresult ReleaseService(const nsCID& aClass, nsISupports* service,
                                    nsIShutdownListener* shutdownListener = NULL);
 
-    static nsresult ShutdownService(const nsCID& aClass);
-
     // Since the global Service Manager is truly global, there's no need to
     // release it.
     static nsresult GetGlobalServiceManager(nsIServiceManager* *result);
 
 protected:
-    static nsIServiceManager* globalServiceManager;
+    static nsIServiceManager* mGlobalServiceManager;
 
 };
+
+////////////////////////////////////////////////////////////////////////////////
+// nsService: Template to make using services easier. Now you can replace this:
+//
+//      nsIMyService* service;
+//      rv = nsServiceManager::GetService(cid, iid, &service);
+//      if (NS_SUCCEEDED(rv)) {
+//              service->Doit(...);     // use my service
+//              rv = nsServiceManager::ReleaseService(cid, service);
+//      }
+//
+// with this:
+//
+//      nsService<nsIMyService> service(cid, &rv);
+//      if (NS_SUCCEEDED(rv)) {
+//              service->Doit(...);     // use my service
+//      }
+//
+// and the automatic destructor will take care of releasing the service.
+
+#if 0   // sorry the T::GetIID() construct doesn't work with egcs
+
+template<class T> class nsService {
+protected:
+  nsCID mCID;
+  T* mService;
+
+public:
+  nsService(nsISupports* aServMgr, const nsCID& aClass, nsresult *rv)
+    : mCID(aClass), mService(0)
+  {
+    nsIServiceManager* servMgr;
+    *rv = aServMgr->QueryInterface(nsIServiceManager::GetIID(), (void**)&servMgr);
+    if (NS_SUCCEEDED(*rv)) {
+      *rv = servMgr->GetService(mCID, T::GetIID(), (nsISupports**)&mService);
+      NS_RELEASE(servMgr);
+    }
+    NS_ASSERTION(NS_SUCCEEDED(*rv), "Couldn't get service.");
+  }
+
+  nsService(nsISupports* aServMgr, const char* aProgID, nsresult *rv)
+    : mService(0)
+  {
+    *rv = nsComponentManager::ProgIDToCLSID(aProgID, &mCID);
+    NS_ASSERTION(NS_SUCCEEDED(*rv), "Couldn't get CLSID.");
+    if (NS_FAILED(*rv)) return;
+  
+    nsIServiceManager* servMgr;
+    *rv = aServMgr->QueryInterface(nsIServiceManager::GetIID(), (void**)&servMgr);
+    if (NS_SUCCEEDED(*rv)) {
+      *rv = servMgr->GetService(mCID, T::GetIID(), (nsISupports**)&mService);
+      NS_RELEASE(servMgr);
+    }
+    NS_ASSERTION(NS_SUCCEEDED(*rv), "Couldn't get service.");
+  }
+
+  nsService(const nsCID& aClass, nsresult *rv)
+    : mCID(aClass), mService(0) {
+    *rv = nsServiceManager::GetService(aClass, T::GetIID(),
+                                       (nsISupports**)&mService);
+    NS_ASSERTION(NS_SUCCEEDED(*rv), "Couldn't get service.");
+  }
+
+  ~nsService() {
+    if (mService) {       // mService could be null if the constructor fails
+      nsresult rv = nsServiceManager::ReleaseService(mCID, mService);
+      NS_ASSERTION(NS_SUCCEEDED(rv), "Couldn't release service.");
+    }
+  }
+
+  T* operator->() const {
+    NS_PRECONDITION(mService != 0, "Your code should test the error result from the constructor.");
+    return mService;
+  }
+
+  PRBool operator==(const T* other) {
+    return mService == other;
+  }
+
+  operator T*() const {
+    return mService;
+  }
+
+};
+
+#else
+
+class nsService {
+protected:
+  nsCID mCID;
+  nsISupports* mService;
+
+public:
+  nsService(nsISupports* aServMgr, const nsCID& aClass, const nsIID& aIID, nsresult *rv)
+    : mCID(aClass), mService(0)
+  {
+    nsIServiceManager* servMgr;
+    *rv = aServMgr->QueryInterface(nsIServiceManager::GetIID(), (void**)&servMgr);
+    if (NS_SUCCEEDED(*rv)) {
+      *rv = servMgr->GetService(mCID, aIID, &mService);
+      NS_RELEASE(servMgr);
+    }
+    NS_ASSERTION(NS_SUCCEEDED(*rv), "Couldn't get service.");
+  }
+
+  nsService(nsISupports* aServMgr, const char* aProgID, const nsIID& aIID, nsresult *rv)
+    : mService(0)
+  {
+    *rv = nsComponentManager::ProgIDToCLSID(aProgID, &mCID);
+    NS_ASSERTION(NS_SUCCEEDED(*rv), "Couldn't get CLSID.");
+    if (NS_FAILED(*rv)) return;
+  
+    nsIServiceManager* servMgr;
+    *rv = aServMgr->QueryInterface(nsIServiceManager::GetIID(), (void**)&servMgr);
+    if (NS_SUCCEEDED(*rv)) {
+      *rv = servMgr->GetService(mCID, aIID, &mService);
+      NS_RELEASE(servMgr);
+    }
+    NS_ASSERTION(NS_SUCCEEDED(*rv), "Couldn't get service.");
+  }
+
+  nsService(const nsCID& aClass, const nsIID& aIID, nsresult *rv)
+    : mCID(aClass), mService(0) {
+    *rv = nsServiceManager::GetService(aClass, aIID,
+                                       (nsISupports**)&mService);
+    NS_ASSERTION(NS_SUCCEEDED(*rv), "Couldn't get service.");
+  }
+
+  ~nsService() {
+    if (mService) {       // mService could be null if the constructor fails
+      nsresult rv = nsServiceManager::ReleaseService(mCID, mService);
+      NS_ASSERTION(NS_SUCCEEDED(rv), "Couldn't release service.");
+    }
+  }
+
+  nsISupports* operator->() const {
+    NS_PRECONDITION(mService != 0, "Your code should test the error result from the constructor.");
+    return mService;
+  }
+
+  PRBool operator==(const nsISupports* other) {
+    return mService == other;
+  }
+
+  operator nsISupports*() const {
+    return mService;
+  }
+
+};
+
+#define NS_WITH_SERVICE(T, var, isupports, cid, rvAddr)      \
+  nsService _serv##var(isupports, cid, T::GetIID(), rvAddr); \
+  T* var = (T*)(nsISupports*)_serv##var;
+
+#endif
+
+////////////////////////////////////////////////////////////////////////////////
+// NS_NewServiceManager: For when you want to create a service manager
+// in a given context.
+
+extern NS_COM nsresult
+NS_NewServiceManager(nsIServiceManager* *result);
 
 ////////////////////////////////////////////////////////////////////////////////
 

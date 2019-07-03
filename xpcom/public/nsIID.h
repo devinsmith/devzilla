@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/*
+/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+ *
  * The contents of this file are subject to the Netscape Public License
  * Version 1.0 (the "NPL"); you may not use this file except in
  * compliance with the NPL.  You may obtain a copy of the NPL at
@@ -16,13 +16,27 @@
  * Reserved.
  */
 
-#ifndef __nsRespository_h
-#define __nsRespository_h
+#ifndef __nsIID_h
+#define __nsIID_h
 
-#include "nsIComponentManager.h"
+/**
+ * An "interface id" which can be used to uniquely identify a given
+ * interface.
+ */
 
-// XXX nsRepository is obsolete! Use nsComponentManager now!
+typedef nsID nsIID;
 
-#define nsRepository            nsComponentManager
+/**
+ * A macro shorthand for <tt>const nsIID&<tt>
+ */
 
-#endif
+#define REFNSIID const nsIID&
+
+/**
+ * Define an IID (obsolete)
+ */
+ 
+#define NS_DEFINE_IID(_name, _iidspec) \
+  const nsIID _name = _iidspec
+
+#endif /* __nsIID_h */

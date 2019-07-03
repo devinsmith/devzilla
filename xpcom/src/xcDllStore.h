@@ -16,13 +16,34 @@
  * Reserved.
  */
 
-#ifndef __nsRespository_h
-#define __nsRespository_h
+ 
+/* nsDllStore
+ *
+ * Stores dll and their accociated info in a hash keyed on the system format
+ * full dll path name e.g C:\Program Files\Netscape\Program\raptor.dll
+ *
+ * NOTE: dll names are considered to be case sensitive.
+ */
 
-#include "nsIComponentManager.h"
+#include "plhash.h"
+#include "xcDll.h"
 
-// XXX nsRepository is obsolete! Use nsComponentManager now!
+class nsDllStore
+{
+private:
+	PLHashTable *m_dllHashTable;
 
-#define nsRepository            nsComponentManager
+public:
+	// Constructor
+	nsDllStore(void);
+	~nsDllStore(void);
 
-#endif
+	// Caller is not expected to delete nsDll returned
+	// The nsDll returned in NOT removed from the hash
+	nsDll* Get(const char *filename);
+	PRBool Put(const char *filename, nsDll *dllInfo);
+
+	// The nsDll returned is removed from the hash
+	// Caller is expected to delete the returned nsDll
+	nsDll* Remove(const char *filename);
+};

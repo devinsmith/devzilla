@@ -3,8 +3,12 @@
 .PHONY: all clean
 
 C_SRCS = plvector.c
-CPP_SRCS = nsDebug.cpp nsEventQueueService.cpp nsHashtable.cpp nsID.cpp \
-			nsRepository.cpp nsServiceManager.cpp nsSupportsArray.cpp
+CPP_SRCS = nsDebug.cpp nsHashtable.cpp nsID.cpp nsCOMPtr.cpp nsProxyEvent.cpp \
+			nsComponentManager.cpp nsRepository.cpp nsServiceManager.cpp \
+			nsSupportsArray.cpp nsSupportsArrayEnumerator.cpp \
+			nsConjoiningEnumerator.cpp nsTraceRefcnt.cpp nsRegistry.cpp \
+			nsXPComFactory.cpp nsEventQueueService.cpp nsAllocator.cpp xcDll.cpp \
+			xcDllStore.cpp nsGenericFactory.cpp
 
 CXX? = g++
 AR? = ar
@@ -22,8 +26,9 @@ ifeq ($(OS),Windows_NT)
 	DEFINES += -D_IMPL_NS_COM -DWIN32_LEAN_AND_MEAN
 	SHARED_LIB = xpcom.dll
 	LD_FLAGS += -L../../nsprpub/pr/src -L../../nsprpub/lib/libc/src \
-		-L../../nsprpub/lib/ds -Wl,--out-implib,$(LIB).a \
-		-lnsprc -lplds -lnspr -lwsock32 -lwinmm
+		-L../../nsprpub/lib/ds -L../../modules/libreg/src \
+		-Wl,--out-implib,$(LIB).a \
+		-lmozreg -lnsprc -lplds -lnspr -lwsock32 -lwinmm
 	ifeq ($(SHELL),sh.exe)
 		# Executing under cmd.exe
 		RM = del /Q 2>NUL
@@ -36,8 +41,8 @@ OBJS = $(CPP_SRCS:.cpp=.o) $(C_SRCS:.c=.o)
 DEPS = $(CPP_SRCS:.cpp=.d) $(C_SRCS:.c=.d)
 
 INCLUDES = -I../public -I../../nsprpub/pr/include \
-					 -I../../nsprpub/lib/libc/include -I../../../include \
-					 -I../../nsprpub/lib/ds
+					 -I../../nsprpub/lib/libc/include -I../../include \
+					 -I../../nsprpub/lib/ds -I../../modules/libreg/include
 
 all: $(SHARED_LIB)
 

@@ -16,13 +16,35 @@
  * Reserved.
  */
 
-#ifndef __nsRespository_h
-#define __nsRespository_h
+#ifndef nsSupportsArrayEnumerator_h___
+#define nsSupportsArrayEnumerator_h___
 
-#include "nsIComponentManager.h"
+#include "nsIEnumerator.h"
 
-// XXX nsRepository is obsolete! Use nsComponentManager now!
+class nsISupportsArray;
 
-#define nsRepository            nsComponentManager
+class NS_COM nsSupportsArrayEnumerator : public nsIBidirectionalEnumerator {
+public:
+  NS_DECL_ISUPPORTS
 
-#endif
+  nsSupportsArrayEnumerator(nsISupportsArray* array);
+  virtual ~nsSupportsArrayEnumerator();
+
+  // nsIEnumerator methods:
+  NS_IMETHOD First();
+  NS_IMETHOD Next();
+  NS_IMETHOD CurrentItem(nsISupports **aItem);
+  NS_IMETHOD IsDone();
+
+  // nsIBidirectionalEnumerator methods:
+  NS_IMETHOD Last();
+  NS_IMETHOD Prev();
+
+protected:
+  nsISupportsArray*     mArray;
+  PRInt32               mCursor;
+
+};
+
+#endif // __nsSupportsArrayEnumerator_h
+

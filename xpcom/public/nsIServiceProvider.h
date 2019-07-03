@@ -16,13 +16,16 @@
  * Reserved.
  */
 
-#ifndef __nsRespository_h
-#define __nsRespository_h
+#ifndef __nsIServerProvider_h
+#define __nsIServerProvider_h
+#include "nsISupports.h"
 
-#include "nsIComponentManager.h"
+typedef nsID nsSID;
+#define NSSIDREF const nsSID&
 
-// XXX nsRepository is obsolete! Use nsComponentManager now!
+class nsIServiceProvider: public nsISupports {
+public:
+  NS_IMETHOD QueryService(NSSIDREF aSID, NSIIDREF sIID, (void **) pService);
+};
 
-#define nsRepository            nsComponentManager
-
-#endif
+#endif /* __nsIServerProvider_h */
