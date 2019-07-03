@@ -12,10 +12,11 @@ CXX? = g++
 
 # Dependencies
 DEP_INCLUDES = -I../../../xpcom/public -I../../../nsprpub/pr/include \
-							 -I../../../base/src -I../../public -I../../../nsprpub/lib/ds
-DEP_LIBS = -L../../../xpcom/src -lxpcom
+	-I../../../base/src -I../../public -I../../../nsprpub/lib/ds \
+	-I../../../gfx/public
+DEP_LIBS = -L../../../xpcom/src -L../../../base/src -lxpcom -lraptorbase
 
-CFLAGS = -Wall -O2 -I.
+CFLAGS = -Wall -g3 -I.
 
 EXE = widget
 

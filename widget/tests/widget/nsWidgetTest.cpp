@@ -26,6 +26,8 @@
 #include "nsRepository.h"
 #include "nsWidgetsCID.h"
 
+#include "nsIWidget.h"
+
 #ifdef XP_UNIX
 #define WIDGET_DLL "libwidgetmotif.so"
 #else
@@ -35,11 +37,21 @@
 const char *gLogFileName   = "selftest.txt";
 FILE *gFD = nsnull;
 
+nsIWidget         *window = NULL;
+
 // class ids
+static NS_DEFINE_IID(kCWindowCID, NS_WINDOW_CID);
 static NS_DEFINE_IID(kCAppShellCID, NS_APPSHELL_CID);
 
 // interface ids
+static NS_DEFINE_IID(kIWindowIID,         NS_IWINDOW_IID);
 static NS_DEFINE_IID(kIAppShellIID,       NS_IAPPSHELL_IID);
+
+nsEventStatus PR_CALLBACK HandleEvent(nsGUIEvent *aEvent)
+{
+  nsEventStatus result = nsEventStatus_eIgnore;
+  return result;
+}
 
 
 nsresult WidgetTest(int * argc, char **argv)
@@ -51,8 +63,8 @@ nsresult WidgetTest(int * argc, char **argv)
     exit(1);
   }
 
+  nsRepository::RegisterFactory(kCWindowCID, WIDGET_DLL, PR_FALSE, PR_FALSE);
   nsRepository::RegisterFactory(kCAppShellCID, WIDGET_DLL, PR_FALSE, PR_FALSE);
-	
 
   nsIAppShell *appShell;
   nsRepository::CreateInstance(kCAppShellCID, nsnull, kIAppShellIID, (void**)&appShell);
@@ -61,6 +73,18 @@ nsresult WidgetTest(int * argc, char **argv)
   } else {
     printf("AppShell is null!\n");
   }
+
+  //
+  // create the main window
+  //
+  nsRepository::CreateInstance(kCWindowCID, nsnull, kIWindowIID, (void**)&window);
+  nsRect rect(100, 100, 600, 700);
+  window->Create((nsIWidget*) nsnull, rect, HandleEvent,
+       (nsIDeviceContext *) nsnull,
+       appShell);
+  window->SetTitle("TOP-LEVEL window");
+  window->Show(PR_TRUE);
+  window->SetBackgroundColor(NS_RGB(196, 196, 196));
 
   return appShell->Run();
 }
