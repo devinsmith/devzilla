@@ -1207,11 +1207,12 @@ NS_METHOD nsWindow::SetBorderStyle(nsBorderStyle aBorderStyle)
 {
   return NS_OK;
 } 
-
+#endif
 NS_METHOD nsWindow::SetTitle(const nsString& aTitle) 
 {
   return NS_OK;
-} 
+}
+#if 0
 
 
 /**

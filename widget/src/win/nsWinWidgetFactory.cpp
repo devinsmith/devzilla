@@ -228,6 +228,9 @@ extern "C" NS_WIDGET nsresult NSGetFactory(const nsCID &aClass, nsISupports *ser
     return NS_ERROR_NULL_POINTER;
   }
 
-  printf("Got here!\n");
-  return NS_ERROR_NULL_POINTER;
+  *aFactory = new nsWidgetFactory(aClass);
+  if (aFactory == nsnull) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
+  return (*aFactory)->QueryInterface(kIFactoryIID, (void **)aFactory);
 }

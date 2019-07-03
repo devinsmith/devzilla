@@ -489,9 +489,7 @@ class nsIWidget : public nsISupports {
 
     //@{
     virtual void AddChild(nsIWidget* aChild) = 0;
-#if 0
     virtual void RemoveChild(nsIWidget* aChild) = 0;
-#endif
     virtual void* GetNativeData(PRUint32 aDataType) = 0;
 #if 0
     virtual nsIRenderingContext* GetRenderingContext() = 0;
@@ -506,6 +504,7 @@ class nsIWidget : public nsISupports {
      */
 
     NS_IMETHOD SetBorderStyle(nsBorderStyle aBorderStyle) = 0;
+#endif
 
     /**
      * Set the widget's title.
@@ -515,7 +514,7 @@ class nsIWidget : public nsISupports {
      */
 
     NS_IMETHOD SetTitle(const nsString& aTitle) = 0;
-
+#if 0
     /**
      * Set the widget's MenuBar.
      * Must be called after Create.
