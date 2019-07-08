@@ -343,10 +343,6 @@ nsRenderingContextWin :: nsRenderingContextWin()
     }
   }
 
-#ifdef NGLAYOUT_DDRAW
-  CreateDDraw();
-#endif
-
   mDC = NULL;
   mMainDC = NULL;
   mDCOwner = nsnull;

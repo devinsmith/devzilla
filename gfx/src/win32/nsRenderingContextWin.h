@@ -42,10 +42,6 @@
 class GraphicsState;
 class nsDrawingSurfaceWin;
 
-#ifdef NGLAYOUT_DDRAW
-#include "ddraw.h"
-#endif
-
 class nsRenderingContextWin : public nsIRenderingContext,
                               nsIRenderingContextWin/*,
                               nsIDOMRenderingContext,
@@ -55,11 +51,7 @@ public:
   nsRenderingContextWin();
   virtual ~nsRenderingContextWin();
 
-  void* operator new(size_t sz) {
-    void* rv = new char[sz];
-    nsCRT::zero(rv, sz);
-    return rv;
-  }
+  NS_DECL_AND_IMPL_ZEROING_OPERATOR_NEW
 
   NS_DECL_ISUPPORTS
 
