@@ -30,6 +30,7 @@ static NS_DEFINE_IID(kIImageRendererIID, IL_IIMAGERENDERER_IID);
 class ImageRendererImpl : public ilIImageRenderer {
 public:
   ImageRendererImpl();
+  virtual ~ImageRendererImpl() { }
 
   NS_DECL_ISUPPORTS
 
