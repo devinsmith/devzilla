@@ -225,7 +225,13 @@ nsresult nsWidgetFactory::LockFactory(PRBool aLock)
   return NS_OK;
 }
 
-extern "C" NS_WIDGET nsresult NSGetFactory(const nsCID &aClass, nsISupports *servMgr, nsIFactory **aFactory)
+// return the proper factory to the caller
+extern "C" NS_WIDGET nsresult 
+NSGetFactory(nsISupports* serviceMgr,
+             const nsCID &aClass,
+             const char *aClassName,
+             const char *aProgID,
+             nsIFactory **aFactory)
 {
   if (aFactory == nsnull) {
     return NS_ERROR_NULL_POINTER;
