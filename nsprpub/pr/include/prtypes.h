@@ -1,19 +1,35 @@
 /* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/*
- * The contents of this file are subject to the Netscape Public License
- * Version 1.0 (the "NPL"); you may not use this file except in
- * compliance with the NPL.  You may obtain a copy of the NPL at
- * http://www.mozilla.org/NPL/
+/* 
+ * The contents of this file are subject to the Mozilla Public
+ * License Version 1.1 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of
+ * the License at http://www.mozilla.org/MPL/
  * 
- * Software distributed under the NPL is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the NPL
- * for the specific language governing rights and limitations under the
- * NPL.
+ * Software distributed under the License is distributed on an "AS
+ * IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
+ * implied. See the License for the specific language governing
+ * rights and limitations under the License.
  * 
- * The Initial Developer of this code under the NPL is Netscape
- * Communications Corporation.  Portions created by Netscape are
- * Copyright (C) 1998 Netscape Communications Corporation.  All Rights
- * Reserved.
+ * The Original Code is the Netscape Portable Runtime (NSPR).
+ * 
+ * The Initial Developer of the Original Code is Netscape
+ * Communications Corporation.  Portions created by Netscape are 
+ * Copyright (C) 1998-2000 Netscape Communications Corporation.  All
+ * Rights Reserved.
+ * 
+ * Contributor(s):
+ * 
+ * Alternatively, the contents of this file may be used under the
+ * terms of the GNU General Public License Version 2 or later (the
+ * "GPL"), in which case the provisions of the GPL are applicable 
+ * instead of those above.  If you wish to allow use of your 
+ * version of this file only under the terms of the GPL and not to
+ * allow others to use your version of this file under the MPL,
+ * indicate your decision by deleting the provisions above and
+ * replace them with the notice and other provisions required by
+ * the GPL.  If you do not delete the provisions above, a recipient
+ * may use your version of this file under either the MPL or the
+ * GPL.
  */
 
 /*
@@ -59,6 +75,28 @@
 **
 ***********************************************************************/
 #if defined(WIN32)
+
+#define PR_EXPORT(__type) extern __declspec(dllexport) __type
+#define PR_EXPORT_DATA(__type) extern __declspec(dllexport) __type
+#define PR_IMPORT(__type) __declspec(dllimport) __type
+#define PR_IMPORT_DATA(__type) __declspec(dllimport) __type
+
+#define PR_EXTERN(__type) extern __declspec(dllexport) __type
+#define PR_IMPLEMENT(__type) __declspec(dllexport) __type
+#define PR_EXTERN_DATA(__type) extern __declspec(dllexport) __type
+#define PR_IMPLEMENT_DATA(__type) __declspec(dllexport) __type
+
+#define PR_CALLBACK
+#define PR_CALLBACK_DECL
+#define PR_STATIC_CALLBACK(__x) static __x
+
+#elif defined(XP_BEOS)
+
+#define PR_EXPORT(__type) extern __declspec(dllexport) __type
+#define PR_EXPORT_DATA(__type) extern __declspec(dllexport) __type
+#define PR_IMPORT(__type) extern __declspec(dllexport) __type
+#define PR_IMPORT_DATA(__type) extern __declspec(dllexport) __type
+
 #define PR_EXTERN(__type) extern __declspec(dllexport) __type
 #define PR_IMPLEMENT(__type) __declspec(dllexport) __type
 #define PR_EXTERN_DATA(__type) extern __declspec(dllexport) __type
@@ -73,6 +111,11 @@
 #define PR_CALLBACK_DECL        __cdecl
 
 #if defined(_WINDLL)
+#define PR_EXPORT(__type) extern __type _cdecl _export _loadds
+#define PR_IMPORT(__type) extern __type _cdecl _export _loadds
+#define PR_EXPORT_DATA(__type) extern __type _export
+#define PR_IMPORT_DATA(__type) extern __type _export
+
 #define PR_EXTERN(__type) extern __type _cdecl _export _loadds
 #define PR_IMPLEMENT(__type) __type _cdecl _export _loadds
 #define PR_EXTERN_DATA(__type) extern __type _export
@@ -82,6 +125,11 @@
 #define PR_STATIC_CALLBACK(__x) static __x PR_CALLBACK
 
 #else /* this must be .EXE */
+#define PR_EXPORT(__type) extern __type _cdecl _export
+#define PR_IMPORT(__type) extern __type _cdecl _export
+#define PR_EXPORT_DATA(__type) extern __type _export
+#define PR_IMPORT_DATA(__type) extern __type _export
+
 #define PR_EXTERN(__type) extern __type _cdecl _export
 #define PR_IMPLEMENT(__type) __type _cdecl _export
 #define PR_EXTERN_DATA(__type) extern __type _export
@@ -92,6 +140,12 @@
 #endif /* _WINDLL */
 
 #elif defined(XP_MAC)
+
+#define PR_EXPORT(__type) extern __declspec(export) __type
+#define PR_EXPORT_DATA(__type) extern __declspec(export) __type
+#define PR_IMPORT(__type) extern __declspec(export) __type
+#define PR_IMPORT_DATA(__type) extern __declspec(export) __type
+
 #define PR_EXTERN(__type) extern __declspec(export) __type
 #define PR_IMPLEMENT(__type) __declspec(export) __type
 #define PR_EXTERN_DATA(__type) extern __declspec(export) __type
@@ -101,28 +155,29 @@
 #define PR_CALLBACK_DECL
 #define PR_STATIC_CALLBACK(__x) static __x
 
-#elif defined(XP_OS2) 
+#else /* Unix */
+
+#define PR_EXPORT(__type) extern __type
+#define PR_EXPORT_DATA(__type) extern __type
+#define PR_IMPORT(__type) extern __type
+#define PR_IMPORT_DATA(__type) extern __type
+
 #define PR_EXTERN(__type) extern __type
 #define PR_IMPLEMENT(__type) __type
 #define PR_EXTERN_DATA(__type) extern __type
 #define PR_IMPLEMENT_DATA(__type) __type
 #define PR_CALLBACK
 #define PR_CALLBACK_DECL
-#ifndef XP_OS2_VACPP
 #define PR_STATIC_CALLBACK(__x) static __x
-#else
-#define PR_STATIC_CALLBACK(__x) static __x _Optlink
+
 #endif
 
-#else /* Unix */
-#define PR_EXTERN(__type) extern __type
-#define PR_IMPLEMENT(__type) __type
-#define PR_EXTERN_DATA(__type) extern __type
-#define PR_IMPLEMENT_DATA(__type) __type
-#define PR_CALLBACK
-#define PR_CALLBACK_DECL
-#define PR_STATIC_CALLBACK(__x) static __x
-
+#if defined(_NSPR_BUILD_)
+#define NSPR_API(__type) PR_EXPORT(__type)
+#define NSPR_DATA_API(__type) PR_EXPORT_DATA(__type)
+#else
+#define NSPR_API(__type) PR_IMPORT(__type)
+#define NSPR_DATA_API(__type) PR_IMPORT_DATA(__type)
 #endif
 
 /***********************************************************************
@@ -161,13 +216,15 @@
 /***********************************************************************
 ** MACROS:      PR_ROUNDUP
 **              PR_MIN
-**                              PR_MAX
+**              PR_MAX
+**              PR_ABS
 ** DESCRIPTION:
 **      Commonly used macros for operations on compatible types.
 ***********************************************************************/
 #define PR_ROUNDUP(x,y) ((((x)+((y)-1))/(y))*(y))
 #define PR_MIN(x,y)     ((x)<(y)?(x):(y))
 #define PR_MAX(x,y)     ((x)>(y)?(x):(y))
+#define PR_ABS(x)       ((x)<0?-(x):(x))
 
 PR_BEGIN_EXTERN_C
 
@@ -240,6 +297,15 @@ typedef double          PRFloat64;
 ************************************************************************/
 typedef size_t PRSize;
 
+
+/************************************************************************
+** TYPES:       PROffset32, PROffset64
+** DESCRIPTION:
+**  A type for representing byte offsets from some location. 
+************************************************************************/
+typedef PRInt32 PROffset32;
+typedef PRInt64 PROffset64;
+
 /************************************************************************
 ** TYPES:       PRPtrDiff
 ** DESCRIPTION:
@@ -265,8 +331,8 @@ typedef unsigned long PRUptrdiff;
 **      juast as you would C int-valued conditions. 
 ************************************************************************/
 typedef PRIntn PRBool;
-#define PR_TRUE (PRIntn)1
-#define PR_FALSE (PRIntn)0
+#define PR_TRUE 1
+#define PR_FALSE 0
 
 /************************************************************************
 ** TYPES:       PRPackedBool
@@ -281,6 +347,34 @@ typedef PRUint8 PRPackedBool;
 ** special status return.
 */
 typedef enum { PR_FAILURE = -1, PR_SUCCESS = 0 } PRStatus;
+
+#ifdef MOZ_UNICODE
+/*
+ * EXPERIMENTAL: This type may be removed in a future release.
+ */
+#ifndef __PRUNICHAR__
+#define __PRUNICHAR__
+#if defined(WIN32) || defined(XP_MAC)
+typedef wchar_t PRUnichar;
+#else
+typedef PRUint16 PRUnichar;
+#endif
+#endif
+#endif /* MOZ_UNICODE */
+
+/*
+** WARNING: The undocumented data types PRWord and PRUword are
+** only used in the garbage collection and arena code.  Do not
+** use PRWord and PRUword in new code.
+**
+** A PRWord is an integer that is the same size as a void*.
+** It implements the notion of a "word" in the Java Virtual
+** Machine.  (See Sec. 3.4 "Words", The Java Virtual Machine
+** Specification, Addison-Wesley, September 1996.
+** http://java.sun.com/docs/books/vmspec/index.html.)
+*/
+typedef long PRWord;
+typedef unsigned long PRUword;
 
 #if defined(NO_NSPR_10_SUPPORT)
 #else
@@ -318,20 +412,14 @@ typedef enum { PR_FAILURE = -1, PR_SUCCESS = 0 } PRStatus;
 #define NSPR_END_EXTERN_C
 #endif
 
-/*
-** A PRWord is an integer that is the same size as a void*
-*/
-typedef long PRWord;
-typedef unsigned long PRUword;
-
-/********* ????????????? End Fix me ?????????????????????????????? *****/
-#endif /* NO_NSPR_10_SUPPORT */
-
 #ifdef XP_MAC
 #include "protypes.h"
 #else
 #include "obsolete/protypes.h"
 #endif
+
+/********* ????????????? End Fix me ?????????????????????????????? *****/
+#endif /* NO_NSPR_10_SUPPORT */
 
 PR_END_EXTERN_C
 
