@@ -600,8 +600,7 @@ _PR_MD_WAKEUP_WAITER(PRThread *thread)
     }
 }
 
-void
-_PR_MD_INIT_IO()
+void PR_MD_INIT_IO()
 {
     WORD WSAVersion = 0x0101;
     WSADATA WSAData;

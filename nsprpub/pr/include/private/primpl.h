@@ -122,6 +122,9 @@ typedef struct _MDFileDesc _MDFileDesc;
 typedef struct _MDProcess _MDProcess;
 typedef struct _MDFileMap _MDFileMap;
 
+/* Socket I/O related */
+extern void PR_MD_INIT_IO();
+
 #if defined(_PR_PTHREADS)
 
 /*
@@ -1008,9 +1011,6 @@ extern PRInt32 _PR_MD_MKDIR(const char *name, PRIntn mode);
 extern PRInt32 _PR_MD_RMDIR(const char *name);
 #define _PR_MD_RMDIR _MD_RMDIR
 
-/* Socket I/O related */
-extern void _PR_MD_INIT_IO(void);
-#define    _PR_MD_INIT_IO _MD_INIT_IO
 
 extern PRInt32 _PR_MD_CLOSE_SOCKET(PRInt32 osfd);
 #define    _PR_MD_CLOSE_SOCKET _MD_CLOSE_SOCKET

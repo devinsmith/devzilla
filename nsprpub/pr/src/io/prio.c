@@ -51,7 +51,7 @@ void _PR_InitIO(void)
     _pr_stderr = PR_AllocFileDesc(2, methods);
 #endif
 
-    _PR_MD_INIT_IO();
+    PR_MD_INIT_IO();
 }
 
 PR_IMPLEMENT(PRFileDesc*) PR_GetSpecialFD(PRSpecialFD osfd)
