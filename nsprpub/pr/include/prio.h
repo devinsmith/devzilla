@@ -1,19 +1,35 @@
 /* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/*
- * The contents of this file are subject to the Netscape Public License
- * Version 1.0 (the "NPL"); you may not use this file except in
- * compliance with the NPL.  You may obtain a copy of the NPL at
- * http://www.mozilla.org/NPL/
+/* 
+ * The contents of this file are subject to the Mozilla Public
+ * License Version 1.1 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of
+ * the License at http://www.mozilla.org/MPL/
  * 
- * Software distributed under the NPL is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the NPL
- * for the specific language governing rights and limitations under the
- * NPL.
+ * Software distributed under the License is distributed on an "AS
+ * IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
+ * implied. See the License for the specific language governing
+ * rights and limitations under the License.
  * 
- * The Initial Developer of this code under the NPL is Netscape
- * Communications Corporation.  Portions created by Netscape are
- * Copyright (C) 1998 Netscape Communications Corporation.  All Rights
- * Reserved.
+ * The Original Code is the Netscape Portable Runtime (NSPR).
+ * 
+ * The Initial Developer of the Original Code is Netscape
+ * Communications Corporation.  Portions created by Netscape are 
+ * Copyright (C) 1998-2000 Netscape Communications Corporation.  All
+ * Rights Reserved.
+ * 
+ * Contributor(s):
+ * 
+ * Alternatively, the contents of this file may be used under the
+ * terms of the GNU General Public License Version 2 or later (the
+ * "GPL"), in which case the provisions of the GPL are applicable 
+ * instead of those above.  If you wish to allow use of your 
+ * version of this file only under the terms of the GPL and not to
+ * allow others to use your version of this file under the MPL,
+ * indicate your decision by deleting the provisions above and
+ * replace them with the notice and other provisions required by
+ * the GPL.  If you do not delete the provisions above, a recipient
+ * may use your version of this file under either the MPL or the
+ * GPL.
  */
 
 /*
@@ -36,6 +52,10 @@ PR_BEGIN_EXTERN_C
 /* Typedefs */
 typedef struct PRDir            PRDir;
 typedef struct PRDirEntry       PRDirEntry;
+#ifdef MOZ_UNICODE
+typedef struct PRDirUTF16       PRDirUTF16;
+typedef struct PRDirEntryUTF16  PRDirEntryUTF16;
+#endif /* MOZ_UNICODE */
 typedef struct PRFileDesc       PRFileDesc;
 typedef struct PRFileInfo       PRFileInfo;
 typedef struct PRFileInfo64     PRFileInfo64;
@@ -43,6 +63,7 @@ typedef union  PRNetAddr        PRNetAddr;
 typedef struct PRIOMethods      PRIOMethods;
 typedef struct PRPollDesc       PRPollDesc;
 typedef struct PRFilePrivate    PRFilePrivate;
+typedef struct PRSendFileData   PRSendFileData;
 
 /*
 ***************************************************************************
@@ -103,14 +124,24 @@ typedef enum PRTransmitFileFlags {
 
 #define PR_AF_INET AF_INET
 #define PR_AF_LOCAL AF_UNIX
-#ifdef AF_INET6
-#define PR_AF_INET6 AF_INET6
-#endif
 #define PR_INADDR_ANY INADDR_ANY
 #define PR_INADDR_LOOPBACK INADDR_LOOPBACK
 #define PR_INADDR_BROADCAST INADDR_BROADCAST
 
 #endif /* WIN32 */
+
+/*
+** Define PR_AF_INET6 in prcpucfg.h with the same
+** value as AF_INET6 on platforms with IPv6 support.
+** Otherwise define it here.
+*/
+#ifndef PR_AF_INET6
+#define PR_AF_INET6 100
+#endif
+
+#ifndef PR_AF_UNSPEC
+#define PR_AF_UNSPEC 0
+#endif
 
 /*
 **************************************************************************
@@ -121,65 +152,60 @@ typedef enum PRTransmitFileFlags {
 ** or IPv6 (AF_INET6).
 **************************************************************************
 *************************************************************************/
-#if defined(_PR_INET6)
 
-#if !defined(AF_INET6)
-#error "AF_INET6 is not defined"
-#endif
+struct PRIPv6Addr {
+	union {
+		PRUint8  _S6_u8[16];
+		PRUint16 _S6_u16[8];
+		PRUint32 _S6_u32[4];
+		PRUint64 _S6_u64[2];
+	} _S6_un;
+};
+#define pr_s6_addr		_S6_un._S6_u8
+#define pr_s6_addr16	_S6_un._S6_u16
+#define pr_s6_addr32	_S6_un._S6_u32
+#define pr_s6_addr64 	_S6_un._S6_u64
 
-typedef struct in6_addr PRIPv6Addr;
-
-#endif /* defined(_PR_INET6) */
+typedef struct PRIPv6Addr PRIPv6Addr;
 
 union PRNetAddr {
     struct {
         PRUint16 family;                /* address family (0x00ff maskable) */
+#ifdef XP_BEOS
+        char data[10];                  /* Be has a smaller structure */
+#else
         char data[14];                  /* raw address data */
+#endif
     } raw;
     struct {
         PRUint16 family;                /* address family (AF_INET) */
         PRUint16 port;                  /* port number */
         PRUint32 ip;                    /* The actual 32 bits of address */
+#ifdef XP_BEOS
+        char pad[4];                    /* Be has a smaller structure */
+#else
         char pad[8];
+#endif
     } inet;
-#if defined(_PR_INET6)
     struct {
         PRUint16 family;                /* address family (AF_INET6) */
         PRUint16 port;                  /* port number */
         PRUint32 flowinfo;              /* routing information */
         PRIPv6Addr ip;                  /* the actual 128 bits of address */
+        PRUint32 scope_id;              /* set of interfaces for a scope */
     } ipv6;
-#endif /* defined(_PR_INET6) */
-#if defined(XP_UNIX)
+#if defined(XP_UNIX) || defined(XP_OS2)
     struct {                            /* Unix domain socket address */
         PRUint16 family;                /* address family (AF_UNIX) */
+#ifdef XP_OS2
+        char path[108];                 /* null-terminated pathname */
+                                        /* bind fails if size is not 108. */
+#else
         char path[104];                 /* null-terminated pathname */
+#endif
     } local;
 #endif
 };
-
-/*
-** The PR_NETADDR_SIZE macro can only be called on a PRNetAddr union
-** whose 'family' field is set.  It returns the size of the union
-** member corresponding to the specified address family.
-*/
-
-#if defined(_PR_INET6)
-
-#define PR_NETADDR_SIZE(_addr) PR_NetAddrSize(_addr)
-
-#else
-
-#if defined(XP_UNIX)
-#define PR_NETADDR_SIZE(_addr) \
-        ((_addr)->raw.family == AF_UNIX \
-        ? sizeof((_addr)->local) \
-        : sizeof((_addr)->inet))
-#else
-#define PR_NETADDR_SIZE(_addr) sizeof((_addr)->inet)
-#endif /* defined(XP_UNIX) */
-
-#endif /* defined(_PR_INET6) */
 
 /*
 ***************************************************************************
