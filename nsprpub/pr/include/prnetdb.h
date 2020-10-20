@@ -1,19 +1,35 @@
 /* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/*
- * The contents of this file are subject to the Netscape Public License
- * Version 1.0 (the "NPL"); you may not use this file except in
- * compliance with the NPL.  You may obtain a copy of the NPL at
- * http://www.mozilla.org/NPL/
+/* 
+ * The contents of this file are subject to the Mozilla Public
+ * License Version 1.1 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of
+ * the License at http://www.mozilla.org/MPL/
  * 
- * Software distributed under the NPL is distributed on an "AS IS" basis,
- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the NPL
- * for the specific language governing rights and limitations under the
- * NPL.
+ * Software distributed under the License is distributed on an "AS
+ * IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
+ * implied. See the License for the specific language governing
+ * rights and limitations under the License.
  * 
- * The Initial Developer of this code under the NPL is Netscape
- * Communications Corporation.  Portions created by Netscape are
- * Copyright (C) 1998 Netscape Communications Corporation.  All Rights
- * Reserved.
+ * The Original Code is the Netscape Portable Runtime (NSPR).
+ * 
+ * The Initial Developer of the Original Code is Netscape
+ * Communications Corporation.  Portions created by Netscape are 
+ * Copyright (C) 1998-2000 Netscape Communications Corporation.  All
+ * Rights Reserved.
+ * 
+ * Contributor(s):
+ * 
+ * Alternatively, the contents of this file may be used under the
+ * terms of the GNU General Public License Version 2 or later (the
+ * "GPL"), in which case the provisions of the GPL are applicable 
+ * instead of those above.  If you wish to allow use of your 
+ * version of this file only under the terms of the GPL and not to
+ * allow others to use your version of this file under the MPL,
+ * indicate your decision by deleting the provisions above and
+ * replace them with the notice and other provisions required by
+ * the GPL.  If you do not delete the provisions above, a recipient
+ * may use your version of this file under either the MPL or the
+ * GPL.
  */
 
 #ifndef prnetdb_h___
@@ -30,10 +46,10 @@ PR_BEGIN_EXTERN_C
  *  Translate an Internet address to/from a character string
  *********************************************************************
  */
-PR_EXTERN(PRStatus) PR_StringToNetAddr(
+NSPR_API(PRStatus) PR_StringToNetAddr(
     const char *string, PRNetAddr *addr);
 
-PR_EXTERN(PRStatus) PR_NetAddrToString(
+NSPR_API(PRStatus) PR_NetAddrToString(
     const PRNetAddr *addr, char *string, PRUint32 size);
 
 /*
@@ -87,8 +103,49 @@ typedef struct PRHostEnt {
 **                      the result will be PR_FAILURE and the reason
 **                      for the failure can be retrieved by PR_GetError().
 ***********************************************************************/
-PR_EXTERN(PRStatus) PR_GetHostByName(
+NSPR_API(PRStatus) PR_GetHostByName(
     const char *hostname, char *buf, PRIntn bufsize, PRHostEnt *hostentry);
+
+/***********************************************************************
+** FUNCTION:	
+** DESCRIPTION:	PR_GetIPNodeByName()
+** Lookup a host by name. Equivalent to getipnodebyname(AI_DEFAULT)
+** of RFC 2553.
+**
+** INPUTS:
+**  char *hostname      Character string defining the host name of interest
+**  PRUint16 af         Address family (either PR_AF_INET or PR_AF_INET6)
+**  PRIntn flags        Specifies the types of addresses that are searched
+**                      for and the types of addresses that are returned.
+**                      The only supported flag is PR_AI_DEFAULT.
+**  char *buf           A scratch buffer for the runtime to return result.
+**                      This buffer is allocated by the caller.
+**  PRIntn bufsize      Number of bytes in 'buf'. A recommnded value to
+**                      use is PR_NETDB_BUF_SIZE.
+** OUTPUTS:
+**  PRHostEnt *hostentry
+**                      This structure is filled in by the runtime if
+**                      the function returns PR_SUCCESS. This structure
+**                      is allocated by the caller.
+** RETURN:
+**  PRStatus            PR_SUCCESS if the lookup succeeds. If it fails
+**                      the result will be PR_FAILURE and the reason
+**                      for the failure can be retrieved by PR_GetError().
+***********************************************************************/
+
+
+#define PR_AI_ALL        0x08
+#define PR_AI_V4MAPPED   0x10
+#define PR_AI_ADDRCONFIG 0x20
+#define PR_AI_DEFAULT    (PR_AI_V4MAPPED | PR_AI_ADDRCONFIG)
+
+NSPR_API(PRStatus) PR_GetIPNodeByName(
+    const char *hostname,
+    PRUint16 af,
+    PRIntn flags,
+    char *buf,
+    PRIntn bufsize,
+    PRHostEnt *hostentry);
 
 /***********************************************************************
 ** FUNCTION:	
@@ -111,7 +168,7 @@ PR_EXTERN(PRStatus) PR_GetHostByName(
 **                      the result will be PR_FAILURE and the reason
 **                      for the failure can be retrieved by PR_GetError().
 ***********************************************************************/
-PR_EXTERN(PRStatus) PR_GetHostByAddr(
+NSPR_API(PRStatus) PR_GetHostByAddr(
     const PRNetAddr *hostaddr, char *buf, PRIntn bufsize, PRHostEnt *hostentry);
 
 /***********************************************************************
@@ -145,7 +202,7 @@ PR_EXTERN(PRStatus) PR_GetHostByAddr(
 **                      has failed. The reason for the failure can be
 **                      retrieved by calling PR_GetError().
 ***********************************************************************/
-PR_EXTERN(PRIntn) PR_EnumerateHostEnt(
+NSPR_API(PRIntn) PR_EnumerateHostEnt(
     PRIntn enumIndex, const PRHostEnt *hostEnt, PRUint16 port, PRNetAddr *address);
 
 /***********************************************************************
@@ -160,7 +217,7 @@ PR_EXTERN(PRIntn) PR_EnumerateHostEnt(
 **                      special well known values that are equivalent to
 **                      INADDR_ANY and INADDR_LOOPBACK.
 **
-**  PRUInt16 port       The port number to be assigned in the structure.
+**  PRUint16 port       The port number to be assigned in the structure.
 **
 ** OUTPUTS:
 **  PRNetAddr *addr     The address to be manipulated.
@@ -174,10 +231,11 @@ typedef enum PRNetAddrValue
 {
     PR_IpAddrNull,      /* do NOT overwrite the IP address */
     PR_IpAddrAny,       /* assign logical INADDR_ANY to IP address */
-    PR_IpAddrLoopback   /* assign logical INADDR_LOOPBACK */
+    PR_IpAddrLoopback,  /* assign logical INADDR_LOOPBACK  */
+    PR_IpAddrV4Mapped   /* IPv4 mapped address */
 } PRNetAddrValue;
 
-PR_EXTERN(PRStatus) PR_InitializeNetAddr(
+NSPR_API(PRStatus) PR_InitializeNetAddr(
     PRNetAddrValue val, PRUint16 port, PRNetAddr *addr);
 
 /***********************************************************************
@@ -212,7 +270,7 @@ typedef struct PRProtoEnt {
 #endif
 } PRProtoEnt;
 
-PR_EXTERN(PRStatus) PR_GetProtoByName(
+NSPR_API(PRStatus) PR_GetProtoByName(
     const char* protocolname, char* buffer, PRInt32 bufsize, PRProtoEnt* result);
 
 /***********************************************************************
@@ -237,7 +295,7 @@ PR_EXTERN(PRStatus) PR_GetProtoByName(
 **                      the result will be PR_FAILURE and the reason
 **                      for the failure can be retrieved by PR_GetError().
 ***********************************************************************/
-PR_EXTERN(PRStatus) PR_GetProtoByNumber(
+NSPR_API(PRStatus) PR_GetProtoByNumber(
     PRInt32 protocolnumber, char* buffer, PRInt32 bufsize, PRProtoEnt* result);
 
 /***********************************************************************
