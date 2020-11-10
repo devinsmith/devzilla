@@ -28,6 +28,8 @@
 class nsIInputStream : public nsIBaseStream {
 public:
 
+    static const nsIID& GetIID() { static nsIID iid = NS_IINPUTSTREAM_IID; return iid; }
+
     /** Return the number of bytes in the stream
      *  @param aLength out parameter to hold the length
      *         of the stream. if an error occurs, the length
@@ -35,12 +37,10 @@ public:
      *  @return error status
      */
     NS_IMETHOD
-    GetLength(PRInt32 *aLength) = 0;
+    GetLength(PRUint32 *aLength) = 0;
 
     /** Read data from the stream.
-     *  @param aErrorCode the error code if an error occurs
      *  @param aBuf the buffer into which the data is read
-     *  @param aOffset the start offset of the data
      *  @param aCount the maximum number of bytes to read
      *  @param aReadCount out parameter to hold the number of
      *         bytes read, eof if 0. if an error occurs, the
@@ -48,7 +48,7 @@ public:
      *  @return error status
      */   
     NS_IMETHOD
-    Read(char* aBuf, PRInt32 aOffset, PRInt32 aCount, PRInt32 *aReadCount) = 0; 
+    Read(char* aBuf, PRUint32 aCount, PRUint32 *aReadCount) = 0; 
 };
 
 #endif /* nsInputStream_h___ */

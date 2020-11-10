@@ -2,13 +2,15 @@
 
 .PHONY: all clean
 
-SRCS = nsCRT.cpp nsString.cpp nsVoidArray.cpp
+SRCS = nsCRT.cpp nsEscape.cpp nsFileSpec.cpp nsFileStream.cpp \
+			 nsIFileStream.cpp nsIStringStream.cpp nsSpecialSystemDirectory.cpp \
+			 nsString.cpp nsVoidArray.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 DEPS = $(SRCS:.cpp=.d)
 
 INCLUDES = -I../../nsprpub/lib/libc/include -I../../nsprpub/pr/include \
-					 -I../../xpcom/public -I../public -I.
+					 -I../../xpcom/public -I../../intl/unicharutil/public -I../public -I.
 CFLAGS = -Wall -O2
 
 CC? = gcc

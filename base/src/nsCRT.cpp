@@ -33,6 +33,10 @@
 
 
 #include "nsCRT.h"
+#include "nsUnicharUtilCIID.h"
+#include "nsIServiceManager.h"
+#include "nsICaseConversion.h"
+
 
 // XXX Bug: These tables don't lowercase the upper 128 characters properly
 
@@ -87,7 +91,7 @@ static const unsigned char kLower2Upper[256] = {
 };
 
 // XXX bug: this doesn't map 0x80 to 0x9f properly
-static const PRUnichar kIsoLatin1ToUCS2[256] = {
+ const PRUnichar kIsoLatin1ToUCS2[256] = {
     0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
    16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
    32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
@@ -109,21 +113,78 @@ static const PRUnichar kIsoLatin1ToUCS2[256] = {
 //----------------------------------------------------------------------
 
 #define TOLOWER(_ucs2) \
-  (((_ucs2) < 256) ? PRUnichar(kUpper2Lower[_ucs2]) : _ToLower(_ucs2))
+  (((_ucs2) < 128) ? PRUnichar(kUpper2Lower[_ucs2]) : _ToLower(_ucs2))
 
 #define TOUPPER(_ucs2) \
-  (((_ucs2) < 256) ? PRUnichar(kLower2Upper[_ucs2]) : _ToUpper(_ucs2))
+  (((_ucs2) < 128) ? PRUnichar(kLower2Upper[_ucs2]) : _ToUpper(_ucs2))
+
+class HandleCaseConversionShutdown : public nsIShutdownListener {
+public :
+   NS_IMETHOD OnShutdown(const nsCID& cid, nsISupports* service);
+   HandleCaseConversionShutdown(void) { NS_INIT_REFCNT(); }
+   virtual ~HandleCaseConversionShutdown(void) {}
+   NS_DECL_ISUPPORTS
+};
+static NS_DEFINE_CID(kUnicharUtilCID, NS_UNICHARUTIL_CID);
+static NS_DEFINE_IID(kICaseConversionIID, NS_ICASECONVERSION_IID);
+
+static nsICaseConversion * gCaseConv = NULL; 
+
+static NS_DEFINE_IID(kIShutdownListenerIID, NS_ISHUTDOWNLISTENER_IID);
+NS_IMPL_ISUPPORTS(HandleCaseConversionShutdown, kIShutdownListenerIID);
+
+nsresult
+HandleCaseConversionShutdown::OnShutdown(const nsCID& cid,
+                                         nsISupports* aService)
+{
+  if (cid.Equals(kUnicharUtilCID)) {
+    NS_ASSERTION(aService == gCaseConv, "wrong service!");
+    gCaseConv->Release();
+    gCaseConv = NULL;
+  }
+  return NS_OK;
+}
+
+static HandleCaseConversionShutdown* gListener = NULL;
+
+static void StartUpCaseConversion()
+{
+    nsresult err;
+
+    if ( NULL == gListener )
+    {
+      gListener = new HandleCaseConversionShutdown();
+      gListener->AddRef();
+    }
+    err = nsServiceManager::GetService(kUnicharUtilCID, kICaseConversionIID,
+                                        (nsISupports**) &gCaseConv, gListener);
+}
+static void CheckCaseConversion()
+{
+    if(NULL == gCaseConv )
+      StartUpCaseConversion();
+
+    NS_ASSERTION( gCaseConv != NULL , "cannot obtain UnicharUtil");
+   
+}
 
 static PRUnichar _ToLower(PRUnichar aChar)
 {
-  // XXX need i18n code here
-  return aChar;
+  PRUnichar oLower;
+  CheckCaseConversion();
+  nsresult err = gCaseConv->ToLower(aChar, &oLower);
+  NS_ASSERTION( NS_SUCCEEDED(err),  "failed to communicate to UnicharUtil");
+  return ( NS_SUCCEEDED(err) ) ? oLower : aChar ;
 }
 
 static PRUnichar _ToUpper(PRUnichar aChar)
 {
-  // XXX need i18n code here
-  return aChar;
+  nsresult err;
+  PRUnichar oUpper;
+  CheckCaseConversion();
+  err = gCaseConv->ToUpper(aChar, &oUpper);
+  NS_ASSERTION( NS_SUCCEEDED(err),  "failed to communicate to UnicharUtil");
+  return ( NS_SUCCEEDED(err) ) ? oUpper : aChar ;
 }
 
 //----------------------------------------------------------------------
@@ -138,9 +199,63 @@ PRUnichar nsCRT::ToLower(PRUnichar aChar)
   return TOLOWER(aChar);
 }
 
-PRInt32 nsCRT::strlen(const PRUnichar* s)
+PRBool nsCRT::IsUpper(PRUnichar aChar)
 {
-  PRInt32 len = 0;
+  return aChar != nsCRT::ToLower(aChar);
+}
+
+PRBool nsCRT::IsLower(PRUnichar aChar)
+{
+  return aChar != nsCRT::ToUpper(aChar);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// My lovely strtok routine
+
+#define IS_DELIM(m, c)          ((m)[(c) >> 3] & (1 << ((c) & 7)))
+#define SET_DELIM(m, c)         ((m)[(c) >> 3] |= (1 << ((c) & 7)))
+#define DELIM_TABLE_SIZE        32
+
+char* nsCRT::strtok(char* str, const char* delims, char* *newStr)
+{
+  NS_ASSERTION(str, "Unlike regular strtok, the first argument cannot be null.");
+
+  char delimTable[DELIM_TABLE_SIZE];
+  PRUint32 i;
+  char* result;
+
+  for (i = 0; i < DELIM_TABLE_SIZE; i++)
+    delimTable[i] = '\0';
+
+  for (i = 0; i < DELIM_TABLE_SIZE && delims[i]; i++) {
+    SET_DELIM(delimTable, delims[i]);
+  }
+  NS_ASSERTION(delims[i] == '\0', "too many delimiters");
+
+  // skip to beginning
+  while (*str && IS_DELIM(delimTable, *str)) {
+    str++;
+  }
+  result = str;
+
+  // fix up the end of the token
+  while (*str) {
+    if (IS_DELIM(delimTable, *str)) {
+      *str++ = '\0';
+      break;
+    }
+    str++;
+  }
+  *newStr = str;
+
+  return str == result ? NULL : result;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+PRUint32 nsCRT::strlen(const PRUnichar* s)
+{
+  PRUint32 len = 0;
   if(s) {
     while (*s++ != 0) {
       len++;
@@ -180,11 +295,11 @@ PRInt32 nsCRT::strcmp(const PRUnichar* s1, const PRUnichar* s2)
  * @param   s1 and s2 both point to unichar strings
  * @return  0 if they match, -1 if s1<s2; 1 if s1>s2
  */
-PRInt32 nsCRT::strncmp(const PRUnichar* s1, const PRUnichar* s2, PRInt32 n)
+PRInt32 nsCRT::strncmp(const PRUnichar* s1, const PRUnichar* s2, PRUint32 n)
 {
   if(s1 && s2) { 
-    if(0<n) {
-      while (--n >= 0) {
+    if(n != 0) {
+      do {
         PRUnichar c1 = *s1++;
         PRUnichar c2 = *s2++;
         if (c1 != c2) {
@@ -192,7 +307,7 @@ PRInt32 nsCRT::strncmp(const PRUnichar* s1, const PRUnichar* s2, PRInt32 n)
           return 1;
         }
         if ((0==c1) || (0==c2)) break;
-      }
+      } while (--n != 0);
     }
   }
   return 0;
@@ -234,11 +349,11 @@ PRInt32 nsCRT::strcasecmp(const PRUnichar* s1, const PRUnichar* s2)
  * @param   s1 and s2 both point to unichar strings
  * @return  0 if they match, -1 if s1<s2; 1 if s1>s2
  */
-PRInt32 nsCRT::strncasecmp(const PRUnichar* s1, const PRUnichar* s2, PRInt32 n)
+PRInt32 nsCRT::strncasecmp(const PRUnichar* s1, const PRUnichar* s2, PRUint32 n)
 {
   if(s1 && s2) {
-    if(0<n){
-      while (--n >= 0) {
+    if(n != 0){
+      do {
         PRUnichar c1 = *s1++;
         PRUnichar c2 = *s2++;
         if (c1 != c2) {
@@ -250,7 +365,7 @@ PRInt32 nsCRT::strncasecmp(const PRUnichar* s1, const PRUnichar* s2, PRInt32 n)
           }
         }
         if ((0==c1) || (0==c2)) break;
-      }
+      } while (--n != 0);
     }
   }
   return 0;
@@ -290,11 +405,11 @@ PRInt32 nsCRT::strcmp(const PRUnichar* s1, const char* s2)
  * @param   s2 points to cstring
  * @return  0 if they match, -1 if s1<s2; 1 if s1>s2
  */
-PRInt32 nsCRT::strncmp(const PRUnichar* s1, const char* s2, PRInt32 n)
+PRInt32 nsCRT::strncmp(const PRUnichar* s1, const char* s2, PRUint32 n)
 {
   if(s1 && s2) {
-    if(0<n){
-      while (--n >= 0) {
+    if(n != 0){
+      do {
         PRUnichar c1 = *s1++;
         PRUnichar c2 = kIsoLatin1ToUCS2[*(const unsigned char*)s2++];
         if (c1 != c2) {
@@ -302,7 +417,7 @@ PRInt32 nsCRT::strncmp(const PRUnichar* s1, const char* s2, PRInt32 n)
           return 1;
         }
         if ((0==c1) || (0==c2)) break;
-      }
+      } while (--n != 0);
     }
   }
   return 0;
@@ -344,11 +459,11 @@ PRInt32 nsCRT::strcasecmp(const PRUnichar* s1, const char* s2)
  * @param   s2 points to cstring
  * @return  0 if they match, -1 if s1<s2; 1 if s1>s2
  */
-PRInt32 nsCRT::strncasecmp(const PRUnichar* s1, const char* s2, PRInt32 n)
+PRInt32 nsCRT::strncasecmp(const PRUnichar* s1, const char* s2, PRUint32 n)
 {
   if(s1 && s2){
-    if(0<n){
-      while (--n >= 0) {
+    if(n != 0){
+      do {
         PRUnichar c1 = *s1++;
         PRUnichar c2 = kIsoLatin1ToUCS2[*(const unsigned char*)s2++];
         if (c1 != c2) {
@@ -360,7 +475,7 @@ PRInt32 nsCRT::strncasecmp(const PRUnichar* s1, const char* s2, PRInt32 n)
           }
         }
         if (c1 == 0) break;
-      }
+      } while (--n != 0);
     }
   }
   return 0;
@@ -368,7 +483,7 @@ PRInt32 nsCRT::strncasecmp(const PRUnichar* s1, const char* s2, PRInt32 n)
 
 PRUnichar* nsCRT::strdup(const PRUnichar* str)
 {
-  PRInt32 len = nsCRT::strlen(str) + 1; // add one for null
+  PRUint32 len = nsCRT::strlen(str) + 1; // add one for null
   PRUnichar* rslt = new PRUnichar[len];
   if (rslt == NULL) return NULL;
   nsCRT::memcpy(rslt, str, len * sizeof(PRUnichar));
@@ -388,10 +503,10 @@ PRUint32 nsCRT::HashValue(const PRUnichar* us)
   return rv;
 }
 
-PRUint32 nsCRT::HashValue(const PRUnichar* us, PRInt32* uslenp)
+PRUint32 nsCRT::HashValue(const PRUnichar* us, PRUint32* uslenp)
 {
   PRUint32 rv = 0;
-  PRInt32 len = 0;
+  PRUint32 len = 0;
   PRUnichar ch;
   while ((ch = *us++) != 0) {
     // FYI: rv = rv*37 + ch
