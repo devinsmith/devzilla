@@ -200,11 +200,12 @@ NS_EXPORT nsresult NS_NewAppShellService(nsIAppShellService** aResult)
 //----------------------------------------------------------------------
 
 // Entry point to create nsAppShellService factory instances...
+NS_DEF_FACTORY(AppShellService,nsAppShellService)
 
 nsresult NS_NewAppShellServiceFactory(nsIFactory** aResult)
 {
   nsresult rv = NS_OK;
-  nsIFactory* inst = new nsFactory<nsAppShellService>();
+  nsIFactory* inst = new nsAppShellServiceFactory;
   if (nsnull == inst) {
     rv = NS_ERROR_OUT_OF_MEMORY;
   }

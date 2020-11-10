@@ -69,7 +69,11 @@ NS_SetupRegistry_1()
    */
   NS_SetupRegistry();
 
+  nsComponentManager::RegisterComponent(kCAppShellServiceCID, NULL, NULL, APPSHELL_DLL, PR_FALSE, PR_FALSE);
+
+#if 0
   nsRepository::RegisterFactory(kCAppShellServiceCID, APPSHELL_DLL, PR_FALSE, PR_FALSE);
  nsRepository::RegisterFactory(kCCmdLineServiceCID, APPSHELL_DLL, PR_FALSE, PR_FALSE);
+#endif
 ///  nsRepository::RegisterFactory(kCBrowserControllerCID, BROWSER_DLL, PR_FALSE, PR_FALSE);
 }

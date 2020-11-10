@@ -2,7 +2,7 @@
 
 .PHONY: all clean
 
-SRCS = nsHttpUrl.cpp nsHttpURLFactory.cpp nsLoadAttribs.cpp \
+SRCS = nsLoadAttribs.cpp \
 			 nsNetFactory.cpp nsNetService.cpp
 
 OBJS = $(SRCS:.cpp=.o)

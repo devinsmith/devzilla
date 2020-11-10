@@ -33,7 +33,7 @@
 
 #include "abcom.h"
 #include "xpgetstr.h"
-#include "pw_public.h"
+//#include "pw_public.h"
 
 extern "C" 
 {

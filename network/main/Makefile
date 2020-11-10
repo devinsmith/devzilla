@@ -2,8 +2,9 @@
 
 .PHONY: all clean
 
-CPP_SRCS = mkabook.cpp
-SRCS = jsautocf.c mkautocf.c mkgeturl.c mkparse.c mkselect.c mktrace.c mkutils.c
+CPP_SRCS =
+SRCS = jsautocf.c mkautocf.c mkfsort.c mkgeturl.c mkparse.c mkselect.c \
+			 mktrace.c mkutils.c
 
 OBJS = $(SRCS:.c=.o) $(CPP_SRCS:.cpp=.o)
 DEPS = $(SRCS:.c=.d) $(CPP_SRCS:.cpp=.d)
@@ -16,7 +17,7 @@ INCLUDES = -I../../nsprpub/lib/libc/include -I../../nsprpub/pr/include \
 					 -I../../js/src -I../protocol/http -I../../modules/security/freenav \
 					 -I../../lib/liblayer/include -I../mimetype -I../cache -I../client \
 					 -I../cnvts -I../util -I../../sun-java/stubs/include
-DEFINES= -DNETSCAPE -DMODULAR_NETLIB #-DSTANDALONE_IMAGE_LIB
+DEFINES= -DNETSCAPE -DMODULAR_NETLIB -DMOZILLA_CLIENT
 CFLAGS = -Wall -g3
 
 CC? = gcc
