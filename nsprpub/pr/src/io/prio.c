@@ -25,6 +25,7 @@
 
 PRLock *_pr_flock_lock;
 
+#if 0
 void _PR_InitIO(void)
 {
     const PRIOMethods *methods = PR_GetFileMethods();
@@ -53,7 +54,9 @@ void _PR_InitIO(void)
 
     PR_MD_INIT_IO();
 }
+#endif
 
+#if 0
 PR_IMPLEMENT(PRFileDesc*) PR_GetSpecialFD(PRSpecialFD osfd)
 {
     PRFileDesc *result = NULL;
@@ -71,6 +74,7 @@ PR_IMPLEMENT(PRFileDesc*) PR_GetSpecialFD(PRSpecialFD osfd)
     }
     return result;
 }
+#endif
 
 PR_IMPLEMENT(PRFileDesc*) PR_AllocFileDesc(
     PRInt32 osfd, const PRIOMethods *methods)
