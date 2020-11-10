@@ -9,3 +9,12 @@ although some portions are older and date back to the Netscape Public Library.
 
 # Requirements
 libjpeg - http://libjpeg.sourceforge.net/
+
+# Running
+copy all shared objects into xpfe/bootstrap, then run ./apprunner with
+LD\_LIBRARY\_PATH set properly
+
+```
+cd xpfe/bootstrap
+LD_DEBUG=all LD_LIBRARY_PATH=. ./apprunner
+```
