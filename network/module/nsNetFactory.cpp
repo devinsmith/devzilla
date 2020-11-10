@@ -149,7 +149,12 @@ nsresult nsNetFactory::LockFactory(PRBool aLock)
 #if defined(XP_MAC) && defined(MAC_STATIC)
 extern "C" NS_NET nsresult NSGetFactory_NETLIB_DLL(const nsCID &aClass, nsISupports* servMgr, nsIFactory **aFactory)
 #else
-extern "C" NS_NET nsresult NSGetFactory(const nsCID &aClass, nsISupports* servMgr, nsIFactory **aFactory)
+extern "C" NS_NET nsresult
+NSGetFactory(nsISupports* serviceMgr,
+    const nsCID &aClass,
+    const char *aClassName,
+    const char *aProgID,
+    nsIFactory **aFactory)
 #endif
 {
   if (nsnull == aFactory) {
