@@ -8,6 +8,7 @@ OBJS = $(CPP_SRCS:.cpp=.o)
 DEPS = $(CPP_SRCS:.cpp=.d)
 
 INTERNAL_CFLAGS = -Wall -g3 -DXP_UNIX -I../../widget/public \
+	-I../../base/public \
 	-I../../base/src -I../../nsprpub/pr/include -I../../xpcom/public \
 	-I../../nsprpub/lib/ds -I../../modules/libpref/public \
 	-I../../include -I../../js/src -I../../webshell/public \
@@ -26,8 +27,8 @@ LDFLAGS = -L../../xpcom/src -L../../nsprpub/lib/ds \
 	-L../../modules/libreg/src \
 	-L../../modules/libutil/src \
 	-Wl,--no-as-needed
-#LIBS = -lnsappshell -lmoznetlib -lraptorbase -lgfxmotif -lxpcom -lmozjs -lplds -limg -lnspr -lnsprc -lmozutil -lXm -lX11 -lXt -ldl
-LIBS = -lnsappshell -lmoznetlib -lraptorbase -lxpcom -lmozjs -lplds -limg -lmozreg -lmozutil -lnspr -lnsprc -lXm -lX11 -lXt -ldl
+#LIBS = -lnsappshell -lmoznetlib -lraptorbase -lxpcom -lmozjs -lplds -limg -lmozreg -lmozutil -lnspr -lnsprc -lXm -lX11 -lXt -ldl
+LIBS = -lmoznetlib -lraptorbase -lxpcom -lmozjs -lplds -limg -lmozreg -lmozutil -lnspr -lnsprc -lXm -lX11 -lXt -ldl
 EXE = apprunner
 
 
