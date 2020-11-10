@@ -18,8 +18,16 @@ INTERNAL_CFLAGS = -Wall -g3 -DXP_UNIX -I../../widget/public \
 CPPFLAGS += -MMD -MP -MT $@
 LDFLAGS = -L../../xpcom/src -L../../nsprpub/lib/ds \
 	-L../../nsprpub/pr/src -L../../nsprpub/lib/libc/src \
+	-L../appshell/src \
+	-L../../network/module \
+	-L../../base/src \
+	-L../../js/src \
+	-L../../modules/libimg/src \
+	-L../../modules/libreg/src \
+	-L../../modules/libutil/src \
 	-Wl,--no-as-needed
-LIBS = -lnsappshell -lmoznetlib -lraptorbase -lgfxmotif -lxpcom -lmozjs -lplds -limg -lnspr -lnsprc -lmozutil -lXm -lX11 -lXt -ldl
+#LIBS = -lnsappshell -lmoznetlib -lraptorbase -lgfxmotif -lxpcom -lmozjs -lplds -limg -lnspr -lnsprc -lmozutil -lXm -lX11 -lXt -ldl
+LIBS = -lnsappshell -lmoznetlib -lraptorbase -lxpcom -lmozjs -lplds -limg -lmozreg -lmozutil -lnspr -lnsprc -lXm -lX11 -lXt -ldl
 EXE = apprunner
 
 

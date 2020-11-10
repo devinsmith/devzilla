@@ -156,7 +156,12 @@ nsresult nsViewFactory::LockFactory(PRBool aLock)
 #if defined(XP_MAC) && defined(MAC_STATIC)
 extern "C" NS_VIEW nsresult NSGetFactory_VIEW_DLL(const nsCID &aClass, nsISupports* servMgr, nsIFactory **aFactory)
 #else
-extern "C" NS_VIEW nsresult NSGetFactory(const nsCID &aClass, nsISupports* servMgr, nsIFactory **aFactory)
+extern "C" NS_VIEW nsresult
+NSGetFactory(nsISupports* serviceMgr,
+    const nsCID &aClass,
+    const char *aClassName,
+    const char *aProgID,
+    nsIFactory **aFactory)
 #endif
 {
   if (nsnull == aFactory) {

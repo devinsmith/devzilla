@@ -226,13 +226,13 @@ struct nsINetService : public nsISupports
      * @return Returns NS_OK if successful, or NS_FALSE if an error occurred.
      */
     NS_IMETHOD SetCustomUserAgent(nsString aCustom)=0;
-
+#endif
     // Managing pluggable protocols:
 
     NS_IMETHOD RegisterProtocol(const nsString& aName, 
                                 nsIProtocolURLFactory* aProtocolURLFactory,
                                 nsIProtocol* aProtocol) = 0;
-
+#if 0
     NS_IMETHOD UnregisterProtocol(const nsString& aName) = 0;
 
     NS_IMETHOD GetProtocol(const nsString& aName,

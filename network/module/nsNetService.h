@@ -84,9 +84,11 @@ public:
     NS_IMETHOD GetPlatform(nsString& aPlatform);
     NS_IMETHOD GetUserAgent(nsString& aUA);
     NS_IMETHOD SetCustomUserAgent(nsString aCustom);
+#endif
     NS_IMETHOD RegisterProtocol(const nsString& aName,
                                 nsIProtocolURLFactory* aProtocolURLFactory,
                                 nsIProtocol* aProtocol);
+#if 0
     NS_IMETHOD UnregisterProtocol(const nsString& aName);
     NS_IMETHOD GetProtocol(const nsString& aName, 
                            nsIProtocolURLFactory* *aProtocolURLFactory,
@@ -129,8 +131,8 @@ private:
     nsNetlibThread* mNetlibThread;
     nsIEventQueueService* mEventQService;
 
-    nsHashtable* mProtocols;
 #endif
+    nsHashtable* mProtocols;
 };
 
 extern "C" void net_ReleaseContext(MWContext *context);

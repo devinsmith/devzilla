@@ -2,7 +2,7 @@
 
 .PHONY: all clean
 
-SRCS = nsLoadAttribs.cpp \
+SRCS = nsLoadAttribs.cpp nsHttpUrl.cpp nsHttpURLFactory.cpp \
 			 nsNetFactory.cpp nsNetService.cpp
 
 OBJS = $(SRCS:.cpp=.o)
@@ -13,7 +13,7 @@ INCLUDES = -I../../nsprpub/lib/libc/include -I../../nsprpub/pr/include \
 					 -I../../include -I../../nsprpub/lib/ds -I../../widget/public \
 					 -I../../modules/libimg/public -I../../modules/libutil/public \
 					 -I../../view/public -I../../modules/libpref/public \
-					 -I../../js/src -I../protocol/http -I../main \
+					 -I../../js/src -I../protocol/http -I../main -I../public \
 					 -I../../lib/liblayer/include
 DEFINES= -DNETSCAPE
 CFLAGS = -Wall -g3

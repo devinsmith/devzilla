@@ -53,8 +53,8 @@ extern "C" {
 #include "nsIProtocolConnection.h"
 #endif
 #include "nsIProtocolURLFactory.h"
-#if 0
 #include "nsIProtocol.h"
+#if 0
 #include "nsIURLGroup.h"
 #endif
 #include "nsIServiceManager.h"
@@ -936,7 +936,7 @@ nsNetlibService::SetCustomUserAgent(nsString aCustom)
     return NS_OK;
 
 }
-
+#endif
 ////////////////////////////////////////////////////////////////////////////////
 
 class nsStringHashKey : public nsHashKey 
@@ -1000,6 +1000,7 @@ nsNetlibService::RegisterProtocol(const nsString& aName,
     void* result = mProtocols->Put(key, pair);
     return NS_OK;
 }
+#if 0
 
 NS_IMETHODIMP
 nsNetlibService::UnregisterProtocol(const nsString& aName)

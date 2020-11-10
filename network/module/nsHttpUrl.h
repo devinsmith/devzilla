@@ -19,13 +19,15 @@
 #ifndef nsHttpUrl_h__
 #define nsHttpUrl_h__
 
+#include "nsNetStream.h"
 #include "nsIURL.h"
 #include "nsINetlibURL.h"
 #include "nsIHttpURL.h"
 #include "nsIPostToServer.h"
+#include "nsCOMPtr.h"
 
-class nsHttpUrlImpl : public nsIURL, public nsINetlibURL, public nsIHttpURL,
-                      public nsIPostToServer    // XXX for now
+class nsHttpUrlImpl : public nsIURL, public nsINetlibURL//, public nsIHttpURL,
+    //                  public nsIPostToServer    // XXX for now
 {
 public:
     // from nsIURL:

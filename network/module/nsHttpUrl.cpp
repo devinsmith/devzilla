@@ -18,7 +18,7 @@
 
 #include "nsAgg.h"
 #include "nsIProtocolConnection.h"
-#include "nsIHttpUrl.h"
+#include "nsIHttpURL.h"
 #include "nsIPostToServer.h"
 
  #include "nsINetService.h"  /* XXX: NS_FALSE */
@@ -35,7 +35,7 @@ static NS_DEFINE_IID(kIOutputStreamIID,  NS_IOUTPUTSTREAM_IID);
 
 class nsHttpUrlImpl : public nsIProtocolConnection,
                       public nsIPostToServer,
-                      public nsIHttpUrl
+                      public nsIHttpURL
 {
 public:
     typedef enum {
@@ -125,7 +125,7 @@ nsresult nsHttpUrlImpl::AggregatedQueryInterface(const nsIID &aIID,
         return NS_OK;
     }
     if (aIID.Equals(kIHttpUrlIID)) {
-        *aInstancePtr = (void*) ((nsIHttpUrl*)this);
+        *aInstancePtr = (void*) ((nsIHttpURL*)this);
         AddRef();
         return NS_OK;
     }

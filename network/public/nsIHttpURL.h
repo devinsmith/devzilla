@@ -16,15 +16,12 @@
  * Reserved.
  */
 
-#ifndef nsIHttpUrl_h___
-#define nsIHttpUrl_h___
+#ifndef nsIHttpURL_h___
+#define nsIHttpURL_h___
 
 #include "nscore.h"
 #include "nsISupports.h"
-
 #include "nspr.h"
-
-
 
 /* 1A0B6FA1-EA25-11d1-BEAE-00805F8A66DC */
 
@@ -32,9 +29,10 @@
 { 0x1a0b6fa1, 0xea25, 0x11d1,                           \
     { 0xbe, 0xae, 0x0, 0x80, 0x5f, 0x8a, 0x66, 0xdc } }
 
-
-struct nsIHttpUrl : public nsISupports
+struct nsIHttpURL : public nsISupports
 {
+	static const nsIID& GetIID() { static nsIID iid = NS_IHTTPURL_IID; return iid; }
+
     /**
       * Parse the mime header into the url struct.
       * This method is intended to be used when an HTML META tag is encoutered
@@ -50,11 +48,8 @@ struct nsIHttpUrl : public nsISupports
     NS_IMETHOD AddMimeHeader(const char *name, const char *value) = 0;
 };
 
-
-
-/** Create a new HttpUrl. */
-extern "C" NS_NET nsresult NS_NewHttpUrl(nsISupports** aInstancePtrResult,
+/** Create a new HttpURL. */
+extern "C" NS_NET nsresult NS_NewHttpURL(nsISupports** aInstancePtrResult,
                                          nsISupports* aOuter);
 
-
-#endif /* nsIHttpUrl_h___ */
+#endif /* nsIHttpURL_h___ */
