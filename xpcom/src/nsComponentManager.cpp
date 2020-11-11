@@ -72,6 +72,7 @@ nsFactoryEntry::nsFactoryEntry(const nsCID &aClass, nsIFactory *aFactory)
     : cid(aClass), factory(aFactory), dll(NULL)
 
 {
+    NS_ADDREF(aFactory);
 }
 
 nsFactoryEntry::~nsFactoryEntry(void)
@@ -856,6 +857,13 @@ nsComponentManagerImpl::LoadFactory(nsFactoryEntry *aEntry,
                 PR_GetErrorText(errorMsg);
             PR_LOG(nsComponentManagerLog, PR_LOG_ALWAYS,
                    ("nsComponentManager: Load(%s) FAILED with error:%s", aEntry->dll->GetFullPath(), errorMsg));
+#if defined(XP_UNIX) || defined(XP_PC)
+            // Put the error message on the screen.
+            printf("**************************************************\n"
+    		   "nsComponentManager: Load(%s) FAILED with error: %s\n"
+            	   "**************************************************\n",
+    		   aEntry->dll->GetFullPath(), errorMsg);
+#endif
 
             return NS_ERROR_FAILURE;
         }
@@ -1764,6 +1772,7 @@ nsComponentManagerImpl::SyncComponentsInFile(const char *fullname)
     nsresult rv = NS_OK;
     if (dll == NULL)
     {
+        dll = new nsDll(fullname, 0, statbuf.size);
         // XXX Create nsDll for this from registry and
         // XXX add it to our dll cache mDllStore.
 #ifdef USE_REGISTRY
