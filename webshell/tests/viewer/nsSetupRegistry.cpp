@@ -38,6 +38,8 @@
 #endif
 #include "nsINetService.h"
 
+#include "nsSpecialSystemDirectory.h"    // For exe dir
+
 
 #ifdef XP_PC
 
@@ -165,6 +167,33 @@ static NS_DEFINE_IID(kCMenuItemCID, NS_MENUITEM_CID);
 extern "C" void
 NS_SetupRegistry()
 {
+  // Autoregistration happens here. The rest of RegisterComponent() calls should happen
+  // only for dlls not in the components directory.
+
+  // Create exeDir/"components"
+  nsSpecialSystemDirectory sysdir(nsSpecialSystemDirectory::OS_CurrentProcessDirectory);
+  sysdir += "components";
+  const char *componentsDir = sysdir.GetCString(); // native path
+  if (componentsDir != NULL)
+  {
+#ifdef XP_PC
+      /* The PC version of the directory from filePath is of the form
+       *    /y|/moz/mozilla/dist/bin/components
+       * We need to remove the initial / and change the | to :
+       * for all this to work with NSPR.      
+       */
+#endif /* XP_PC */
+      printf("nsComponentManager: Using components dir: %s\n", componentsDir);
+
+#ifdef XP_MAC
+      nsComponentManager::AutoRegister(nsIComponentManager::NS_Startup, nsnull);
+#else
+      nsComponentManager::AutoRegister(nsIComponentManager::NS_Startup, componentsDir);
+#endif    /* XP_MAC */
+      // XXX Look for user specific components
+      // XXX UNIX: ~/.mozilla/components
+  }
+
 #if 0
   nsRepository::RegisterFactory(kLookAndFeelCID, WIDGET_DLL, PR_FALSE, PR_FALSE);
   nsRepository::RegisterFactory(kCWindowIID, WIDGET_DLL, PR_FALSE, PR_FALSE);
