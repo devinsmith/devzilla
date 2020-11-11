@@ -77,7 +77,7 @@
 
 // XP_UNIX
 //#ifndef WIDGET_DLL
-#define WIDGET_DLL "libwidgetmotif.so"
+#define WIDGET_DLL "libraptorwidget.so"
 ///#endif
 //#ifndef GFXWIN_DLL
 #define GFXWIN_DLL "libgfxmotif.so"

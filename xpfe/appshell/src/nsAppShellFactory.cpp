@@ -17,7 +17,9 @@
  * Netscape Communications Corporation.  All Rights Reserved.
  */
 #include "nsIFactory.h"
+#include "nsRepository.h"
 #include "nscore.h"
+#include "nsIComponentManager.h"
 #include "nsAppShellCIDs.h"
 #include "nsICmdLineService.h"
 
@@ -26,16 +28,54 @@ nsresult NS_NewAppShellServiceFactory(nsIFactory** aFactory);
 
 
 static NS_DEFINE_IID(kAppShellServiceCID, NS_APPSHELL_SERVICE_CID);
-static NS_DEFINE_IID(kCmdLineServiceCID,         NS_COMMANDLINE_SERVICE_CID);
+static NS_DEFINE_IID(kCmdLineServiceCID,  NS_COMMANDLINE_SERVICE_CID);
+
+/*
+ * Global entry point to register all components in the registry...
+ */
+extern "C" NS_EXPORT nsresult
+NSRegisterSelf(nsISupports* serviceMgr, const char *path)
+{
+    nsComponentManager::RegisterComponent(kAppShellServiceCID, NULL, NULL, path, PR_TRUE, PR_TRUE);
+    nsComponentManager::RegisterComponent(kCmdLineServiceCID,  NULL, NULL, path, PR_TRUE, PR_TRUE);
+
+   return NS_OK;
+}
+
+/*
+ * Global entry point to unregister all components in the registry...
+ */
+extern "C" NS_EXPORT nsresult
+NSUnregisterSelf(nsISupports* serviceMgr, const char *path)
+{
+    nsComponentManager::UnregisterFactory(kAppShellServiceCID, path);
+    nsComponentManager::UnregisterFactory(kCmdLineServiceCID,  path);
+
+    return NS_OK;
+}
 
 
+/*
+ * Global entry point to create class factories for the components
+ * available withing the DLL...
+ */
 #if defined(XP_MAC) && defined(MAC_STATIC)
-extern "C" NS_APPSHELL nsresult NSGetFactory_APPSHELL_DLL(const nsCID& aClass, nsISupports* servMgr, nsIFactory** aFactory)
+extern "C" NS_APPSHELL nsresult 
+NSGetFactory_APPSHELL_DLL(nsISupports* serviceMgr,
+                          const nsCID &aClass,
+                          const char *aClassName,
+                          const char *aProgID,
+                          nsIFactory **aFactory)
 #else
-extern "C" NS_APPSHELL nsresult NSGetFactory(const nsCID& aClass, nsISupports* servMgr, nsIFactory** aFactory)
+extern "C" NS_APPSHELL nsresult
+NSGetFactory(nsISupports* serviceMgr,
+             const nsCID &aClass,
+             const char *aClassName,
+             const char *aProgID,
+             nsIFactory **aFactory)
 #endif
 {
-  nsresult rv = NS_OK;
+  nsresult rv = NS_ERROR_FACTORY_NOT_REGISTERED;
 
   if (nsnull == aFactory) {
     return NS_ERROR_NULL_POINTER;
@@ -45,7 +85,7 @@ extern "C" NS_APPSHELL nsresult NSGetFactory(const nsCID& aClass, nsISupports* s
     rv = NS_NewAppShellServiceFactory(aFactory);
   }
   else if (aClass.Equals(kCmdLineServiceCID)) {
-     rv = NS_NewCmdLineServiceFactory(aFactory);
+    rv = NS_NewCmdLineServiceFactory(aFactory);
   }
 
   return rv;
