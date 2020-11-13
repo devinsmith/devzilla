@@ -2,6 +2,17 @@
 #
 .PHONY: build clean
 
+# Xlib
+XLIB_SRCS = xlib/nsAppShell.cpp xlib/nsComboBox.cpp xlib/nsLabel.cpp \
+						xlib/nsMenuBar.cpp xlib/nsPopUpMenu.cpp xlib/nsTabWidget.cpp \
+						xlib/nsTextWidget.cpp xlib/nsWidget.cpp xlib/nsButton.cpp \
+						xlib/nsDialog.cpp xlib/nsListBox.cpp xlib/nsMenu.cpp \
+						xlib/nsRadioButton.cpp xlib/nsTextAreaWidget.cpp \
+						xlib/nsToolkit.cpp xlib/nsWidgetFactory.cpp xlib/nsCheckButton.cpp \
+						xlib/nsFileWidget.cpp xlib/nsLookAndFeel.cpp xlib/nsMenuItem.cpp \
+						xlib/nsScrollBar.cpp xlib/nsTextHelper.cpp \
+						xlib/nsTooltipWidget.cpp xlib/nsWindow.cpp
+
 # Motif
 MOTIF_C_SRCS = motif/nsXtManageWidget.c
 MOTIF_SRCS = motif/Motifdlldeps.cpp motif/nsMotifWidgetFactory.cpp \
@@ -18,6 +29,7 @@ COMMON_SRCS = xpwidgets/nsBaseWidget.cpp
 
 INCLUDES = -I../../nsprpub/lib/libc/include -I../../nsprpub/pr/include \
 					 -I../../xpcom/public -I../public -I../../base/src \
+					 -I../../base/public \
 					 -I../../gfx/public -I../../nsprpub/lib/ds -Ixpwidgets
 
 CFLAGS = -Wall -g3
@@ -44,10 +56,11 @@ ifeq ($(OS),Windows_NT)
 		FixPath = $(subst /,\,$1)
 	endif
 else
-	C_SRCS = $(MOTIF_C_SRCS)
-	CPP_SRCS = $(MOTIF_SRCS) $(COMMON_SRCS)
+#	C_SRCS = $(MOTIF_C_SRCS)
+#	CPP_SRCS = $(MOTIF_SRCS) $(COMMON_SRCS)
+	CPP_SRCS = $(XLIB_SRCS) $(COMMON_SRCS)
 	CFLAGS += -fPIC
-	LDFLAGS += -lXm -lXt -lX11
+	LDFLAGS += -lXt -lX11
 endif
 
 OBJS = $(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o)
