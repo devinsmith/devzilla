@@ -20,6 +20,7 @@
 #define nsHashtable_h__
 
 #include "plhash.h"
+#include "prlock.h"
 #include "nsCom.h"
 
 class NS_COM nsHashKey {
@@ -37,15 +38,17 @@ public:
 typedef PRBool (*nsHashtableEnumFunc)(nsHashKey *aKey, void *aData, void* closure);
 
 class NS_COM nsHashtable {
-private:
+protected:
   // members  
   PLHashTable *hashtable;
+  PRLock *mLock;
 
 public:
-  nsHashtable(PRUint32 aSize = 256);
+  nsHashtable(PRUint32 aSize = 256, PRBool threadSafe = PR_FALSE);
   ~nsHashtable();
 
   PRInt32 Count(void) { return hashtable->nentries; }
+  PRBool Exists(nsHashKey *aKey);
   void *Put(nsHashKey *aKey, void *aData);
   void *Get(nsHashKey *aKey);
   void *Remove(nsHashKey *aKey);
@@ -90,7 +93,7 @@ public:
 // nsVoidKey: Where keys are void* objects that don't get refcounted.
 
 class nsVoidKey : public nsHashKey {
-private:
+protected:
   const void* mKey;
 
 public:
