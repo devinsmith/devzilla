@@ -27,8 +27,12 @@
 #include "prdtoa.h"
 #include "nsISizeOfHandler.h"
 
+
+#include "nsUnicharUtilCIID.h"
+#include "nsIServiceManager.h"
+#include "nsICaseConversion.h"
+
 const PRInt32 kGrowthDelta = 8;
-const PRInt32 kNotFound = -1;
 PRUnichar gBadChar = 0;
 const char* kOutOfBoundsError = "Error: out of bounds";
 const char* kNullPointerError = "Error: unexpected null ptr";
@@ -36,8 +40,117 @@ const char* kFoolMsg = "Error: Some fool overwrote the shared buffer.";
 
 PRUnichar kCommonEmptyBuffer[100];   //shared by all strings; NEVER WRITE HERE!!!
 
-PRBool nsString::mSelfTested = PR_FALSE;   
+#ifdef  RICKG_DEBUG
+PRBool nsString1::mSelfTested = PR_FALSE;   
+#endif
 
+
+#define NOT_USED 0xfffd
+
+static PRUint16 PA_HackTable[] = {
+	NOT_USED,
+	NOT_USED,
+	0x201a,  /* SINGLE LOW-9 QUOTATION MARK */
+	0x0192,  /* LATIN SMALL LETTER F WITH HOOK */
+	0x201e,  /* DOUBLE LOW-9 QUOTATION MARK */
+	0x2026,  /* HORIZONTAL ELLIPSIS */
+	0x2020,  /* DAGGER */
+	0x2021,  /* DOUBLE DAGGER */
+	0x02c6,  /* MODIFIER LETTER CIRCUMFLEX ACCENT */
+	0x2030,  /* PER MILLE SIGN */
+	0x0160,  /* LATIN CAPITAL LETTER S WITH CARON */
+	0x2039,  /* SINGLE LEFT-POINTING ANGLE QUOTATION MARK */
+	0x0152,  /* LATIN CAPITAL LIGATURE OE */
+	NOT_USED,
+	NOT_USED,
+	NOT_USED,
+
+	NOT_USED,
+	0x2018,  /* LEFT SINGLE QUOTATION MARK */
+	0x2019,  /* RIGHT SINGLE QUOTATION MARK */
+	0x201c,  /* LEFT DOUBLE QUOTATION MARK */
+	0x201d,  /* RIGHT DOUBLE QUOTATION MARK */
+	0x2022,  /* BULLET */
+	0x2013,  /* EN DASH */
+	0x2014,  /* EM DASH */
+	0x02dc,  /* SMALL TILDE */
+	0x2122,  /* TRADE MARK SIGN */
+	0x0161,  /* LATIN SMALL LETTER S WITH CARON */
+	0x203a,  /* SINGLE RIGHT-POINTING ANGLE QUOTATION MARK */
+	0x0153,  /* LATIN SMALL LIGATURE OE */
+	NOT_USED,
+	NOT_USED,
+	0x0178   /* LATIN CAPITAL LETTER Y WITH DIAERESIS */
+};
+
+static PRUnichar gToUCS2[256];
+
+class CTableConstructor {
+public:
+  CTableConstructor(){
+    PRUnichar* cp = gToUCS2;
+    PRInt32 i;
+    for (i = 0; i < 256; i++) {
+      *cp++ = PRUnichar(i);
+    }
+    cp = gToUCS2;
+    for (i = 0; i < 32; i++) {
+      cp[0x80 + i] = PA_HackTable[i];
+    }
+  }
+};
+static CTableConstructor gTableConstructor;
+
+//---- XPCOM code to connect with UnicharUtil
+
+class HandleCaseConversionShutdown2 : public nsIShutdownListener {
+public :
+   NS_IMETHOD OnShutdown(const nsCID& cid, nsISupports* service);
+   HandleCaseConversionShutdown2(void) { NS_INIT_REFCNT(); }
+   virtual ~HandleCaseConversionShutdown2(void) {}
+   NS_DECL_ISUPPORTS
+};
+static NS_DEFINE_CID(kUnicharUtilCID, NS_UNICHARUTIL_CID);
+static NS_DEFINE_IID(kICaseConversionIID, NS_ICASECONVERSION_IID);
+
+static nsICaseConversion * gCaseConv = NULL; 
+
+static NS_DEFINE_IID(kIShutdownListenerIID, NS_ISHUTDOWNLISTENER_IID);
+NS_IMPL_ISUPPORTS(HandleCaseConversionShutdown2, kIShutdownListenerIID);
+
+nsresult
+HandleCaseConversionShutdown2::OnShutdown(const nsCID& cid, nsISupports* service)
+{
+    if (cid.Equals(kUnicharUtilCID)) {
+        NS_ASSERTION(service == gCaseConv, "wrong service!");
+        gCaseConv->Release();
+        gCaseConv = NULL;
+    }
+    return NS_OK;
+}
+
+static HandleCaseConversionShutdown2* gListener = NULL;
+
+static void StartUpCaseConversion()
+{
+    nsresult err;
+
+    if ( NULL == gListener )
+    {
+      gListener = new HandleCaseConversionShutdown2();
+      gListener->AddRef();
+    }
+    err = nsServiceManager::GetService(kUnicharUtilCID, kICaseConversionIID,
+                                        (nsISupports**) &gCaseConv, gListener);
+}
+static void CheckCaseConversion()
+{
+    if(NULL == gCaseConv )
+      StartUpCaseConversion();
+
+    // NS_ASSERTION( gCaseConv != NULL , "cannot obtain UnicharUtil");
+   
+}
 
 /***********************************************************************
   IMPLEMENTATION NOTES:
@@ -58,10 +171,12 @@ nsString::nsString() {
   NS_ASSERTION(kCommonEmptyBuffer[0]==0,kFoolMsg);
   mLength = mCapacity = 0;
   mStr = kCommonEmptyBuffer;
+#ifdef RICKG_DEBUG
   if(!mSelfTested) {
     mSelfTested=PR_TRUE;
 		SelfTest();
   }
+#endif
 }
 
 
@@ -237,7 +352,7 @@ const PRUnichar* nsString::GetUnicode(void) const{
   return mStr;
 }
 
-nsString::operator PRUnichar*() const{
+nsString::operator const PRUnichar*() const{
   return mStr;
 }
 
@@ -301,6 +416,16 @@ PRUnichar& nsString::Last() const{
   if((mLength) && (mStr))
     return mStr[mLength-1];
   else return gBadChar;
+}
+
+PRBool nsString::SetCharAt(PRUnichar aChar,PRInt32 anIndex){
+  PRBool result=PR_FALSE;
+  if(anIndex<mLength){
+    PRUnichar* theStr=(PRUnichar*)mStr;
+    theStr[anIndex]=aChar;
+    result=PR_TRUE;
+  }
+  return result;
 }
 
 /**
@@ -374,6 +499,16 @@ nsString nsString::operator+(PRUnichar aChar) {
  */
 void nsString::ToLowerCase()
 {
+  // I18N code begin
+  CheckCaseConversion();
+  if(gCaseConv) {
+    nsresult err = gCaseConv->ToLower(mStr, mStr, mLength);
+    if( NS_SUCCEEDED(err))
+      return;
+  }
+  // I18N code end
+
+  // somehow UnicharUtil return failed, fallback to the old ascii only code
   chartype* cp = mStr;
   chartype* end = cp + mLength;
   while (cp < end) {
@@ -391,6 +526,16 @@ void nsString::ToLowerCase()
  */
 void nsString::ToUpperCase()
 {
+  // I18N code begin
+  CheckCaseConversion();
+  if(gCaseConv) {
+    nsresult err = gCaseConv->ToUpper(mStr, mStr, mLength);
+    if( NS_SUCCEEDED(err))
+      return;
+  }
+  // I18N code end
+
+  // somehow UnicharUtil return failed, fallback to the old ascii only code
   chartype* cp = mStr;
   chartype* end = cp + mLength;
   while (cp < end) {
@@ -403,6 +548,24 @@ void nsString::ToUpperCase()
 }
 
 /**
+ * Converts all chars in given string to UCS2
+ */
+void nsString::ToUCS2(PRInt32 aStartOffset){
+  if(aStartOffset<mLength){
+    chartype* cp = &mStr[aStartOffset];
+    chartype* end = cp + mLength;
+    while (cp < end) {
+      unsigned char ch = (unsigned char)*cp;
+      if( 0x0080 == (0xFFE0 & (*cp)) ) // limit to only 0x0080 to 0x009F
+        *cp=gToUCS2[ch];
+      cp++;
+    }
+  }
+}
+
+
+
+/**
  * Converts chars in this to lowercase, and
  * stores them in aOut
  * @update	gess 7/27/98
@@ -412,6 +575,19 @@ void nsString::ToLowerCase(nsString& aOut) const
 {
   aOut.EnsureCapacityFor(mLength);
   aOut.mLength = mLength;
+
+  // I18N code begin
+  CheckCaseConversion();
+  if(gCaseConv) {
+    nsresult err = gCaseConv->ToLower(mStr, aOut.mStr, mLength);
+    (*(aOut.mStr+mLength)) = 0;
+    if( NS_SUCCEEDED(err))
+      return;
+  }
+  // I18N code end
+
+  // somehow UnicharUtil return failed, fallback to the old ascii only code
+
   chartype* to = aOut.mStr;
   chartype* from = mStr;
   chartype* end = from + mLength;
@@ -435,6 +611,18 @@ void nsString::ToUpperCase(nsString& aOut) const
 {
   aOut.EnsureCapacityFor(mLength);
   aOut.mLength = mLength;
+
+  // I18N code begin
+  CheckCaseConversion();
+  if(gCaseConv) {
+    nsresult err = gCaseConv->ToUpper(mStr, aOut.mStr, mLength);
+    (*(aOut.mStr+mLength)) = 0;
+    if( NS_SUCCEEDED(err))
+      return;
+  }
+  // I18N code end
+
+  // somehow UnicharUtil return failed, fallback to the old ascii only code
   chartype* to = aOut.mStr;
   chartype* from = mStr;
   chartype* end = from + mLength;
@@ -549,12 +737,15 @@ float nsString::ToFloat(PRInt32* aErrorCode) const
  */
 PRInt32 nsString::ToInteger(PRInt32* aErrorCode,PRInt32 aRadix) const {
   PRInt32     result = 0;
-  PRUnichar*  cp = mStr + mLength-1;
+  PRInt32     decPt=Find(PRUnichar('.'),0);
+  PRUnichar*  cp = (-1==decPt) ? mStr + mLength-1 : mStr+decPt-1;
   char        digit=0;
   PRUnichar   theChar;
+//  PRInt32     theShift=0;
   PRInt32     theMult=1;
 
   *aErrorCode = (0<mLength) ? NS_OK : NS_ERROR_ILLEGAL_VALUE;
+
 
   // Skip trailing non-numeric...
   while (cp >= mStr) {
@@ -587,7 +778,11 @@ PRInt32 nsString::ToInteger(PRInt32* aErrorCode,PRInt32 aRadix) const {
       result=-result;
       break;
     }
-    else if('+'==theChar) {
+    else if(('+'==theChar) || (' '==theChar) || ('#'==theChar)) { //stop in a good state if you see this...
+      break;
+    }
+    else if((('x'==theChar) || ('X'==theChar)) && (16==aRadix)) {  
+      //stop in a good state.
       break;
     }
     else{
@@ -885,7 +1080,7 @@ nsString& nsString::Append(float aFloat){
  *  @param   aCount -- number of chars to copy
  *  @return  number of chars copied
  */
-PRInt32 nsString::Left(nsString& aCopy,PRInt32 aCount) {
+PRInt32 nsString::Left(nsString& aCopy,PRInt32 aCount) const {
   return Mid(aCopy,0,aCount);
 }
 
@@ -900,7 +1095,8 @@ PRInt32 nsString::Left(nsString& aCopy,PRInt32 aCount) {
  *  @param   anOffset -- position where copying begins
  *  @return  number of chars copied
  */
-PRInt32 nsString::Mid(nsString& aCopy,PRInt32 anOffset,PRInt32 aCount) {
+PRInt32 nsString::Mid(nsString& aCopy,PRInt32 anOffset,PRInt32 aCount) const {
+  aCopy.Truncate();
   if(anOffset<mLength) {
     aCount=(anOffset+aCount<=mLength) ? aCount : mLength-anOffset;
 
@@ -927,7 +1123,7 @@ PRInt32 nsString::Mid(nsString& aCopy,PRInt32 anOffset,PRInt32 aCount) {
  *  @param  aCount -- number of chars to copy
  *  @return number of chars copied
  */
-PRInt32 nsString::Right(nsString& aCopy,PRInt32 aCount) {
+PRInt32 nsString::Right(nsString& aCopy,PRInt32 aCount) const {
   PRInt32 offset=(mLength-aCount<0) ? 0 : mLength-aCount;
   return Mid(aCopy,offset,aCount);
 }
@@ -943,7 +1139,7 @@ PRInt32 nsString::Right(nsString& aCopy,PRInt32 aCount) {
  *  @param  aCount -- number of chars to be copied from aCopy
  *  @return number of chars inserted into this.
  */
-PRInt32 nsString::Insert(nsString& aCopy,PRInt32 anOffset,PRInt32 aCount) {
+PRInt32 nsString::Insert(const nsString& aCopy,PRInt32 anOffset,PRInt32 aCount) {
   aCount=(aCount>aCopy.mLength) ? aCopy.mLength : aCount; //don't try to copy more than you are given
   if (aCount < 0) aCount = aCopy.mLength;
   if(0<=anOffset) {
@@ -1184,11 +1380,12 @@ nsString& nsString::Trim(const char* aTrimSet,
 nsString& nsString::CompressWhitespace( PRBool aEliminateLeading,
                                               PRBool aEliminateTrailing)
 {
+  
+  Trim(" \r\n\t",aEliminateLeading,aEliminateTrailing);
+
   PRUnichar* from = mStr;
   PRUnichar* end = mStr + mLength;
   PRUnichar* to = from;
-
-  Trim(" \r\n\t",aEliminateLeading,aEliminateTrailing);
 
     //this code converts /n, /t, /r into normal space ' ';
     //it also eliminates runs of whitespace...
@@ -1223,6 +1420,28 @@ nsString& nsString::StripWhitespace()
 {
   Trim(" \r\n\t");
   return StripChars("\r\t\n");
+}
+
+/**
+ *  This method is used to replace all occurances of the
+ *  given source char with the given dest char
+ *  
+ *  @param  
+ *  @return *this 
+ */
+nsString& nsString::ReplaceChar(PRUnichar aSourceChar, PRUnichar aDestChar) {
+  PRUnichar* from = mStr;
+  PRUnichar* end = mStr + mLength;
+
+  while (from < end) {
+    PRUnichar ch = *from;
+    if(ch==aSourceChar) {
+      *from = aDestChar;
+    }
+    from++;
+  }
+
+  return *this;
 }
 
 /**
@@ -1494,7 +1713,7 @@ PRInt32 nsString::RFind(const char* anAsciiSet,PRBool aIgnoreCase) const{
  */
 PRInt32 nsString::RFind(PRUnichar aChar,PRBool aIgnoreCase) const{
   chartype uc=nsCRT::ToUpper(aChar);
-  for(PRInt32 offset=mLength-1;offset>0;offset--) 
+  for(PRInt32 offset=mLength-1;offset>=0;offset--) 
     if(aIgnoreCase) {
       if(nsCRT::ToUpper(mStr[offset])==uc)
         return offset;
@@ -1601,6 +1820,7 @@ PRInt32 nsString::Compare(const PRUnichar* aString,PRBool aIgnoreCase,PRInt32 aL
 PRBool nsString::operator==(const nsString &S) const {return Equals(S);}      
 PRBool nsString::operator==(const char *s) const {return Equals(s);}
 PRBool nsString::operator==(const PRUnichar *s) const {return Equals(s);}
+PRBool nsString::operator==(PRUnichar *s) const {return Equals(s);}
 PRBool nsString::operator!=(const nsString &S) const {return PRBool(Compare(S)!=0);}
 PRBool nsString::operator!=(const char *s) const {return PRBool(Compare(s)!=0);}
 PRBool nsString::operator!=(const PRUnichar *s) const {return PRBool(Compare(s)!=0);}
@@ -1952,7 +2172,6 @@ std::ostream& operator<<(std::ostream& os,nsAutoString& aString){
 }
 
 
-
 /**
  * 
  * @update	gess 7/27/98
@@ -1972,7 +2191,7 @@ NS_BASE int fputs(const nsString& aString, FILE* out)
   if(len>0)
     ::fwrite(cp, 1, len, out);
   if (cp != buf) {
-    delete cp;
+    delete [] cp;
   }
   return (int) len;
 }
@@ -1985,13 +2204,22 @@ NS_BASE int fputs(const nsString& aString, FILE* out)
  * @return
  */
 void nsString::SelfTest(void) {
-#if 0
+
+#ifdef  RICKG_DEBUG
+	mSelfTested=PR_TRUE;
+  nsAutoString a("foobar");
+  nsAutoString b("foo");
+  nsAutoString c(".5111");
+  nsAutoString d(" 5");
+  PRInt32 result=a.Compare(b);
+  PRInt32 result2=result;
+  result=c.ToInteger(&result2);
+  result=d.ToInteger(&result2);
+  result2=result;
 
   static const char* kConstructorError = kConstructorError;
   static const char* kComparisonError  = "Comparision error!";
   static const char* kEqualsError = "Equals error!";
-
-	mSelfTested=PR_TRUE;
   
   nsAutoString as("Hello there");
   as.SelfTest();

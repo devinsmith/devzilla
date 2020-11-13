@@ -40,6 +40,7 @@
 #include <iostream>
 #include <stdio.h>
 class nsISizeOfHandler;
+#include "nsStr.h"
 
 class NS_BASE nsString {
   public: 
@@ -136,7 +137,7 @@ const PRUnichar* GetUnicode(void) const;
  * @param 
  * @return
  */
-operator PRUnichar*() const;
+operator const PRUnichar*() const;
 
 /**
  * Retrieve unicode char at given index
@@ -170,6 +171,9 @@ PRUnichar& First() const;
  * @return  PRUnichar from internal string
  */
 PRUnichar& Last() const;
+
+PRBool SetCharAt(PRUnichar aChar,PRInt32 anIndex);
+
 
 /**********************************************************************
   String creation methods...
@@ -224,6 +228,12 @@ void ToLowerCase(nsString& aString) const;
  * Converts all chars in given string to upper
  */
 void ToUpperCase();
+
+/**
+ * Converts all chars in given string to UCS2
+ * which ensure that the lower 256 chars are correct.
+ */
+void ToUCS2(PRInt32 aStartOffset);
 
 /**
  * Converts all chars in internal string to upper
@@ -428,7 +438,7 @@ nsString& Append(float aFloat);
  *  @param   aCount -- number of chars to copy
  *  @return  number of chars copied
  */
-PRInt32 Left(nsString& aCopy,PRInt32 aCount);
+PRInt32 Left(nsString& aCopy,PRInt32 aCount) const;
 
 /*
  *  Copies n characters from this string to given string,
@@ -440,7 +450,7 @@ PRInt32 Left(nsString& aCopy,PRInt32 aCount);
  *  @param   anOffset -- position where copying begins
  *  @return  number of chars copied
  */
-PRInt32 Mid(nsString& aCopy,PRInt32 anOffset,PRInt32 aCount);
+PRInt32 Mid(nsString& aCopy,PRInt32 anOffset,PRInt32 aCount) const;
 
 /*
  *  Copies n characters from this string to given string,
@@ -451,7 +461,7 @@ PRInt32 Mid(nsString& aCopy,PRInt32 anOffset,PRInt32 aCount);
  *  @param  aCount -- number of chars to copy
  *  @return number of chars copied
  */
-PRInt32 Right(nsString& aCopy,PRInt32 aCount);
+PRInt32 Right(nsString& aCopy,PRInt32 aCount) const;
 
 /*
  *  This method inserts n chars from given string into this
@@ -462,7 +472,7 @@ PRInt32 Right(nsString& aCopy,PRInt32 aCount);
  *  @param  aCount -- number of chars to be copied from aCopy
  *  @return number of chars inserted into this.
  */
-PRInt32 Insert(nsString& aCopy,PRInt32 anOffset,PRInt32 aCount=-1);
+PRInt32 Insert(const nsString& aCopy,PRInt32 anOffset,PRInt32 aCount=-1);
 
 /**
  * Insert a single unicode char into this string at
@@ -492,6 +502,15 @@ nsString& Cut(PRInt32 anOffset,PRInt32 aCount);
  *  @return *this 
  */
 nsString& StripChars(const char* aSet);
+
+/**
+ *  This method is used to replace all occurances of the
+ *  given source char with the given dest char
+ *  
+ *  @param  
+ *  @return *this 
+ */
+nsString& ReplaceChar(PRUnichar aSourceChar, PRUnichar aDestChar);
 
 /**
  *  This method strips whitespace throughout the string
@@ -642,6 +661,7 @@ virtual PRInt32 Compare(const PRUnichar *aString,PRBool aIgnoreCase=PR_FALSE,PRI
 PRBool  operator==(const nsString &aString) const;
 PRBool  operator==(const char *aString) const;
 PRBool  operator==(const PRUnichar* aString) const;
+PRBool  operator==(PRUnichar* aString) const;
 
 /**
  * These methods perform a !compare of a given string type to this 
@@ -744,7 +764,9 @@ typedef PRUnichar chartype;
             chartype*       mStr;
             PRInt32         mLength;
             PRInt32         mCapacity;
+#ifdef  RICKG_DEBUG
 		static	PRBool					mSelfTested;
+#endif
 };
 
 std::ostream& operator<<(std::ostream& os,nsString& aString);
@@ -770,6 +792,7 @@ public:
   virtual       ~nsAutoString();
 
   nsAutoString& operator=(const nsString& aString) {nsString::operator=(aString); return *this;}
+  nsAutoString& operator=(const nsAutoString& aString) {nsString::operator=(aString); return *this;}
   nsAutoString& operator=(const char* aCString) {nsString::operator=(aCString); return *this;}
   nsAutoString& operator=(char aChar) {nsString::operator=(aChar); return *this;}
   nsAutoString& operator=(const PRUnichar* aBuffer) {nsString::operator=(aBuffer); return *this;}
