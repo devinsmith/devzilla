@@ -18,6 +18,7 @@
  */
 #define NS_IMPL_IDS
 #include "nsIPref.h"
+#include "nsIComponentManager.h"
 #include "nsRepository.h"
 #include "nsWidgetsCID.h"
 #include "nsGfxCIID.h"
@@ -107,9 +108,7 @@ static NS_DEFINE_IID(kCDialogCID, NS_DIALOG_CID);
 static NS_DEFINE_IID(kCLabelCID, NS_LABEL_CID);
 #endif
 static NS_DEFINE_IID(kCAppShellCID, NS_APPSHELL_CID);
-#if 0
 static NS_DEFINE_IID(kCToolkitCID, NS_TOOLKIT_CID);
-#endif
 static NS_DEFINE_IID(kCWindowIID, NS_WINDOW_CID);
 #if 0
 static NS_DEFINE_IID(kCScrollbarIID, NS_VERTSCROLLBAR_CID);
@@ -196,7 +195,9 @@ NS_SetupRegistry()
 
 #if 0
   nsRepository::RegisterFactory(kLookAndFeelCID, WIDGET_DLL, PR_FALSE, PR_FALSE);
-  nsRepository::RegisterFactory(kCWindowIID, WIDGET_DLL, PR_FALSE, PR_FALSE);
+#endif
+  nsComponentManager::RegisterComponent(kCWindowIID, NULL, NULL, WIDGET_DLL, PR_FALSE, PR_FALSE);
+#if 0
   nsRepository::RegisterFactory(kCScrollbarIID, WIDGET_DLL, PR_FALSE, PR_FALSE);
   nsRepository::RegisterFactory(kCHScrollbarIID, WIDGET_DLL, PR_FALSE, PR_FALSE);
   nsRepository::RegisterFactory(kCDialogCID, WIDGET_DLL, PR_FALSE, PR_FALSE);
@@ -211,11 +212,13 @@ NS_SetupRegistry()
   nsRepository::RegisterFactory(kCCheckButtonIID, WIDGET_DLL, PR_FALSE, PR_FALSE);
   nsRepository::RegisterFactory(kCChildIID, WIDGET_DLL, PR_FALSE, PR_FALSE);
 #endif
-  nsRepository::RegisterComponent(kCAppShellCID, NULL, NULL, WIDGET_DLL, PR_FALSE, PR_FALSE);
+  nsComponentManager::RegisterComponent(kCAppShellCID, NULL, NULL, WIDGET_DLL, PR_FALSE, PR_FALSE);
+  nsComponentManager::RegisterComponent(kCToolkitCID, NULL, NULL, WIDGET_DLL, PR_FALSE, PR_FALSE);
 #if 0
-  nsRepository::RegisterFactory(kCToolkitCID, WIDGET_DLL, PR_FALSE, PR_FALSE);
   nsRepository::RegisterFactory(kCRenderingContextIID, GFXWIN_DLL, PR_FALSE, PR_FALSE);
-  nsRepository::RegisterFactory(kCDeviceContextIID, GFXWIN_DLL, PR_FALSE, PR_FALSE);
+#endif
+  nsComponentManager::RegisterComponent(kCDeviceContextIID, NULL, NULL, GFXWIN_DLL, PR_FALSE, PR_FALSE);
+#if 0
   nsRepository::RegisterFactory(kCFontMetricsIID, GFXWIN_DLL, PR_FALSE, PR_FALSE);
   nsRepository::RegisterFactory(kCImageIID, GFXWIN_DLL, PR_FALSE, PR_FALSE);
   nsRepository::RegisterFactory(kCRegionIID, GFXWIN_DLL, PR_FALSE, PR_FALSE);
