@@ -18,9 +18,7 @@
  */
 
 #include "nsRepository.h"
-#if 0
 #include "nsITimer.h"
-#endif
 #include "nsNetService.h"
 #include "nsNetStream.h"
 #if 0
@@ -136,7 +134,6 @@ extern const char *XP_AppPlatform;
 
 } /* end of extern "C" */
 
-
 static NS_DEFINE_IID(kINetlibURLIID,  NS_INETLIBURL_IID);
 static NS_DEFINE_IID(kEventQueueServiceCID, NS_EVENTQUEUESERVICE_CID);
 static NS_DEFINE_IID(kIEventQueueServiceIID, NS_IEVENTQUEUESERVICE_IID);
@@ -223,9 +220,9 @@ nsNetlibService::nsNetlibService()
         PR_Free((char *)XP_AppVersion);
     XP_AppVersion = PL_strdup(buf);
 
+#endif
     mProtocols = new nsHashtable();
     PR_ASSERT(mProtocols);
-#endif
 }
 
 static NS_DEFINE_IID(kINetServiceIID, NS_INETSERVICE_IID);
@@ -1013,6 +1010,7 @@ nsNetlibService::UnregisterProtocol(const nsString& aName)
     return NS_OK;
 }
 
+#endif
 NS_IMETHODIMP
 nsNetlibService::GetProtocol(const nsString& aName,
                              nsIProtocolURLFactory* *aProtocolURLFactory,
@@ -1029,7 +1027,6 @@ nsNetlibService::GetProtocol(const nsString& aName,
     return NS_OK;
 }
 
-#endif
 NS_IMETHODIMP
 nsNetlibService::CreateURL(nsIURL* *aURL, 
                            const nsString& aSpec,
@@ -1037,7 +1034,6 @@ nsNetlibService::CreateURL(nsIURL* *aURL,
                            nsISupports* aContainer,
                            nsIURLGroup* aGroup)
 {
-#if 0
     nsAutoString protoName;
     PRInt32 pos = aSpec.Find(':');
     if (pos >= 0) {
@@ -1054,10 +1050,8 @@ nsNetlibService::CreateURL(nsIURL* *aURL,
     nsIProtocolURLFactory* protocolURLFactory;
     nsresult err = GetProtocol(protoName, &protocolURLFactory, NULL);
     if (err != NS_OK) return err;
-    
+
     return protocolURLFactory->CreateURL(aURL, aSpec, aContextURL, aContainer, aGroup);
-#endif
-    return NS_OK;
 }
 #if 0
 

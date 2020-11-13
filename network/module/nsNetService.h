@@ -90,10 +90,10 @@ public:
                                 nsIProtocol* aProtocol);
 #if 0
     NS_IMETHOD UnregisterProtocol(const nsString& aName);
+#endif
     NS_IMETHOD GetProtocol(const nsString& aName, 
                            nsIProtocolURLFactory* *aProtocolURLFactory,
                            nsIProtocol* *aProtocol);
-#endif
     NS_IMETHOD CreateURL(nsIURL* *aURL, 
                          const nsString& aSpec,
                          const nsIURL* aContextURL = nsnull,
