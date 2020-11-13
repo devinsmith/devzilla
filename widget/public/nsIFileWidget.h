@@ -20,6 +20,7 @@
 #define nsIFileWidget_h__
 
 #include "nsString.h"
+#include "nsFileSpec.h"
 
 // {F8030015-C342-11d1-97F0-00609703C14E}
 #define NS_IFILEWIDGET_IID \
@@ -30,11 +31,21 @@
  * File selector mode 
  */
 
-enum nsMode {
+enum nsFileDlgMode {
         /// Load a file or directory
       eMode_load,
         /// Save a file or directory
-      eMode_save };
+      eMode_save,
+        /// Select a fodler/directory
+      eMode_getfolder
+      };
+
+
+enum nsFileDlgResults {
+  nsFileDlgResults_Cancel,    // User hit cancel, ignore selection
+  nsFileDlgResults_OK,        // User hit Ok, process selection 
+  nsFileDlgResults_Replace    // User acknowledged file already exists so ok to replace, process selection
+};
 
 /**
  * File selector widget.
@@ -59,7 +70,7 @@ public:
   */
   NS_IMETHOD Create(nsIWidget *aParent,
                       nsString& aTitle,
-                      nsMode aMode,
+                      nsFileDlgMode aMode,
                       nsIDeviceContext *aContext = nsnull,
                       nsIAppShell *aAppShell = nsnull,
                       nsIToolkit *aToolkit = nsnull,
@@ -94,6 +105,14 @@ public:
   */
   
   NS_IMETHOD GetFile(nsString& aFile) = 0;
+ 
+ /**
+  * Get the nsFileSpec for the file or directory.
+  *
+  * @param aFile on exit it contains the file or directory selected
+  */
+  
+  NS_IMETHOD GetFile(nsFileSpec& aFile) = 0;
 
 
  /**
@@ -105,6 +124,39 @@ public:
   */
   NS_IMETHOD SetDefaultString(nsString& aString) = 0;
 
+ /**
+  * Set the directory that the file open/save dialog initially displays
+  *
+  * @param      aDirectory          the name of the directory
+  * @return     void
+  *
+  */
+  NS_IMETHOD SetDisplayDirectory(nsString& aDirectory) = 0;
+
+ /**
+  * Get the directory that the file open/save dialog was last displaying
+  *
+  * @param      aDirectory          the name of the directory
+  * @return     void
+  *
+  */
+  NS_IMETHOD GetDisplayDirectory(nsString& aDirectory) = 0;
+
+
+  virtual nsFileDlgResults GetFile(
+    nsIWidget        * aParent,
+    nsString         & promptString,    // Window title for the dialog
+    nsFileSpec       & theFileSpec) = 0;     // Populate with initial path for file dialog
+    
+  virtual nsFileDlgResults GetFolder(
+    nsIWidget        * aParent,
+    nsString         & promptString,    // Window title for the dialog
+    nsFileSpec       & theFileSpec) = 0;     // Populate with initial path for file dialog 
+    
+  virtual nsFileDlgResults PutFile(
+    nsIWidget        * aParent,
+    nsString         & promptString,    // Window title for the dialog
+    nsFileSpec       & theFileSpec) = 0;     // Populate with initial path for file dialog 
 };
 
 #endif // nsIFileWidget_h__

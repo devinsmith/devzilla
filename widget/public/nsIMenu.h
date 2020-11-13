@@ -38,7 +38,8 @@ class nsIMenuItem;
 class nsIMenu : public nsISupports {
 
   public:
- 
+    static const nsIID& GetIID() { static nsIID iid = NS_IMENU_IID; return iid; }
+
   /**
     * Creates the Menu and adds it the MenuBar
     *
@@ -67,7 +68,7 @@ class nsIMenu : public nsISupports {
     * Set the Menu label
     *
     */
-    NS_IMETHOD SetLabel(nsString &aText) = 0;
+    NS_IMETHOD SetLabel(const nsString &aText) = 0;
 
    /**
     * Adds a Menu Item
