@@ -8,3 +8,9 @@ gfx/FontMetics -- maybe done.
 widget/Child, child window kChildIID
 
 Sync more of m5 in.
+
+On Linux:
+gfx/xlib depends on widget/xlib
+but on Windows:
+widget/xlib depends on gfx/xlib
+
