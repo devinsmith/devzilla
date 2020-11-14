@@ -20,7 +20,8 @@ CC? = gcc
 AR? = ar
 RM = rm -f
 
-TOOLKIT = motif
+#TOOLKIT = motif
+TOOLKIT = xlib
 DEFINES = -D_IMPL_NS_GFX
 LIB = libraptorgfx
 SHARED_LIB = $(LIB).so

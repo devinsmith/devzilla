@@ -81,7 +81,7 @@
 #define WIDGET_DLL "libraptorwidget.so"
 ///#endif
 //#ifndef GFXWIN_DLL
-#define GFXWIN_DLL "libgfxmotif.so"
+#define GFXWIN_DLL "libraptorgfx.so"
 //#endif
 //#define VIEW_DLL   "libraptorview.so"
 #define WEB_DLL    "libraptorwebwidget.so"

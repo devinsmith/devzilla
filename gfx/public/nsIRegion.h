@@ -23,16 +23,28 @@
 #include "nsISupports.h"
 #include "nsRect.h"
 
-// Function type passed into nsIRegion::forEachRect, invoked
-// for each rectangle in a region
-typedef void (*nsRectInRegionFunc)(void *closure, nsRect& rect);
-
 enum nsRegionComplexity
 {
   eRegionComplexity_empty = 0,
   eRegionComplexity_rect = 1,
   eRegionComplexity_complex = 2
 };
+
+typedef struct
+{
+  PRInt32   x;
+  PRInt32   y;
+  PRUint32  width;
+  PRUint32  height;
+} nsRegionRect;
+
+typedef struct
+{
+  PRUint32      mNumRects;    //number of actual rects in the mRects array
+  PRUint32      mRectsLen;    //length, in rects, of the mRects array
+  PRUint32      mArea;        //area of the covered portion of the region
+  nsRegionRect  mRects[1];
+} nsRegionRectSet;
 
 // An implementation of a region primitive that can be used to
 // represent arbitrary pixel areas. Probably implemented on top
@@ -185,24 +197,36 @@ public:
   virtual void Offset(PRInt32 aXOffset, PRInt32 aYOffset) = 0;
 
   /**
-  * does the region completely contain the rectangle?
+  * does the region intersect the rectangle?
   *
   * @param      rect to check for containment
-  * @return     true iff the rect is completely contained
+  * @return     true if the region intersects the rect
   *
   **/
 
   virtual PRBool ContainsRect(PRInt32 aX, PRInt32 aY, PRInt32 aWidth, PRInt32 aHeight) = 0;
   
   /**
-  * invoke a function for each rectangle in the region
-  *
-  * @param  func    Function to invoke for each rectangle
-  * @param  closure Arbitrary data to pass to the function
-  * @return          void
-  *
-  **/
-  virtual PRBool ForEachRect(nsRectInRegionFunc *func, void *closure) = 0;
+   * get the set of rects which make up this region. the aRects
+   * parameter must be freed by calling FreeRects before the region
+   * is deleted. aRects may be passed in again when requesting
+   * the rect list as a recycling method.
+   *
+   * @param  aRects out parameter containing set of rects
+   *                comprising the region
+   * @return error status
+   *
+   **/
+  NS_IMETHOD GetRects(nsRegionRectSet **aRects) = 0;
+
+  /**
+   * Free a rect set returned by GetRects.
+   *
+   * @param  aRects rects to free
+   * @return error status
+   *
+   **/
+  NS_IMETHOD FreeRects(nsRegionRectSet *aRects) = 0;
 
   /**
    * Get the native region that this nsIRegion represents.
