@@ -103,6 +103,7 @@ nsAllocator::HeapMinimize(void)
 
 nsAllocatorFactory::nsAllocatorFactory(void)
 {
+    NS_INIT_REFCNT();
 }
 
 nsAllocatorFactory::~nsAllocatorFactory(void)
