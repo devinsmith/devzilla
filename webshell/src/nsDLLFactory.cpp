@@ -32,9 +32,19 @@ static NS_DEFINE_IID(kWebShellCID, NS_WEB_SHELL_CID);
 
 
 #if defined(XP_MAC) && defined(MAC_STATIC)
-extern "C" NS_WEB nsresult NSGetFactory_WEB_DLL(const nsCID& aClass, nsIFactory** aFactory)
+extern "C" NS_WEB nsresult 
+NSGetFactory_WEB_DLL(nsISupports* serviceMgr,
+                     const nsCID &aClass,
+                     const char *aClassName,
+                     const char *aProgID,
+                     nsIFactory **aFactory)
 #else
-extern "C" NS_WEB nsresult NSGetFactory(const nsCID& aClass, nsIFactory** aFactory)
+extern "C" NS_WEB nsresult
+NSGetFactory(nsISupports* serviceMgr,
+             const nsCID &aClass,
+             const char *aClassName,
+             const char *aProgID,
+             nsIFactory **aFactory)
 #endif
 {
   nsresult rv = NS_OK;
