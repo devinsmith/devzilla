@@ -47,10 +47,13 @@ class nsIDocumentLoaderObserver;
 class nsIDocumentLoaderFactory : public nsISupports
 {
 public:
+    static const nsIID& GetIID() { static nsIID iid = NS_IDOCUMENTLOADERFACTORY_IID; return iid; }
+
     NS_IMETHOD CreateInstance(nsIURL* aURL,
                               const char* aContentType, 
                               const char *aCommand,
                               nsIContentViewerContainer* aContainer,
+                              nsISupports* aExtraInfo,
                               nsIStreamListener** aDocListenerResult,
                               nsIContentViewer** aDocViewerResult) = 0;
 };
@@ -67,6 +70,8 @@ public:
 class nsIDocumentLoader : public nsISupports 
 {
 public:
+    static const nsIID& GetIID() { static nsIID iid = NS_IDOCUMENTLOADER_IID; return iid; }
+
     NS_IMETHOD LoadDocument(const nsString& aURLSpec, 
                             const char* aCommand,
                             nsIContentViewerContainer* aContainer,
@@ -87,14 +92,15 @@ public:
     NS_IMETHOD AddObserver(nsIDocumentLoaderObserver *aObserver) = 0;
 
     NS_IMETHOD RemoveObserver(nsIDocumentLoaderObserver *aObserver) = 0;
+
+    NS_IMETHOD SetContainer(nsIContentViewerContainer* aContainer) = 0;
+
+    NS_IMETHOD GetContainer(nsIContentViewerContainer** aResult) = 0;
 };
 
 /* 057b04d0-0ccf-11d2-beba-00805f8a66dc */
-#define NS_DOCUMENTLOADER_CID   \
+#define NS_DOCUMENTLOADER_SERVICE_CID   \
 { 0x057b04d0, 0x0ccf, 0x11d2, \
   {0xbe, 0xba, 0x00, 0x80, 0x5f, 0x8a, 0x66, 0xdc} }
-
-extern "C" NS_WEB nsresult
-NS_NewDocumentLoaderFactory(nsIFactory** aFactory);
 
 #endif /* nsIDocumentLoader_h___ */

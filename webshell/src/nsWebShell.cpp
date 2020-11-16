@@ -38,7 +38,8 @@
 #include "nsDOMEvent.h"
 #include "nsIPresContext.h"
 #endif
-#include "nsRepository.h"
+#include "nsIComponentManager.h"
+#include "nsIServiceManager.h"
 #include "nsCRT.h"
 #include "nsVoidArray.h"
 #include "nsString.h"
@@ -134,6 +135,8 @@ class nsWebShell : public nsIWebShell/*,
 public:
   nsWebShell();
   virtual ~nsWebShell();
+
+  NS_DECL_AND_IMPL_ZEROING_OPERATOR_NEW
 
   // nsISupports
   NS_DECL_ISUPPORTS
@@ -363,7 +366,7 @@ protected:
 // Class IID's
 static NS_DEFINE_IID(kChildCID,               NS_CHILD_CID);
 static NS_DEFINE_IID(kDeviceContextCID,       NS_DEVICE_CONTEXT_CID);
-static NS_DEFINE_IID(kDocumentLoaderCID,      NS_DOCUMENTLOADER_CID);
+static NS_DEFINE_IID(kDocLoaderServiceCID,    NS_DOCUMENTLOADER_SERVICE_CID);
 static NS_DEFINE_IID(kWebShellCID,            NS_WEB_SHELL_CID);
 #if 0
 
@@ -414,9 +417,9 @@ nsresult nsWebShell::CreatePluginHost(PRBool aAllowPlugins)
   {
     if (nsnull == mPluginManager)
     {
-      rv = nsRepository::CreateInstance(kCPluginHostCID, nsnull,
-                                        kIPluginManagerIID,
-                                        (void**)&mPluginManager);
+      // use the service manager to obtain the plugin manager.
+      rv = nsServiceManager::GetService(kCPluginManagerCID, kIPluginManagerIID,
+      									(nsISupports**)&mPluginManager);
       if (NS_OK == rv)
       {
         if (NS_OK == mPluginManager->QueryInterface(kIPluginHostIID,
@@ -472,6 +475,7 @@ nsWebShell::nsWebShell()
   mMarginWidth  = -1;  
   mMarginHeight = -1;
   mScrolling = -1;
+  mContainer = nsnull;
 }
 
 nsWebShell::~nsWebShell()
@@ -722,34 +726,43 @@ nsWebShell::Init(nsNativeWidget aNativeParent,
     goto done;
   }
 
-
   // Create a document loader...
   if (nsnull != mParent) {
     nsIDocumentLoader* parentLoader;
 
     // Create a child document loader...
-    mParent->GetDocumentLoader(parentLoader);
-    if (NS_OK == rv) {
+    rv = mParent->GetDocumentLoader(parentLoader);
+    if (NS_SUCCEEDED(rv)) {
       rv = parentLoader->CreateDocumentLoader(&mDocLoader);
       NS_RELEASE(parentLoader);
     }
   } else {
-    rv = nsRepository::CreateInstance(kDocumentLoaderCID,
-                                      nsnull,
+    nsIDocumentLoader* docLoaderService;
+
+    // Get the global document loader service...  
+    rv = nsServiceManager::GetService(kDocLoaderServiceCID,
                                       kIDocumentLoaderIID,
-                                      (void**)&mDocLoader);
+                                      (nsISupports **)&docLoaderService);
+    if (NS_SUCCEEDED(rv)) {
+      rv = docLoaderService->CreateDocumentLoader(&mDocLoader);
+      nsServiceManager::ReleaseService(kDocLoaderServiceCID, docLoaderService);
+    }
   }
-  if (NS_OK != rv) {
+  if (NS_FAILED(rv)) {
     goto done;
   }
+
+  // Set the webshell as the default IContentViewerContainer for the loader...
+  mDocLoader->SetContainer(this);
+
   //Register ourselves as an observer for the new doc loader
   mDocLoader->AddObserver((nsIDocumentLoaderObserver*)this);
 
   // Create device context
-  rv = nsRepository::CreateInstance(kDeviceContextCID, nsnull,
+  rv = nsComponentManager::CreateInstance(kDeviceContextCID, nsnull,
                                     kIDeviceContextIID,
                                     (void **)&mDeviceContext);
-  if (NS_OK != rv) {
+  if (NS_FAILED(rv)) {
     goto done;
   }
   mDeviceContext->Init(aNativeParent);
@@ -763,8 +776,8 @@ nsWebShell::Init(nsNativeWidget aNativeParent,
   mDeviceContext->SetGamma(1.0f);
 
   // Create a Native window for the shell container...
-  rv = nsRepository::CreateInstance(kChildCID, nsnull, kIWidgetIID, (void**)&mWindow);
-  if (NS_OK != rv) {
+  rv = nsComponentManager::CreateInstance(kChildCID, nsnull, kIWidgetIID, (void**)&mWindow);
+  if (NS_FAILED(rv)) {
     goto done;
   }
 
@@ -772,6 +785,7 @@ nsWebShell::Init(nsNativeWidget aNativeParent,
   //widgetInit.mBorderStyle = aIsSunkenBorder ? eBorderStyle_3DChildWindow : eBorderStyle_none;
   mWindow->Create(aNativeParent, aBounds, nsWebShell::HandleEvent,
                   mDeviceContext, nsnull, nsnull, &widgetInit);
+
 done:
   return rv;
 }

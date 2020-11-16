@@ -24,11 +24,14 @@
 #include "nsIThrobber.h"
 
 #endif
-static NS_DEFINE_IID(kDocumentLoaderCID, NS_DOCUMENTLOADER_CID);
+static NS_DEFINE_IID(kDocLoaderServiceCID,  NS_DOCUMENTLOADER_SERVICE_CID);
 #if 0
 static NS_DEFINE_IID(kThrobberCID, NS_THROBBER_CID);
 #endif
-static NS_DEFINE_IID(kWebShellCID, NS_WEB_SHELL_CID);
+static NS_DEFINE_IID(kWebShellCID,          NS_WEB_SHELL_CID);
+
+
+nsresult NS_NewDocLoaderServiceFactory(nsIFactory** aResult);
 
 
 #if defined(XP_MAC) && defined(MAC_STATIC)
@@ -56,8 +59,8 @@ NSGetFactory(nsISupports* serviceMgr,
   if (aClass.Equals(kWebShellCID)) {
     rv = NS_NewWebShellFactory(aFactory);
   }
-  else if (aClass.Equals(kDocumentLoaderCID)) {
-    rv = NS_NewDocumentLoaderFactory(aFactory);
+  else if (aClass.Equals(kDocLoaderServiceCID)) {
+    rv = NS_NewDocLoaderServiceFactory(aFactory);
   }
 #if 0
   else if (aClass.Equals(kThrobberCID)) {

@@ -46,7 +46,10 @@
 #include "nsIURLGroup.h"
 #include "nsIServiceManager.h"
 #include "nsINetService.h"
-
+#endif
+#include "nsXPComFactory.h"
+#include "nsIDocStreamLoaderFactory.h"
+#if 0
 // XXX: Only needed for dummy factory...
 #include "nsIDocument.h"
 #include "nsIDocumentViewer.h"
@@ -88,7 +91,9 @@ NS_DEFINE_IID(kDocumentBindInfoIID,       NS_DOCUMENTBINDINFO_IID);
 NS_DEFINE_IID(kIURLGroupIID,              NS_IURLGROUP_IID);
 NS_DEFINE_IID(kRefreshURLIID,             NS_IREFRESHURL_IID);
 NS_DEFINE_IID(kHTTPURLIID,                NS_IHTTPURL_IID);
+#endif
 NS_DEFINE_IID(kISupportsIID,              NS_ISUPPORTS_IID);
+#if 0
 NS_DEFINE_IID(kIDocumentIID,              NS_IDOCUMENT_IID);
 NS_DEFINE_IID(kIStreamListenerIID,        NS_ISTREAMLISTENER_IID);
 NS_DEFINE_IID(kINetServiceIID,            NS_INETSERVICE_IID);
@@ -178,6 +183,7 @@ public:
                               const char* aContentType, 
                               const char* aCommand,
                               nsIContentViewerContainer* aContainer,
+                              nsISupports* aExtraInfo,
                               nsIStreamListener** aDocListener,
                               nsIContentViewer** aDocViewer);
 #if 0
@@ -199,6 +205,7 @@ public:
     nsresult CreateRDFDocument(nsIURL* aURL, 
                                const char* aCommand,
                                nsIContentViewerContainer* aContainer,
+                               nsISupports* aExtraInfo,
                                nsIStreamListener** aDocListener,
                                nsIContentViewer** aDocViewer);
 
@@ -228,16 +235,45 @@ nsDocFactoryImpl::nsDocFactoryImpl()
 /*
  * Implementation of ISupports methods...
  */
-NS_IMPL_ISUPPORTS(nsDocFactoryImpl,kIDocumentLoaderFactoryIID);
+NS_IMPL_ADDREF(nsDocFactoryImpl)
+NS_IMPL_RELEASE(nsDocFactoryImpl)
 
-static const char* gValidTypes[] = {"text/html","application/rtf",0};
+NS_IMETHODIMP
+nsDocFactoryImpl::QueryInterface( REFNSIID aIID, void** aInstancePtr )
+{
+		nsISupports* temp;
+		nsISupports** result = aInstancePtr ? NS_REINTERPRET_CAST(nsISupports**, aInstancePtr) : &temp;
+
+		if ( aIID.Equals(nsIDocumentLoaderFactory::GetIID()) )
+			*result = NS_STATIC_CAST(nsIDocumentLoaderFactory*, this);
+//	  else if ( aIID.Equals(nsIDocStreamLoaderFactory::GetIID()) )
+//			*result = NS_STATIC_CAST(nsIDocStreamLoaderFactory*, this);
+		else if ( aIID.Equals(kISupportsIID) )
+			*result = NS_STATIC_CAST(nsISupports*, NS_STATIC_CAST(nsIDocumentLoaderFactory*, this));
+		else
+			*result = 0;
+
+		nsresult status;
+		if ( !aInstancePtr )
+			status = NS_ERROR_NULL_POINTER;
+		else if ( !*aInstancePtr )
+			status = NS_NOINTERFACE;
+		else
+			{
+				NS_ADDREF(*result);
+				status = NS_OK;
+			}
+
+		return status;
+	}
+
+static const char* gValidTypes[] = {"text/html","application/rtf","text/plain",0};
 static const char* gXMLTypes[] = {"text/xml", "application/xml", 0};
 #if 0
-static char* gRDFTypes[] = {"text/rdf", 0};
+static const char* gRDFTypes[] = {"text/rdf", "text/xul", 0};
 
-static char* gImageTypes[] = {"image/gif", "image/jpeg", "image/png", 0 };
-
-static char* gPluginTypes[] = {
+static const char* gImageTypes[] = {"image/gif", "image/jpeg", "image/png", 0 };
+static const char* gPluginTypes[] = {
     "video/quicktime",
     "video/msvideo",
     "video/x-msvideo",
@@ -263,6 +299,7 @@ nsDocFactoryImpl::CreateInstance(nsIURL* aURL,
                                  const char* aContentType, 
                                  const char *aCommand,
                                  nsIContentViewerContainer* aContainer,
+                                 nsISupports* aExtraInfo,
                                  nsIStreamListener** aDocListener,
                                  nsIContentViewer** aDocViewer)
 {
@@ -300,6 +337,7 @@ nsDocFactoryImpl::CreateInstance(nsIURL* aURL,
         if (0 == PL_strcmp(gRDFTypes[typeIndex++], aContentType)) {
             return CreateRDFDocument(aURL, aCommand,
                                      aContainer,
+                                     aExtraInfo,
                                      aDocListener,
                                      aDocViewer);
         }
@@ -360,11 +398,11 @@ nsDocFactoryImpl::CreateDefaultDocument(nsIURL* aURL,
     /*
      * Create the HTML document...
      */
-    rv = nsRepository::CreateInstance(kCHTMLDocumentCID,
+    rv = nsComponentManager::CreateInstance(kCHTMLDocumentCID,
                                       nsnull,
                                       kIDocumentIID,
                                       (void **)&doc);
-    if (NS_OK != rv) {
+    if (NS_FAILED(rv)) {
         goto done;
     }
 
@@ -372,7 +410,7 @@ nsDocFactoryImpl::CreateDefaultDocument(nsIURL* aURL,
      * Create the HTML Content Viewer...
      */
     rv = NS_NewDocumentViewer(docv);
-    if (NS_OK != rv) {
+    if (NS_FAILED(rv)) {
         goto done;
     }
     docv->SetUAStyleSheet(gUAStyleSheet);
@@ -384,7 +422,7 @@ nsDocFactoryImpl::CreateDefaultDocument(nsIURL* aURL,
      * aDocListener.
      */
     rv = doc->StartDocumentLoad(aURL, aContainer, aDocListener, aCommand);
-    if (NS_OK != rv) {
+    if (NS_FAILED(rv)) {
         NS_IF_RELEASE(docv);
         goto done;
     }
@@ -419,11 +457,11 @@ nsDocFactoryImpl::CreateXMLDocument(nsIURL* aURL,
     /*
      * Create the image document...
      */
-    rv = nsRepository::CreateInstance(kCXMLDocumentCID,
+    rv = nsComponentManager::CreateInstance(kCXMLDocumentCID,
                                       nsnull,
                                       kIDocumentIID,
                                       (void **)&doc);
-    if (NS_OK != rv) {
+    if (NS_FAILED(rv)) {
         goto done;
     }
 
@@ -431,7 +469,7 @@ nsDocFactoryImpl::CreateXMLDocument(nsIURL* aURL,
      * Create the image content viewer...
      */
     rv = NS_NewDocumentViewer(docv);
-    if (NS_OK != rv) {
+    if (NS_FAILED(rv)) {
         goto done;
     }
     docv->SetUAStyleSheet(gUAStyleSheet);
@@ -443,7 +481,7 @@ nsDocFactoryImpl::CreateXMLDocument(nsIURL* aURL,
      * aDocListener.
      */
     rv = doc->StartDocumentLoad(aURL, aContainer, aDocListener, aCommand);
-    if (NS_OK != rv) {
+    if (NS_FAILED(rv)) {
         NS_IF_RELEASE(docv);
         goto done;
     }
@@ -458,6 +496,8 @@ done:
     NS_IF_RELEASE(doc);
     return rv;
 }
+
+
 
 nsresult
 nsDocFactoryImpl::CreateRDFDocument(nsIURL* aURL, 
@@ -537,11 +577,11 @@ nsDocFactoryImpl::CreateImageDocument(nsIURL* aURL,
     /*
      * Create the image document...
      */
-    rv = nsRepository::CreateInstance(kCImageDocumentCID,
+    rv = nsComponentManager::CreateInstance(kCImageDocumentCID,
                                       nsnull,
                                       kIDocumentIID,
                                       (void **)&doc);
-    if (NS_OK != rv) {
+    if (NS_FAILED(rv)) {
         goto done;
     }
 
@@ -549,7 +589,7 @@ nsDocFactoryImpl::CreateImageDocument(nsIURL* aURL,
      * Create the image content viewer...
      */
     rv = NS_NewDocumentViewer(docv);
-    if (NS_OK != rv) {
+    if (NS_FAILED(rv)) {
         goto done;
     }
     docv->SetUAStyleSheet(gUAStyleSheet);
@@ -561,7 +601,7 @@ nsDocFactoryImpl::CreateImageDocument(nsIURL* aURL,
      * aDocListener.
      */
     rv = doc->StartDocumentLoad(aURL, aContainer, aDocListener,aCommand);
-    if (NS_OK != rv) {
+    if (NS_FAILED(rv)) {
         NS_IF_RELEASE(docv);
         goto done;
     }
@@ -678,7 +718,10 @@ public:
 
     NS_IMETHOD AddObserver(nsIDocumentLoaderObserver *aObserver);
     NS_IMETHOD RemoveObserver(nsIDocumentLoaderObserver *aObserver);
-
+#endif
+    NS_IMETHOD SetContainer(nsIContentViewerContainer* aContainer);
+    NS_IMETHOD GetContainer(nsIContentViewerContainer** aResult);
+#if 0
     // nsIURLGroup interface...
     NS_IMETHOD CreateURL(nsIURL** aInstancePtrResult, 
                          nsIURL* aBaseURL,
@@ -993,6 +1036,27 @@ nsDocLoaderImpl::RemoveObserver(nsIDocumentLoaderObserver* aObserver)
   return NS_ERROR_FAILURE;
 }
 
+NS_IMETHODIMP
+nsDocLoaderImpl::SetContainer(nsIContentViewerContainer* aContainer)
+{
+  mContainer = aContainer;
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsDocLoaderImpl::GetContainer(nsIContentViewerContainer** aResult)
+{
+  nsresult rv = NS_OK;
+
+  if (nsnull == aResult) {
+    rv = NS_ERROR_NULL_POINTER;
+  } else {
+    *aResult = mContainer;
+    NS_IF_ADDREF(*aResult);
+  }
+  return rv;
+}
 
 NS_IMETHODIMP
 nsDocLoaderImpl::CreateURL(nsIURL** aInstancePtrResult, 
@@ -1189,7 +1253,7 @@ PRBool nsDocLoaderImpl::StopBindInfoEnumerator(nsISupports* aElement, void* aDat
     nsDocumentBindInfo* bindInfo;
 
     rv = aElement->QueryInterface(kDocumentBindInfoIID, (void**)&bindInfo);
-    if (NS_OK == rv) {
+    if (NS_SUCCEEDED(rv)) {
         bindInfo->Stop();
         NS_RELEASE(bindInfo);
     }
@@ -1204,7 +1268,7 @@ PRBool nsDocLoaderImpl::StopDocLoaderEnumerator(void* aElement, void* aData)
   nsIDocumentLoader* docLoader;
     
   rv = ((nsISupports*)aElement)->QueryInterface(kIDocumentLoaderIID, (void**)&docLoader);
-  if (NS_OK == rv) {
+  if (NS_SUCCEEDED(rv)) {
     docLoader->Stop();
     NS_RELEASE(docLoader);
   }
@@ -1289,7 +1353,6 @@ nsDocumentBindInfo::~nsDocumentBindInfo()
     NS_IF_RELEASE(m_ExtraInfo);
 }
 
-
 /*
  * Implementation of ISupports methods...
  */
@@ -1353,7 +1416,7 @@ nsresult nsDocumentBindInfo::Bind(const nsString& aURLSpec,
         nsIPostToServer* pts;
 
         rv = url->QueryInterface(kPostToServerIID, (void **)&pts);
-        if (NS_OK == rv) {
+        if (NS_SUCCEEDED(rv)) {
             const char* data = aPostData->GetData();
 
             if (aPostData->IsFile()) {
@@ -1628,8 +1691,8 @@ nsDocumentBindInfo::RefreshURL(nsIURL* aURL, PRInt32 millis, PRBool repeat)
         /* Delegate the actual refresh call up-to the container. */
         rv = m_Container->QueryInterface(kRefreshURLIID, (void**)&refresher);
 
-        if (rv != NS_OK) {
-            PR_FALSE;
+        if (NS_FAILED(rv)) {
+            return PR_FALSE;
         }
         rv = refresher->RefreshURL(aURL, millis, repeat);
         NS_RELEASE(refresher);
@@ -1648,8 +1711,8 @@ nsDocumentBindInfo::CancelRefreshURLTimers(void)
         /* Delegate the actual cancel call up-to the container. */
         rv = m_Container->QueryInterface(kRefreshURLIID, (void**)&refresher);
 
-        if (rv != NS_OK) {
-            PR_FALSE;
+        if (NS_FAILED(rv)) {
+            return PR_FALSE;
         }
         rv = refresher->CancelRefreshURLTimers();
         NS_RELEASE(refresher);
@@ -1660,107 +1723,76 @@ nsDocumentBindInfo::CancelRefreshURLTimers(void)
 #endif
 
 /*******************************************
- *  nsDocLoaderFactory
+ *  nsDocLoaderServiceFactory
  *******************************************/
+static nsDocLoaderImpl* gServiceInstance = nsnull;
 
-static NS_DEFINE_IID(kIFactoryIID, NS_IFACTORY_IID);
-static NS_DEFINE_IID(kCDocumentLoader, NS_DOCUMENTLOADER_CID);
+NS_DEF_FACTORY(DocLoaderServiceGen,nsDocLoaderImpl)
 
-class nsDocumentLoaderFactory : public nsIFactory
+class nsDocLoaderServiceFactory : public nsDocLoaderServiceGenFactory
 {
 public:
-    nsDocumentLoaderFactory();
-
-    NS_DECL_ISUPPORTS
-
-    // nsIFactory methods
-    NS_IMETHOD CreateInstance(nsISupports *aOuter,
-                              const nsIID &aIID,
-                              void **aResult);
-
-    NS_IMETHOD LockFactory(PRBool aLock);
-
-
-protected:
-    virtual ~nsDocumentLoaderFactory();
+  NS_IMETHOD CreateInstance(nsISupports *aOuter,
+                            const nsIID &aIID,
+                            void **aResult);
 };
 
-nsDocumentLoaderFactory::nsDocumentLoaderFactory()
-{
-    NS_INIT_REFCNT();
-}
-
-nsDocumentLoaderFactory::~nsDocumentLoaderFactory()
-{
-}
-
-/*
- * Implementation of ISupports methods...
- */
-NS_IMPL_ISUPPORTS(nsDocumentLoaderFactory,kIFactoryIID);
-
 NS_IMETHODIMP
-nsDocumentLoaderFactory::CreateInstance(nsISupports* aOuter,
-                                        const nsIID& aIID,
-                                        void** aResult)
+nsDocLoaderServiceFactory::CreateInstance(nsISupports *aOuter,
+                                          const nsIID &aIID,
+                                          void **aResult)
 {
-    nsresult rv;
-    nsIDocumentLoader* inst;
-    static nsDocLoaderImpl* gGlobalDocLoader = nsnull;
+  nsresult rv;
+  nsDocLoaderImpl* inst;
 
-    if (nsnull == aResult) {
-        rv = NS_ERROR_NULL_POINTER;
-        goto done;
+  // Parameter validation...
+  if (NULL == aResult) {
+    rv = NS_ERROR_NULL_POINTER;
+    goto done;
+  }
+  // Do not support aggregatable components...
+  *aResult = NULL;
+  if (NULL != aOuter) {
+    rv = NS_ERROR_NO_AGGREGATION;
+    goto done;
+  }
+
+  if (NULL == gServiceInstance) {
+    // Create a new instance of the component...
+    NS_NEWXPCOM(gServiceInstance, nsDocLoaderImpl);
+    if (NULL == gServiceInstance) {
+      rv = NS_ERROR_OUT_OF_MEMORY;
+      goto done;
     }
-    *aResult = nsnull;
+  }
 
-    if (nsnull != aOuter) {
-        rv = NS_ERROR_NO_AGGREGATION;
-        goto done;
-    }
+  // If the QI fails, the component will be destroyed...
+  //
+  // Use a local copy so the NS_RELEASE() will not null the global
+  // pointer...
+  inst = gServiceInstance;
 
-    if (nsnull == gGlobalDocLoader) {
-        NS_NEWXPCOM(gGlobalDocLoader, nsDocLoaderImpl);
-        if (nsnull == gGlobalDocLoader) {
-            rv = NS_ERROR_OUT_OF_MEMORY;
-            goto done;
-        }
-
-        NS_ADDREF(gGlobalDocLoader);    // RefCount = 1
-    }
-
-    rv = gGlobalDocLoader->CreateDocumentLoader(&inst);
-    if (NS_OK != rv) {
-        rv = NS_ERROR_OUT_OF_MEMORY;
-        goto done;
-    }
-    *aResult = inst;
+  NS_ADDREF(inst);
+  rv = inst->QueryInterface(aIID, aResult);
+  NS_RELEASE(inst);
 
 done:
-    return rv;
+  return rv;
 }
 
-NS_IMETHODIMP
-nsDocumentLoaderFactory::LockFactory(PRBool aLock)
+
+// Entry point to create nsDocLoaderService factory instances...
+
+nsresult NS_NewDocLoaderServiceFactory(nsIFactory** aResult)
 {
-    // Not implemented in simplest case.
-    return NS_OK;
+  nsresult rv = NS_OK;
+  nsIFactory* inst = new nsDocLoaderServiceFactory();
+  if (NULL == inst) {
+    rv = NS_ERROR_OUT_OF_MEMORY;
+  }
+  else {
+    NS_ADDREF(inst);
+  }
+  *aResult = inst;
+  return rv;
 }
-
-extern "C" NS_WEB nsresult
-NS_NewDocumentLoaderFactory(nsIFactory** aFactory)
-{
-    if (nsnull == aFactory) {
-        return NS_ERROR_NULL_POINTER;
-    }
-    nsDocumentLoaderFactory* it;
-    NS_NEWXPCOM(it, nsDocumentLoaderFactory);
-    *aFactory = it;
-    if (nsnull == *aFactory) {
-        return NS_ERROR_OUT_OF_MEMORY;
-    }
-    NS_ADDREF(*aFactory);
-    return NS_OK;
-}
-
-
