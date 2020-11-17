@@ -60,7 +60,8 @@ else
 #	CPP_SRCS = $(MOTIF_SRCS) $(COMMON_SRCS)
 	CPP_SRCS = $(XLIB_SRCS) $(COMMON_SRCS)
 	CFLAGS += -fPIC
-	LDFLAGS += -lXt -lX11
+#	LDFLAGS += -lXt -lX11
+	LDFLAGS += -lX11
 endif
 
 OBJS = $(C_SRCS:.c=.o) $(CPP_SRCS:.cpp=.o)

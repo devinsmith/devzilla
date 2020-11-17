@@ -27,6 +27,7 @@ endif
 LIB = libnsappshell
 SHARED_LIB = $(LIB).so
 STATIC_LIB = $(LIB).a
+LDFLAGS = -L../../../base/src -lraptorbase
 
 all: $(SHARED_LIB)
 
@@ -36,7 +37,7 @@ $(STATIC_LIB): $(OBJS)
 	ranlib $(STATIC_LIB)
 
 $(SHARED_LIB): $(OBJS)
-	$(CXX) -shared -o $@ $(OBJS)
+	$(CXX) -shared -o $@ $(OBJS) $(LDFLAGS)
 
 .c.o:
 	$(CC) $(INTERNAL_CFLAGS) $(CPPFLAGS) -o $@ -c $<

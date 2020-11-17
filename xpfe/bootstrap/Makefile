@@ -28,7 +28,8 @@ LDFLAGS = -L../../xpcom/src -L../../nsprpub/lib/ds \
 	-L../../modules/libutil/src \
 	-Wl,--no-as-needed
 #LIBS = -lnsappshell -lmoznetlib -lraptorbase -lxpcom -lmozjs -lplds -limg -lmozreg -lmozutil -lnspr -lnsprc -lXm -lX11 -lXt -ldl
-LIBS = -lmoznetlib -lraptorbase -lxpcom -lmozjs -lplds -limg -lmozreg -lmozutil -lnspr -lnsprc -lXm -lX11 -lXt -ldl
+#LIBS = -lmoznetlib -lraptorbase -lxpcom -lmozjs -lplds -limg -lmozreg -lmozutil -lnspr -lnsprc -lXm -lX11 -lXt -ldl
+LIBS = -lmoznetlib -lraptorbase -lxpcom -lmozjs -lplds -limg -lmozreg -lmozutil -lnspr -lnsprc -ldl
 EXE = apprunner
 
 

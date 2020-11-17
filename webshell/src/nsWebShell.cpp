@@ -685,7 +685,7 @@ nsWebShell::Embed(nsIContentViewer* aContentViewer,
                             mPrefs,
                             bounds,
                             mScrollPref);
-  if (NS_OK == rv) {
+  if (NS_SUCCEEDED(rv)) {
     mContentViewer->Show();
   }
 

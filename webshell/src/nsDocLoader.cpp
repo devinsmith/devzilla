@@ -769,6 +769,7 @@ protected:
     PRInt32             mForegroundURLs;
     PRInt32             mTotalURLs;
 #endif
+    nsIContentViewerContainer* mContainer;         // [WEAK] it owns me!
 };
 
 
@@ -1035,6 +1036,7 @@ nsDocLoaderImpl::RemoveObserver(nsIDocumentLoaderObserver* aObserver)
   }
   return NS_ERROR_FAILURE;
 }
+#endif
 
 NS_IMETHODIMP
 nsDocLoaderImpl::SetContainer(nsIContentViewerContainer* aContainer)
@@ -1057,6 +1059,7 @@ nsDocLoaderImpl::GetContainer(nsIContentViewerContainer** aResult)
   }
   return rv;
 }
+#if 0
 
 NS_IMETHODIMP
 nsDocLoaderImpl::CreateURL(nsIURL** aInstancePtrResult, 

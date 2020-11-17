@@ -55,9 +55,9 @@
 #include "prcmon.h"
 #include "prthread.h" /* XXX: only used for the NSPR initialization hack (rick) */
 
-#ifdef NS_DEBUG
+//#ifdef NS_DEBUG
 PRLogModuleInfo* nsComponentManagerLog = NULL;
-#endif
+//#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // nsFactoryEntry
@@ -169,13 +169,13 @@ nsresult nsComponentManagerImpl::Init(void)
             return NS_ERROR_OUT_OF_MEMORY;
     }
 
-#ifdef NS_DEBUG
+//#ifdef NS_DEBUG
     if (nsComponentManagerLog == NULL) {
         nsComponentManagerLog = PR_NewLogModule("nsComponentManager");
     }
     PR_LOG(nsComponentManagerLog, PR_LOG_ALWAYS,
            ("nsComponentManager: Initialized."));
-#endif
+//#endif
 
 #ifdef USE_NSREG
 
@@ -968,6 +968,9 @@ nsComponentManagerImpl::FindFactory(const nsCID &aClass,
         if ((entry)->factory == NULL)
         {
             res = LoadFactory(entry, aFactory);
+            if (!NS_SUCCEEDED(res)) {
+              printf("%s LoadFactory FAILED: %s\n", __func__, entry->dll->GetFullPath());
+            }
         }
         else
         {
@@ -980,7 +983,12 @@ nsComponentManagerImpl::FindFactory(const nsCID &aClass,
     PR_LOG(nsComponentManagerLog, PR_LOG_WARNING,
            ("\t\tFindFactory() %s",
             NS_SUCCEEDED(res) ? "succeeded" : "FAILED"));
-	
+    if (!NS_SUCCEEDED(res)) {
+        char *buf = aClass.ToString();
+        printf("nsComponentManager: FindFactory(%s) failed!\n", buf);
+        delete [] buf;
+    }
+
     return res;
 }
 
