@@ -31,6 +31,7 @@ ifeq ($(OS),Windows_NT)
 		RM = del /Q 2>NUL
 	endif
 else
+	SRCS += xlib/nsTimerXlib.cpp
 	CFLAGS += -fPIC
 endif
 

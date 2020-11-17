@@ -31,7 +31,10 @@
 #include "nsIDocumentLoader.h"
 #if 0
 #include "nsIThrobber.h"
+#endif
 
+#include "nsXPComCIID.h"
+#if 0
 #include "nsParserCIID.h"
 #include "nsDOMCID.h"
 #include "nsLayoutCID.h"
@@ -43,6 +46,7 @@
 
 #ifdef XP_PC
 
+    #define XPCOM_DLL  "xpcom32.dll"
 #define WIDGET_DLL "raptorwidget.dll"
 #define GFXWIN_DLL "raptorgfxwin.dll"
 #define VIEW_DLL   "raptorview.dll"
@@ -76,6 +80,7 @@
 #else
 
 // XP_UNIX
+    #define XPCOM_DLL  "libxpcom.so"
 //#ifndef WIDGET_DLL
 #define WIDGET_DLL "libraptorwidget.so"
 ///#endif
@@ -98,6 +103,7 @@
 #endif // XP_PC
 
 // Class ID's
+static NS_DEFINE_IID(kEventQueueServiceCID, NS_EVENTQUEUESERVICE_CID);
 #if 0
 static NS_DEFINE_IID(kCFileWidgetCID, NS_FILEWIDGET_CID);
 #endif
@@ -193,6 +199,7 @@ NS_SetupRegistry()
       printf("nsComponentManager: Auto registration complete\n");
   }
 
+  nsComponentManager::RegisterComponent(kEventQueueServiceCID, NULL, NULL, XPCOM_DLL, PR_FALSE, PR_FALSE);
 #if 0
   nsRepository::RegisterFactory(kLookAndFeelCID, WIDGET_DLL, PR_FALSE, PR_FALSE);
 #endif
@@ -210,8 +217,8 @@ NS_SetupRegistry()
   nsRepository::RegisterFactory(kCTextAreaCID, WIDGET_DLL, PR_FALSE, PR_FALSE);
   nsRepository::RegisterFactory(kCTextFieldCID, WIDGET_DLL, PR_FALSE, PR_FALSE);
   nsRepository::RegisterFactory(kCCheckButtonIID, WIDGET_DLL, PR_FALSE, PR_FALSE);
-  nsRepository::RegisterFactory(kCChildIID, WIDGET_DLL, PR_FALSE, PR_FALSE);
 #endif
+  nsComponentManager::RegisterComponent(kCChildIID, NULL, NULL, WIDGET_DLL, PR_FALSE, PR_FALSE);
   nsComponentManager::RegisterComponent(kCAppShellCID, NULL, NULL, WIDGET_DLL, PR_FALSE, PR_FALSE);
   nsComponentManager::RegisterComponent(kCToolkitCID, NULL, NULL, WIDGET_DLL, PR_FALSE, PR_FALSE);
 #if 0

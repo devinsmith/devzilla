@@ -42,12 +42,14 @@ FixPath = $1
 LIB = raptorwidget
 SHARED_LIB = libraptorwidget.so
 
+LDFLAGS = -L../../base/src -lraptorbase
+
 ifeq ($(OS),Windows_NT)
 	CPP_SRCS = $(WIN_SRCS) $(COMMON_SRCS)
 	SHARED_LIB = $(LIB).dll
 	CFLAGS += -D_IMPL_NS_WIDGET -DXP_PC
 	INCLUDES += -I../../gfx/src/win32
-	LDFLAGS += -L../../base/src -lraptorbase -L../../xpcom/src -lxpcom \
+	LDFLAGS += -L../../xpcom/src -lxpcom \
 						 -lgdi32 -L../../gfx/src -lraptorgfx \
 						 -Wl,--out-implib,lib$(LIB).a -lgdi32 -lcomctl32
 	ifeq ($(SHELL),sh.exe)

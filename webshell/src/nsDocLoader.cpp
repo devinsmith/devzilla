@@ -74,6 +74,7 @@ PRLogModuleInfo* gDocLoaderLog = nsnull;
 #endif /* DEBUG || FORCE_PR_LOG */
 
 
+#endif
   /* Private IIDs... */
 /* eb001fa0-214f-11d2-bec0-00805f8a66dc */
 #define NS_DOCUMENTBINDINFO_IID   \
@@ -83,11 +84,10 @@ PRLogModuleInfo* gDocLoaderLog = nsnull;
 
 /* Define IIDs... */
 NS_DEFINE_IID(kIStreamObserverIID,        NS_ISTREAMOBSERVER_IID);
-#endif
 NS_DEFINE_IID(kIDocumentLoaderIID,        NS_IDOCUMENTLOADER_IID);
 NS_DEFINE_IID(kIDocumentLoaderFactoryIID, NS_IDOCUMENTLOADERFACTORY_IID);
-#if 0
 NS_DEFINE_IID(kDocumentBindInfoIID,       NS_DOCUMENTBINDINFO_IID);
+#if 0
 NS_DEFINE_IID(kIURLGroupIID,              NS_IURLGROUP_IID);
 NS_DEFINE_IID(kRefreshURLIID,             NS_IREFRESHURL_IID);
 NS_DEFINE_IID(kHTTPURLIID,                NS_IHTTPURL_IID);
@@ -202,12 +202,19 @@ public:
                                nsIStreamListener** aDocListener,
                                nsIContentViewer** aDocViewer);
 
-    nsresult CreateRDFDocument(nsIURL* aURL, 
+    nsresult CreateRDFDocument(const char* aContentType, nsIURL* aURL, 
                                const char* aCommand,
                                nsIContentViewerContainer* aContainer,
                                nsISupports* aExtraInfo,
                                nsIStreamListener** aDocListener,
                                nsIContentViewer** aDocViewer);
+
+		nsresult CreateXULDocumentFromStream( nsIInputStream& aXULStream,
+																					const char* aCommand,
+																					nsIContentViewerContainer* aContainer,
+																					nsISupports* aExtraInfo,
+																					nsIContentViewer** aDocViewer );
+
 
     nsresult CreateImageDocument(nsIURL* aURL, 
                                  const char* aCommand,
@@ -660,7 +667,7 @@ nsresult nsDocFactoryImpl::InitUAStyleSheet()
           // Create parser and set it up to process the input file
           nsICSSParser* css;
           rv = NS_NewCSSParser(&css);
-          if (NS_OK == rv) {
+          if (NS_SUCCEEDED(rv)) {
             // Parse the input and produce a style set
             // XXX note: we are ignoring rv until the error code stuff in the
             // input routines is converted to use nsresult's
@@ -672,7 +679,7 @@ nsresult nsDocFactoryImpl::InitUAStyleSheet()
         NS_RELEASE(in);
       }
       else {
-        printf("open of %s failed: error=%x\n", UA_CSS_URL, ec);
+        printf("open of %s failed: error=%x\n", UA_CSS_URL, rv);
         rv = NS_ERROR_ILLEGAL_VALUE;  // XXX need a better error code here
       }
 
@@ -688,7 +695,7 @@ nsresult nsDocFactoryImpl::InitUAStyleSheet()
  * nsDocLoaderImpl implementation...
  ****************************************************************************/
 
-class nsDocLoaderImpl /*: public nsIDocumentLoader,
+class nsDocLoaderImpl : public nsIDocumentLoader/*,
                         public nsIURLGroup */
 {
 public:
@@ -696,7 +703,6 @@ public:
     nsDocLoaderImpl();
 
     NS_DECL_ISUPPORTS
-#if 0
 
     // nsIDocumentLoader interface
     NS_IMETHOD LoadDocument(const nsString& aURLSpec, 
@@ -711,14 +717,11 @@ public:
     NS_IMETHOD Stop(void);
 
     NS_IMETHOD IsBusy(PRBool& aResult);
-#endif
     NS_IMETHOD CreateDocumentLoader(nsIDocumentLoader** anInstance);
-#if 0
     NS_IMETHOD SetDocumentFactory(nsIDocumentLoaderFactory* aFactory);
 
     NS_IMETHOD AddObserver(nsIDocumentLoaderObserver *aObserver);
     NS_IMETHOD RemoveObserver(nsIDocumentLoaderObserver *aObserver);
-#endif
     NS_IMETHOD SetContainer(nsIContentViewerContainer* aContainer);
     NS_IMETHOD GetContainer(nsIContentViewerContainer** aResult);
 #if 0
@@ -743,21 +746,22 @@ public:
 #endif
 protected:
     virtual ~nsDocLoaderImpl();
-#if 0
 private:
+#if 0
     static PRBool StopBindInfoEnumerator (nsISupports* aElement, void* aData);
     static PRBool StopDocLoaderEnumerator(void* aElement, void* aData);
+#endif
     static PRBool IsBusyEnumerator(void* aElement, void* aData);
-
 public:
     nsIDocumentLoaderFactory* m_DocFactory;
 
 protected:
+#if 0
     nsISupportsArray*   m_LoadingDocsList;
 #endif
     nsVoidArray         mChildGroupList;
-#if 0
     nsVoidArray         mDocObservers;
+#if 0
     nsILoadAttribs*     m_LoadAttrib;
     nsIStreamObserver*  mStreamObserver;
 
@@ -766,9 +770,9 @@ protected:
      * The following counts are for the current document loader only.  They
      * do not take into account URLs being loaded by child document loaders.
      */
+#endif
     PRInt32             mForegroundURLs;
     PRInt32             mTotalURLs;
-#endif
     nsIContentViewerContainer* mContainer;         // [WEAK] it owns me!
 };
 
@@ -803,8 +807,8 @@ nsDocLoaderImpl::nsDocLoaderImpl()
 
 nsDocLoaderImpl::~nsDocLoaderImpl()
 {
-#if 0
   Stop();
+#if 0
   if (nsnull != mParent) {
     mParent->RemoveChildGroup(this);
     NS_RELEASE(mParent);
@@ -881,7 +885,6 @@ done:
   return rv;
 }
 
-#if 0
 
 
 NS_IMETHODIMP
@@ -907,6 +910,7 @@ nsDocLoaderImpl::LoadDocument(const nsString& aURLSpec,
 {
   nsresult rv;
   nsURLLoadType loadType;
+#if 0
   nsDocumentBindInfo* loader = nsnull;
 
   /* Check for initial error conditions... */
@@ -957,13 +961,14 @@ nsDocLoaderImpl::LoadDocument(const nsString& aURLSpec,
   rv = loader->Bind(aURLSpec, aPostData, nsnull);
 
 done:
+#endif
   return rv;
 }
-
 
 NS_IMETHODIMP
 nsDocLoaderImpl::Stop(void)
 {
+#if 0
   m_LoadingDocsList->EnumerateForwards(nsDocLoaderImpl::StopBindInfoEnumerator, nsnull);
 
   /* 
@@ -989,10 +994,9 @@ nsDocLoaderImpl::Stop(void)
    * It will be set on the next LoadDocument(...) 
    */
   NS_IF_RELEASE(mStreamObserver);
-
+#endif
   return NS_OK;
-}       
-
+}
 
 NS_IMETHODIMP
 nsDocLoaderImpl::IsBusy(PRBool& aResult)
@@ -1006,7 +1010,7 @@ nsDocLoaderImpl::IsBusy(PRBool& aResult)
   /* Otherwise, check its child document loaders... */
   else {
     mChildGroupList.EnumerateForwards(nsDocLoaderImpl::IsBusyEnumerator, 
-                                      (void*)aResult);
+                                      (void*)&aResult);
   }
 
   return NS_OK;
@@ -1036,7 +1040,6 @@ nsDocLoaderImpl::RemoveObserver(nsIDocumentLoaderObserver* aObserver)
   }
   return NS_ERROR_FAILURE;
 }
-#endif
 
 NS_IMETHODIMP
 nsDocLoaderImpl::SetContainer(nsIContentViewerContainer* aContainer)
@@ -1279,7 +1282,7 @@ PRBool nsDocLoaderImpl::StopDocLoaderEnumerator(void* aElement, void* aData)
   return PR_TRUE;
 }
 
-
+#endif
 PRBool nsDocLoaderImpl::IsBusyEnumerator(void* aElement, void* aData)
 {
   nsresult rv;
@@ -1294,6 +1297,7 @@ PRBool nsDocLoaderImpl::IsBusyEnumerator(void* aElement, void* aData)
 
   return !result;
 }
+#if 0
 
 /****************************************************************************
  * nsDocumentBindInfo implementation...
