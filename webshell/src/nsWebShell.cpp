@@ -40,6 +40,8 @@
 #endif
 #include "nsIComponentManager.h"
 #include "nsIServiceManager.h"
+#include "nsIEventQueueService.h"
+#include "nsXPComCIID.h"
 #include "nsCRT.h"
 #include "nsVoidArray.h"
 #include "nsString.h"
@@ -57,8 +59,10 @@
 #include "nsIPref.h"
 #if 0
 #include "nsIRefreshUrl.h"
+#endif
 #include "nsITimer.h"
 #include "nsITimerCallback.h"
+#if 0
 #include "jsurl.h"
 #endif
 #include "nsIBrowserWindow.h"
@@ -75,7 +79,6 @@
 #endif
 //XXX for nsIPostData; this is wrong; we shouldn't see the nsIDocument type
 #include "nsIDocument.h"
-#if 0
 
 #ifdef DEBUG
 #undef NOISY_LINKS
@@ -90,9 +93,10 @@
  */
 static PRLogModuleInfo* gLogModule = PR_NewLogModule("webshell");
 #endif
-#endif
+
 #define WEB_TRACE_CALLS        0x1
 #define WEB_TRACE_HISTORY      0x2
+
 #define WEB_LOG_TEST(_lm,_bit) (PRIntn((_lm)->level) & (_bit))
 
 #ifdef NS_DEBUG
@@ -210,9 +214,9 @@ public:
                      PRBool aModifyHistory=PR_TRUE,
                      nsURLReloadType aType = nsURLReload,
                      const PRUint32 localIP = 0);
-#if 0
 
   NS_IMETHOD Stop(void);
+#if 0
   NS_IMETHOD Reload(nsURLReloadType aType);
    
   // History api's
@@ -260,7 +264,9 @@ public:
 
   // nsIRefreshURL interface methods...
   NS_IMETHOD RefreshURL(nsIURL* aURL, PRInt32 millis, PRBool repeat);
+#endif
   NS_IMETHOD CancelRefreshURLTimers(void);
+#if 0
 
   // nsIStreamObserver
   NS_IMETHOD OnStartBinding(nsIURL* aURL, const char *aContentType);
@@ -300,9 +306,9 @@ public:
                             const PRUnichar* aURLSpec,
                             const PRUnichar* aTargetSpec,
                             nsIPostData* aPostDat = 0);
-
+#endif
   void ShowHistory();
-
+#if 0
   nsIWebShell* GetTarget(const PRUnichar* aName);
   nsIBrowserWindow* GetBrowserWindow(void);
 
@@ -316,6 +322,7 @@ public:
   nsresult DestroyPluginHost(void);
 #endif
 protected:
+  void InitFrameData(PRBool aCompleteInitScrolling);
 #if 0
   nsIScriptGlobalObject *mScriptGlobal;
   nsIScriptContext* mScriptContext;
@@ -330,12 +337,12 @@ protected:
   nsINetSupport* mNetSupport;
 
   nsIWebShell* mParent;
-#if 0
   nsVoidArray mChildren;
+#if 0
   nsString mName;
 
+#endif
   nsVoidArray mHistory;
-#endif 
   PRInt32 mHistoryIndex;
 #if 0
 
@@ -347,13 +354,21 @@ protected:
   nsScrollPreference mScrollPref;
   PRInt32 mMarginWidth;
   PRInt32 mMarginHeight;
-  PRInt32 mScrolling;
-#if 0
+  PRInt32 mScrolling[2];
+  PRBool  mIsFrame;
   nsVoidArray mRefreshments;
+#if 0
 
   void ReleaseChildren();
   void DestroyChildren();
   nsresult CreateScriptEnvironment();
+  nsresult DoLoadURL(const nsString& aUrlSpec,
+                     const char* aCommand,
+                     nsIPostData* aPostData,
+                     nsURLReloadType aType,
+                     const PRUint32 aLocalIP);
+
+  float mZoom;
 
   static nsIPluginHost    *mPluginHost;
   static nsIPluginManager *mPluginManager;
@@ -364,6 +379,7 @@ protected:
 //----------------------------------------------------------------------
 
 // Class IID's
+static NS_DEFINE_IID(kEventQueueServiceCID,   NS_EVENTQUEUESERVICE_CID);
 static NS_DEFINE_IID(kChildCID,               NS_CHILD_CID);
 static NS_DEFINE_IID(kDeviceContextCID,       NS_DEVICE_CONTEXT_CID);
 static NS_DEFINE_IID(kDocLoaderServiceCID,    NS_DOCUMENTLOADER_SERVICE_CID);
@@ -397,6 +413,7 @@ static NS_DEFINE_IID(kITimerCallbackIID,      NS_ITIMERCALLBACK_IID);
 static NS_DEFINE_IID(kIWebShellContainerIID,  NS_IWEB_SHELL_CONTAINER_IID);
 static NS_DEFINE_IID(kIBrowserWindowIID,      NS_IBROWSER_WINDOW_IID);
 static NS_DEFINE_IID(kIClipboardCommandsIID,  NS_ICLIPBOARDCOMMANDS_IID);
+static NS_DEFINE_IID(kIEventQueueServiceIID,  NS_IEVENTQUEUESERVICE_IID);
 
 // XXX not sure
 static NS_DEFINE_IID(kILinkHandlerIID,        NS_ILINKHANDLER_IID);
@@ -471,10 +488,10 @@ nsWebShell::nsWebShell()
 #if 0
   mScriptGlobal = nsnull;
   mScriptContext = nsnull;
+  InitFrameData(PR_TRUE);
 #endif
   mMarginWidth  = -1;  
   mMarginHeight = -1;
-  mScrolling = -1;
   mContainer = nsnull;
 }
 
@@ -522,6 +539,21 @@ nsWebShell::~nsWebShell()
   DestroyPluginHost();
 #endif
 }
+
+void nsWebShell::InitFrameData(PRBool aCompleteInitScrolling)
+{
+  mMarginWidth  = -1;  
+  mMarginHeight = -1;
+  if (aCompleteInitScrolling) {
+    mScrolling[0] = -1;
+    mScrolling[1] = -1;
+  }
+  else {
+    mScrolling[1] = mScrolling[0];
+  }
+}
+
+
 #if 0
 
 void
@@ -704,6 +736,8 @@ nsWebShell::Init(nsNativeWidget aNativeParent,
                  PRBool aAllowPlugins,
                  PRBool aIsSunkenBorder)
 {
+  nsresult rv = NS_OK;
+
   //XXX make sure plugins have started up. this really needs to
   //be associated with the nsIContentViewerContainer interfaces,
   //not the nsIWebShell interfaces. this is a hack. MMP
@@ -716,8 +750,6 @@ nsWebShell::Init(nsNativeWidget aNativeParent,
 
   WEB_TRACE(WEB_TRACE_CALLS,
             ("nsWebShell::Init: this=%p", this));
-
-  nsresult rv = NS_OK;
 
   // Initial error checking...
   NS_PRECONDITION(nsnull != aNativeParent, "null Parent Window");
@@ -794,10 +826,10 @@ NS_IMETHODIMP
 nsWebShell::Destroy()
 {
   nsresult rv = NS_OK;
-#if 0
   // Stop any URLs that are currently being loaded...
   Stop();
 
+#if 0
   SetContainer(nsnull);
   SetObserver(nsnull);
 
@@ -834,26 +866,21 @@ nsWebShell::SetBounds(PRInt32 x, PRInt32 y, PRInt32 w, PRInt32 h)
 {
   NS_PRECONDITION(nsnull != mWindow, "null window");
   
-  nsRect rectClient(0,0,w,h);
   PRInt32 borderWidth  = 0;
   PRInt32 borderHeight = 0;
-
   if (nsnull != mWindow) {
     mWindow->GetBorderSize(borderWidth, borderHeight);
     // Don't have the widget repaint. Layout will generate repaint requests
     // during reflow
-//    mWindow->Resize(x, y, w, h,
-//                    PR_FALSE);
-    mWindow->Resize(x, y, w, h,
-                    PR_TRUE);
+    mWindow->Resize(x, y, w, h, PR_FALSE);
   }
 
-  // Set the size of the content area, which is the size of the window minus the borders
+  // Set the size of the content area, which is the size of the window
+  // minus the borders
   if (nsnull != mContentViewer) {
     nsRect rr(0, 0, w-(borderWidth*2), h-(borderHeight*2));
     mContentViewer->SetBounds(rr);
   }
-
   return NS_OK;
 }
 #if 0
@@ -1171,7 +1198,7 @@ nsWebShell::SetMarginHeight(PRInt32 aHeight)
 NS_IMETHODIMP
 nsWebShell::GetScrolling(PRInt32& aScrolling)
 {
-  aScrolling = mScrolling;
+  aScrolling = mScrolling[1];
   return NS_OK;
 }
 
@@ -1192,11 +1219,10 @@ nsWebShell::GetDocumentLoader(nsIDocumentLoader*& aResult)
   NS_IF_ADDREF(mDocLoader);
   return (nsnull != mDocLoader) ? NS_OK : NS_ERROR_FAILURE;
 }
-#if 0
 
 #define FILE_PROTOCOL "file:///"
 
-static void convertFileToURL(nsString &aIn, nsString &aOut)
+static void convertFileToURL(const nsString &aIn, nsString &aOut)
 {
 #ifdef XP_PC
   char szFile[1000];
@@ -1204,7 +1230,7 @@ static void convertFileToURL(nsString &aIn, nsString &aOut)
   if (PL_strchr(szFile, '\\')) {
     PRInt32 len = strlen(szFile);
     PRInt32 sum = len + sizeof(FILE_PROTOCOL);
-    char* lpszFileURL = new char[sum];
+    char* lpszFileURL = (char *)PR_Malloc(sum + 1);
     
     // Translate '\' to '/'
     for (PRInt32 i = 0; i < len; i++) {
@@ -1219,6 +1245,7 @@ static void convertFileToURL(nsString &aIn, nsString &aOut)
     // Build the file URL
     PR_snprintf(lpszFileURL, sum, "%s%s", FILE_PROTOCOL, szFile);
     aOut = lpszFileURL;
+    PR_Free((void *)lpszFileURL);
   }
   else
 #endif
@@ -1226,7 +1253,6 @@ static void convertFileToURL(nsString &aIn, nsString &aOut)
     aOut = aIn;
   }
 }
-#endif
 
 NS_IMETHODIMP
 nsWebShell::LoadURL(const PRUnichar *aURLSpec,
@@ -1235,6 +1261,9 @@ nsWebShell::LoadURL(const PRUnichar *aURLSpec,
                     nsURLReloadType aType,
                     const PRUint32 aLocalIP)
 {
+  // Initialize margnwidth, marginheight. Put scrolling back the way it was
+  // before the last document was loaded.
+  InitFrameData(PR_FALSE);
 
   return LoadURL(aURLSpec,"view",aPostData,aModifyHistory,aType, aLocalIP);
 }
@@ -1248,8 +1277,6 @@ nsWebShell::LoadURL(const PRUnichar *aURLSpec,
                     const PRUint32 aLocalIP)
 {
   printf("nsWebShell::LoadURL - TODO\n");
-  return NS_OK;
-#if 0
 
   nsresult rv;
   PRInt32 colon, fSlash;
@@ -1272,8 +1299,8 @@ nsWebShell::LoadURL(const PRUnichar *aURLSpec,
 
   // Give web-shell-container right of refusal
   if (nsnull != mContainer) {
-    rv = mContainer->WillLoadURL(this, urlSpec, nsLoadURL);
-    if (NS_OK != rv) {
+    rv = mContainer->WillLoadURL(this, urlSpec.GetUnicode(), nsLoadURL);
+    if (NS_FAILED(rv)) {
       return rv;
     }
   }
@@ -1316,19 +1343,17 @@ nsWebShell::LoadURL(const PRUnichar *aURLSpec,
   }
 
   rv = mDocLoader->LoadDocument(urlSpec,       // URL string
-                                aCommand,         // Command
-                                this,           // Container
-                                aPostData,      // Post Data
-                                nsnull,         // Extra Info...
-                                this,           // Observer
-                                aType,          // reload type
-                                aLocalIP);      // load attributes.
+                                  aCommand,       // Command
+                                  this,           // Container
+                                  aPostData,      // Post Data
+                                  nsnull,         // Extra Info...
+                                  mObserver,      // Observer
+                                  aType,          // reload type
+                                  aLocalIP);      // load attributes.
 
 
   return rv;
-#endif
 }
-#if 0
 
 NS_IMETHODIMP nsWebShell::Stop(void)
 {
@@ -1353,13 +1378,14 @@ NS_IMETHODIMP nsWebShell::Stop(void)
 
   return NS_OK;
 }
+#if 0
 
 NS_IMETHODIMP nsWebShell::Reload(nsURLReloadType aType)
 {
   nsString* s = (nsString*) mHistory.ElementAt(mHistoryIndex);
   if (nsnull != s) {
     // XXX What about the post data?
-    return LoadURL(*s, nsnull, PR_FALSE, aType);
+    return LoadURL(s->GetUnicode(), nsnull, PR_FALSE, aType);
   }
   return NS_ERROR_FAILURE;
 }
@@ -1403,8 +1429,8 @@ nsWebShell::GoTo(PRInt32 aHistoryIndex)
     // Give web-shell-container right of refusal
     nsAutoString urlSpec(*s);
     if (nsnull != mContainer) {
-      rv = mContainer->WillLoadURL(this, urlSpec, nsLoadHistory);
-      if (NS_OK != rv) {
+      rv = mContainer->WillLoadURL(this, urlSpec.GetUnicode(), nsLoadHistory);
+      if (NS_FAILED(rv)) {
         return rv;
       }
     }
@@ -1458,6 +1484,7 @@ nsWebShell::GetURL(PRInt32 aHistoryIndex, PRUnichar** aURLResult)
   return rv;
 }
 
+#endif
 void
 nsWebShell::ShowHistory()
 {
@@ -1478,6 +1505,7 @@ nsWebShell::ShowHistory()
   }
 #endif
 }
+#if 0
 
 //----------------------------------------
 
@@ -1519,10 +1547,11 @@ nsWebShell::GetTitle(PRUnichar** aResult)
 NS_IMETHODIMP
 nsWebShell::WillLoadURL(nsIWebShell* aShell, const PRUnichar* aURL, nsLoadType aReason)
 {
+  nsresult rv = NS_OK;
   if (nsnull != mContainer) {
-    return mContainer->WillLoadURL(aShell, aURL, aReason);
+    rv = mContainer->WillLoadURL(aShell, aURL, aReason);
   }
-  return NS_OK;
+  return rv;
 }
 
 NS_IMETHODIMP
@@ -1530,7 +1559,7 @@ nsWebShell::BeginLoadURL(nsIWebShell* aShell, const PRUnichar* aURL)
 {
   if (nsnull != mContainer) {
     // XXX: do not propagate this notification up from any frames...
-//  return mContainer->BeginLoadURL(aShell, aURL);
+    return mContainer->BeginLoadURL(aShell, aURL);
   }
   return NS_OK;
 }
@@ -2055,6 +2084,7 @@ done:
   return rv;
 }
 
+#endif
 NS_IMETHODIMP
 nsWebShell::CancelRefreshURLTimers(void) {
   PRInt32 index;
@@ -2078,6 +2108,7 @@ nsWebShell::CancelRefreshURLTimers(void) {
 
   return NS_OK;
 }
+#if 0
 
 //----------------------------------------------------------------------
 

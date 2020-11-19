@@ -57,9 +57,16 @@ typedef enum {
   nsLoadRefresh
 } nsLoadType;
 
+typedef enum {
+	nsWebShellChrome,
+	nsWebShellContent
+} nsWebShellType;
+
 // Container for web shell's
 class nsIWebShellContainer : public nsISupports {
 public:
+  static const nsIID& GetIID() { static nsIID iid = NS_IWEB_SHELL_CONTAINER_IID; return iid; }
+
   // History control
   NS_IMETHOD WillLoadURL(nsIWebShell* aShell,
                          const PRUnichar* aURL,
@@ -289,7 +296,6 @@ public:
                      PRBool aModifyHistory=PR_TRUE,
                      nsURLReloadType aType=nsURLReload,
                      const PRUint32 aLocalIP=0) = 0;
-#if 0
 
 
   /**
@@ -297,6 +303,7 @@ public:
    */
   NS_IMETHOD Stop(void) = 0;
 
+#if 0
   /**
    * Reload the current document.
    */

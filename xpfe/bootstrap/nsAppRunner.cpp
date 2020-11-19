@@ -17,6 +17,7 @@
  * Netscape Communications Corporation.  All Rights Reserved.
  */
 #include "nsIServiceManager.h"
+#include "nsIComponentManager.h"
 #include "nsIURL.h"
 #include "nsIWidget.h"
 #include "plevent.h"
@@ -71,10 +72,14 @@ int main(int argc, char* argv[])
   nsString controllerCID;
 
   nsICmdLineService *  cmdLineArgs = nsnull;
+
   char *  urlstr=nsnull;
   char *   progname = nsnull;
   char *   width=nsnull, *height=nsnull;
   char *  iconic_state=nsnull;
+
+  PRInt32 widthVal  = 615;
+  PRInt32 heightVal = 480;
 
   nsIAppShellService* appShell = nsnull;
 
@@ -97,7 +102,7 @@ int main(int argc, char* argv[])
   rv = nsServiceManager::GetService(kCmdLineServiceCID,
                                     kICmdLineServiceIID,
                                     (nsISupports **)&cmdLineArgs);
-  if (!NS_SUCCEEDED(rv)) {
+  if (NS_FAILED(rv)) {
     fprintf(stderr, "Could not obtain CmdLine processing service\n");
     goto done;
   }
@@ -153,15 +158,15 @@ int main(int argc, char* argv[])
   rv = nsServiceManager::GetService(kAppShellServiceCID,
                                     kIAppShellServiceIID,
                                     (nsISupports**)&appShell);
-  if (!NS_SUCCEEDED(rv)) {
+  if (NS_FAILED(rv)) {
     goto done;
   }
 
   /*
    * Initialize the Shell...
    */
-  rv = appShell->Initialize(&argc, argv);
-  if (!NS_SUCCEEDED(rv)) {
+  rv = appShell->Initialize();
+  if (NS_FAILED(rv)) {
     goto done;
   }
  
@@ -174,7 +179,7 @@ int main(int argc, char* argv[])
    */
   ///write me...
   nsIURL* url;
-  nsIWidget* newWindow;
+  nsIWebShellWindow* newWindow;
   
   rv = NS_NewURL(&url, urlstr);
   if (NS_FAILED(rv)) {
@@ -186,9 +191,15 @@ int main(int argc, char* argv[])
    *      components this will be specified in the XUL description...
    */
   controllerCID = "43147b80-8a39-11d2-9938-0080c7cb1081";
-  appShell->CreateTopLevelWindow(url, controllerCID, newWindow);
-  NS_RELEASE(url);
+  rv = appShell->CreateTopLevelWindow(nsnull, url, controllerCID, newWindow,
+                   nsnull, nsnull, widthVal, heightVal);
 
+  NS_RELEASE(url);
+  if (NS_FAILED(rv)) {
+    goto done;
+  }
+
+ 
   /*
    * Start up the main event loop...
    */

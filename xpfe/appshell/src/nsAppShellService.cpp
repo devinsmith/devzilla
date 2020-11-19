@@ -20,14 +20,16 @@
 
 #include "nsIAppShellService.h"
 #include "nsISupportsArray.h"
-#include "nsRepository.h"
+#include "nsIComponentManager.h"
 #include "nsIURL.h"
 #include "nsIServiceManager.h"
+#include "nsIEventQueueService.h"
 #include "nsXPComCIID.h"
 #include "nsXPComFactory.h"    /* template implementation of a XPCOM factory */
 
 #include "nsIAppShell.h"
 #include "nsIWidget.h"
+#include "nsIWebShellWindow.h"
 #include "nsWebShellWindow.h"
 
 #include "nsWidgetsCID.h"
@@ -39,8 +41,8 @@ static NS_DEFINE_IID(kAppShellCID,         NS_APPSHELL_CID);
 
 static NS_DEFINE_IID(kIFactoryIID,         NS_IFACTORY_IID);
 static NS_DEFINE_IID(kIAppShellServiceIID, NS_IAPPSHELL_SERVICE_IID);
-static NS_DEFINE_IID(kIAppShellIID,        NS_IAPPSHELL_IID);
-
+static NS_DEFINE_IID(kIAppShellIID,          NS_IAPPSHELL_IID);
+static NS_DEFINE_IID(kIWebShellWindowIID,    NS_IWEBSHELL_WINDOW_IID);
 
 
 class nsAppShellService : public nsIAppShellService
@@ -50,19 +52,24 @@ public:
 
   NS_DECL_ISUPPORTS
 
-  NS_IMETHOD Initialize(int* argc, char **argv);
+  NS_IMETHOD Initialize(void);
   NS_IMETHOD Run(void);
   NS_IMETHOD Shutdown(void);
-  NS_IMETHOD CreateTopLevelWindow(nsIURL* aUrl, nsString& aControllerIID,
-                                  nsIWidget*& aResult);
-  NS_IMETHOD CloseTopLevelWindow(nsIWidget* aWindow);
+  NS_IMETHOD CreateTopLevelWindow(nsIWebShellWindow * aParent,
+                                  nsIURL* aUrl, 
+                                  nsString& aControllerIID,
+                                  nsIWebShellWindow*& aResult, nsIStreamObserver* anObserver,
+                                  nsIXULWindowCallbacks *aCallbacks,
+                                  PRInt32 aInitialWidth, PRInt32 aInitialHeight);
+
+  NS_IMETHOD CloseTopLevelWindow(nsIWebShellWindow* aWindow);
+  NS_IMETHOD UnregisterTopLevelWindow(nsIWebShellWindow* aWindow);
 
 
 protected:
   virtual ~nsAppShellService();
 
   nsIAppShell* mAppShell;
-
   nsISupportsArray* mWindowList;
 };
 
@@ -89,7 +96,7 @@ NS_IMPL_ISUPPORTS(nsAppShellService, kIAppShellServiceIID);
 
 
 NS_IMETHODIMP
-nsAppShellService::Initialize(int* argc, char ** argv)
+nsAppShellService::Initialize(void)
 {
   nsresult rv;
 
@@ -99,13 +106,13 @@ nsAppShellService::Initialize(int* argc, char ** argv)
   }
 
   // Create widget application shell
-  rv = nsRepository::CreateInstance(kAppShellCID, nsnull, kIAppShellIID,
+  rv = nsComponentManager::CreateInstance(kAppShellCID, nsnull, kIAppShellIID,
                                     (void**)&mAppShell);
   if (NS_FAILED(rv)) {
     goto done;
   }
 
-  rv = mAppShell->Create(argc, argv);
+  rv = mAppShell->Create(0, nsnull);
 
 done:
   return rv;
@@ -127,14 +134,26 @@ nsAppShellService::Shutdown(void)
 /*
  * Create a new top level window and display the given URL within it...
  *
- * XXX:
- * Currently, the IID of the Controller object for the URL is provided as an
- * argument.  In the future, this argument will be specified by the XUL document
- * itself.
+ * @param aParent - parent for the window to be created (generally null;
+ *                  included for compatibility with dialogs).
+ *                  (currently unused).
+ * @param aURL - location of XUL window contents description
+ * @param aControllerIID - currently provided as an argument. in the future,
+ *                         this will be specified by the XUL document itself.
+ *                         (currently unused, but please specify the same
+ *                         hardwired IID as others are using).
+ * @param anObserver - a stream observer to give to the new window
+ * @param aConstructionCallbacks - methods which will be called during
+ *                                 window construction. can be null.
+ * @param aInitialWidth - width of window, in pixels (currently unused)
+ * @param aInitialHeight - height of window, in pixels (currently unused)
  */
 NS_IMETHODIMP
-nsAppShellService::CreateTopLevelWindow(nsIURL* aUrl, nsString& aControllerIID,
-                                        nsIWidget*& aResult)
+nsAppShellService::CreateTopLevelWindow(nsIWebShellWindow *aParent,
+                                        nsIURL* aUrl, nsString& aControllerIID,
+                                        nsIWebShellWindow*& aResult, nsIStreamObserver* anObserver,
+                                        nsIXULWindowCallbacks *aCallbacks,
+                                        PRInt32 aInitialWidth, PRInt32 aInitialHeight)
 {
   nsresult rv;
   nsWebShellWindow* window;
@@ -143,10 +162,16 @@ nsAppShellService::CreateTopLevelWindow(nsIURL* aUrl, nsString& aControllerIID,
   if (nsnull == window) {
     rv = NS_ERROR_OUT_OF_MEMORY;
   } else {
-    rv = window->Initialize(mAppShell, aUrl, aControllerIID);
+    // temporarily disabling parentage because non-Windows platforms
+    // seem to be interpreting it in unexpected ways.
+    rv = window->Initialize((nsIWebShellWindow *) nsnull, mAppShell, aUrl, aControllerIID,
+                            anObserver, aCallbacks,
+                            aInitialWidth, aInitialHeight);
     if (NS_SUCCEEDED(rv)) {
+      rv = window->QueryInterface(kIWebShellWindowIID, (void **) &aResult);
       mWindowList->AppendElement((nsIWebShellContainer*)window);
-      aResult = window->GetWidget();
+      //aResult = window->GetWidget();
+      window->Show(PR_TRUE);
     }
   }
 
@@ -155,32 +180,29 @@ nsAppShellService::CreateTopLevelWindow(nsIURL* aUrl, nsString& aControllerIID,
 
 
 NS_IMETHODIMP
-nsAppShellService::CloseTopLevelWindow(nsIWidget* aWindow)
+nsAppShellService::CloseTopLevelWindow(nsIWebShellWindow* aWindow)
 {
-  nsresult rv = NS_OK;
+  return aWindow->Close();
+}
 
-  nsWebShellWindow* window;
-  void* data;
+static NS_DEFINE_IID(kIWebShellContainerIID,  NS_IWEB_SHELL_CONTAINER_IID);
 
-  // Get the nsWebShellWindow from the nsIWidget...
-  aWindow->GetClientData(data);
-  if (nsnull != data) {
-    window = (nsWebShellWindow*)data;
+NS_IMETHODIMP
+nsAppShellService::UnregisterTopLevelWindow(nsIWebShellWindow* aWindow)
+{
+  nsresult rv;
+
+  nsIWebShellContainer* wsc;
+  rv = aWindow->QueryInterface(kIWebShellContainerIID, (void **) &wsc);
+  if (NS_SUCCEEDED(rv)) {
+    mWindowList->RemoveElement(wsc);
+    NS_RELEASE(wsc);
   }
-
-  if (nsnull != data) {
-    PRBool bFound;
-
-    bFound = mWindowList->RemoveElement((nsIWebShellContainer*)window);
-
-  }
-
-  if (0 == mWindowList->Count()) {
+  if (0 == mWindowList->Count())
     mAppShell->Exit();
-  }
-
   return rv;
 }
+
 
 NS_EXPORT nsresult NS_NewAppShellService(nsIAppShellService** aResult)
 {

@@ -21,7 +21,7 @@
 #include "nsWebShellWindow.h"
 #include "nsCOMPtr.h"
 
-#include "nsRepository.h"
+#include "nsIComponentManager.h"
 #include "nsIServiceManager.h"
 #include "nsIURL.h"
 
@@ -39,10 +39,13 @@ static NS_DEFINE_IID(kWebShellCID,         NS_WEB_SHELL_CID);
 static NS_DEFINE_IID(kAppShellServiceCID,  NS_APPSHELL_SERVICE_CID);
 
 /* Define Interface IDs */
-static NS_DEFINE_IID(kISupportsIID,        NS_ISUPPORTS_IID);
-static NS_DEFINE_IID(kIWidgetIID,          NS_IWIDGET_IID);
-static NS_DEFINE_IID(kIWebShellIID,        NS_IWEB_SHELL_IID);
+static NS_DEFINE_IID(kISupportsIID,           NS_ISUPPORTS_IID);
+static NS_DEFINE_IID(kIWebShellWindowIID,     NS_IWEBSHELL_WINDOW_IID);
+static NS_DEFINE_IID(kIWidgetIID,             NS_IWIDGET_IID);
+static NS_DEFINE_IID(kIWebShellIID,           NS_IWEB_SHELL_IID);
+static NS_DEFINE_IID(kIWebShellContainerIID,  NS_IWEB_SHELL_CONTAINER_IID);
 
+static NS_DEFINE_IID(kIAppShellServiceIID,    NS_IAPPSHELL_SERVICE_IID);
 
 
 #include "nsIWebShell.h"
@@ -54,6 +57,7 @@ nsWebShellWindow::nsWebShellWindow()
 
   mWebShell = nsnull;
   mWindow   = nsnull;
+  mContinueModalLoop = PR_FALSE;
 }
 
 
@@ -68,14 +72,58 @@ nsWebShellWindow::~nsWebShellWindow()
 }
 
 
-NS_IMPL_ISUPPORTS(nsWebShellWindow, kISupportsIID);
+NS_IMPL_ADDREF(nsWebShellWindow);
+NS_IMPL_RELEASE(nsWebShellWindow);
 
-nsresult nsWebShellWindow::Initialize(nsIAppShell* aShell, nsIURL* aUrl, 
-                                      nsString& aControllerIID)
+nsresult
+nsWebShellWindow::QueryInterface(REFNSIID aIID, void** aInstancePtr)
+{
+  nsresult rv = NS_NOINTERFACE;
+
+  if (NULL == aInstancePtr) {
+    return NS_ERROR_NULL_POINTER;
+  }
+  if ( aIID.Equals(kIWebShellWindowIID) ) {
+    *aInstancePtr = (void*) ((nsIWebShellWindow*)this);
+    NS_ADDREF_THIS();  
+    return NS_OK;
+  }
+  if (aIID.Equals(kIWebShellContainerIID)) {
+    *aInstancePtr = (void*)(nsIWebShellContainer*)this;
+    NS_ADDREF_THIS();
+    return NS_OK;
+  }
+/*
+  if (aIID.Equals(kIDocumentLoaderObserverIID)) {
+    *aInstancePtr = (void*) ((nsIDocumentLoaderObserver*)this);
+    NS_ADDREF_THIS();
+    return NS_OK;
+  }
+	if ( aIID.Equals(kIBrowserWindowIID) ) {
+    *aInstancePtr = (void*) (nsIBrowserWindow*) this;
+    NS_ADDREF_THIS();
+    return NS_OK;
+  }
+*/
+  if (aIID.Equals(kISupportsIID)) {
+    *aInstancePtr = (void*)(nsISupports*)(nsIWebShellContainer*)this;
+    NS_ADDREF_THIS();
+    return NS_OK;
+  }
+  return rv;
+}
+
+
+nsresult nsWebShellWindow::Initialize(nsIWebShellWindow* aParent,
+                                      nsIAppShell* aShell, nsIURL* aUrl, 
+                                      nsString& aControllerIID, nsIStreamObserver* anObserver,
+                                      nsIXULWindowCallbacks *aCallbacks,
+                                      PRInt32 aInitialWidth, PRInt32 aInitialHeight)
 {
   nsresult rv;
 
   nsString urlString;
+  nsIWidget *parentWidget;
   const char *tmpStr = NULL;
   nsIID iid;
   char str[40];
@@ -84,27 +132,30 @@ nsresult nsWebShellWindow::Initialize(nsIAppShell* aShell, nsIURL* aUrl,
   urlString = tmpStr;
 
   // XXX: need to get the default window size from prefs...
-  nsRect r(0, 0, 650, 618);
+  nsRect r(0, 0, aInitialWidth, aInitialHeight);
   
   nsWidgetInitData initData;
 
 
   if (nsnull == aUrl) {
     rv = NS_ERROR_NULL_POINTER;
-    goto done;
+    return rv;
   }
 
   // Create top level window
-  rv = nsRepository::CreateInstance(kWindowCID, nsnull, kIWidgetIID,
+  rv = nsComponentManager::CreateInstance(kWindowCID, nsnull, kIWidgetIID,
                                     (void**)&mWindow);
   if (NS_OK != rv) {
-    goto done;
+    return rv;
   }
 
-  initData.mBorderStyle = eBorderStyle_dialog;
+  initData.mBorderStyle = eBorderStyle_window;
+
+  if (!aParent || NS_FAILED(aParent->GetWidget(parentWidget)))
+    parentWidget = nsnull;
 
   mWindow->SetClientData(this);
-  mWindow->Create((nsIWidget*)nsnull,                 // Parent nsIWidget
+  mWindow->Create(parentWidget,                       // Parent nsIWidget
                   r,                                  // Widget dimensions
                   nsWebShellWindow::HandleEvent,      // Event handler function
                   nsnull,                             // Device context
@@ -115,11 +166,11 @@ nsresult nsWebShellWindow::Initialize(nsIAppShell* aShell, nsIURL* aUrl,
   mWindow->SetBackgroundColor(NS_RGB(192,192,192));
 
   // Create web shell
-  rv = nsRepository::CreateInstance(kWebShellCID, nsnull,
+  rv = nsComponentManager::CreateInstance(kWebShellCID, nsnull,
                                     kIWebShellIID,
                                     (void**)&mWebShell);
   if (NS_OK != rv) {
-    goto done;
+    return rv;
   }
 
   r.x = r.y = 0;
@@ -137,7 +188,32 @@ nsresult nsWebShellWindow::Initialize(nsIAppShell* aShell, nsIURL* aUrl,
 
   mWindow->Show(PR_TRUE);
 
-done:
+  return rv;
+}
+
+
+/*
+ * Close the window
+ */
+NS_METHOD
+nsWebShellWindow::Close()
+{
+  ExitModalLoop();
+  if ( mWebShell ) {
+    mWebShell->Destroy();
+    NS_IF_RELEASE(mWebShell);
+  }
+
+  NS_IF_RELEASE(mWindow);
+  nsIAppShellService* appShell;
+  nsresult rv = nsServiceManager::GetService(kAppShellServiceCID,
+                                  kIAppShellServiceIID,
+                                  (nsISupports**)&appShell);
+  if (NS_FAILED(rv))
+    return rv;
+  
+  rv = appShell->UnregisterTopLevelWindow(this);
+  nsServiceManager::ReleaseService(kAppShellServiceCID, appShell);
   return rv;
 }
 
@@ -231,6 +307,17 @@ NS_IMETHODIMP nsWebShellWindow::FindWebShellWithName(const PRUnichar* aName,
 NS_IMETHODIMP 
 nsWebShellWindow::FocusAvailable(nsIWebShell* aFocusedWebShell)
 {
+  return NS_OK;
+}
+
+//----------------------------------------
+// nsIWebShellWindow methods...
+//----------------------------------------
+NS_IMETHODIMP
+nsWebShellWindow::Show(PRBool aShow)
+{
+  mWebShell->Show(); // crimminy -- it doesn't take a parameter!
+  mWindow->Show(aShow);
   return NS_OK;
 }
 

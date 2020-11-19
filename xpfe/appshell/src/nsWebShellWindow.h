@@ -21,6 +21,7 @@
 #define nsWebShellWindow_h__
 
 #include "nsISupports.h"
+#include "nsIWebShellWindow.h"
 #include "nsGUIEvent.h"
 #include "nsIWebShell.h"  
 #include "nsIDocumentLoaderObserver.h"
@@ -31,15 +32,20 @@ class nsIURL;
 class nsIAppShell;
 class nsIWidget;
 class nsIWidgetController;
+class nsIStreamObserver;
 
+class nsIXULWindowCallbacks;
+class nsVoidArray;
 
-class nsWebShellWindow : public nsIWebShellContainer
+class nsWebShellWindow : public nsIWebShellWindow,
+                         public nsIWebShellContainer
 {
 public:
   nsWebShellWindow();
 
   // nsISupports interface...
   NS_DECL_ISUPPORTS
+
 
   // nsIWebShellContainer interface...
   NS_IMETHOD WillLoadURL(nsIWebShell* aShell,
@@ -67,19 +73,26 @@ public:
 
   NS_IMETHOD FocusAvailable(nsIWebShell* aFocusedWebShell);
 
+  // nsIWebShellWindow methods...
+  NS_IMETHOD Show(PRBool aShow);
+  NS_IMETHOD Close();
 
   // nsWebShellWindow methods...
-  nsresult Initialize(nsIAppShell* aShell, nsIURL* aUrl, nsString& aControllerIID);
-  
+  nsresult Initialize(nsIWebShellWindow * aParent, nsIAppShell* aShell, nsIURL* aUrl,
+                      nsString& aControllerIID, nsIStreamObserver* anObserver,
+                      nsIXULWindowCallbacks *aCallbacks,
+                      PRInt32 aInitialWidth, PRInt32 aInitialHeight);
   nsIWidget* GetWidget(void) { return mWindow; }
 
 protected:
   virtual ~nsWebShellWindow();
 
+  void                    ExitModalLoop() { mContinueModalLoop = PR_FALSE; }
   static nsEventStatus PR_CALLBACK HandleEvent(nsGUIEvent *aEvent);
 
   nsIWidget*   mWindow;
   nsIWebShell* mWebShell;
+  PRBool                  mContinueModalLoop;
 };
 
 

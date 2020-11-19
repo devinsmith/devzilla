@@ -17,7 +17,7 @@
  * Netscape Communications Corporation.  All Rights Reserved.
  */
 
-#include "nsRepository.h"
+#include "nsIComponentManager.h"
 #include "nsITimer.h"
 #include "nsNetService.h"
 #include "nsNetStream.h"
@@ -1090,7 +1090,6 @@ NS_NET nsresult NS_NewURL(nsIURL** aInstancePtrResult,
                           nsISupports* aContainer,
                           nsIURLGroup* aGroup)
 {
-  printf("NS_NewURL TODO!\n");
     NS_PRECONDITION(nsnull != aInstancePtrResult, "null ptr");
     if (nsnull == aInstancePtrResult) {
         return NS_ERROR_NULL_POINTER;
@@ -1468,7 +1467,7 @@ char *mangleResourceIntoFileURL(const char* aResourceFileName)
 //
 // Obtain the resource: url base from the environment variable
 //
-// MOZILLA_HOME
+// MOZILLA_FIVE_HOME
 //
 // Which is the standard place where mozilla stores global (ie, not
 // user specific) data
@@ -1478,13 +1477,13 @@ char *mangleResourceIntoFileURL(const char* aResourceFileName)
 #define MAXPATHLEN 1024 // A good guess, i suppose
 #endif
 
-#define MOZILLA_HOME "MOZILLA_HOME"
+#define MOZILLA_FIVE_HOME "MOZILLA_FIVE_HOME"
 
     static char * nsUnixMozillaHomePath = nsnull;
 
     if (nsnull == nsUnixMozillaHomePath)
     {
-      nsUnixMozillaHomePath = PR_GetEnv(MOZILLA_HOME);
+      nsUnixMozillaHomePath = PR_GetEnv(MOZILLA_FIVE_HOME);
     }
     if (nsnull == nsUnixMozillaHomePath)
     {
