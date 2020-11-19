@@ -5,6 +5,7 @@ Favor C99 features in C based code.
 - Replace PL_snprintf with snprintf (C99 feature)
 
 C++
-We typically don't care for operator::new
+We typically don't care for operator::new, however Mozilla used this to initialize some
+object fields to 0.
 
 On Windows, __declspec(thread) doesn't exist for Mingw. So change to just __thread
