@@ -19,8 +19,8 @@
 #include "nsIWebShell.h"
 #include "nsIDocumentLoader.h"
 #include "nsIContentViewer.h"
-#if 0
 #include "nsIDocumentViewer.h"
+#if 0
 #include "nsIClipboardCommands.h"
 #endif
 #include "nsIDeviceContext.h"
@@ -71,12 +71,14 @@
 #endif
 #include "prlog.h"
 
-#if 0
+#ifdef XP_PC
+#include <windows.h>
+#endif
 
 //XXX used for nsIStreamObserver implementation.  This sould be replaced by DocLoader
 //    notifications...
 #include "nsIURL.h"
-#endif
+
 //XXX for nsIPostData; this is wrong; we shouldn't see the nsIDocument type
 #include "nsIDocument.h"
 
@@ -126,11 +128,11 @@ void nsWebShell_SetUnixEventQueue(PLEventQueue* aEventQueue)
 
 //----------------------------------------------------------------------
 #endif
-class nsWebShell : public nsIWebShell/*,
+class nsWebShell : public nsIWebShell,/*
                    public nsIWebShellContainer,
                    public nsILinkHandler,
-                   public nsIScriptContextOwner,
-                   public nsIDocumentLoaderObserver,
+                   public nsIScriptContextOwner,*/
+                   public nsIDocumentLoaderObserver/*,
                    public nsIRefreshUrl,
                    public nsINetSupport,
                    public nsIStreamObserver,
@@ -178,9 +180,8 @@ public:
   NS_IMETHOD GetContainer(nsIWebShellContainer*& aResult);
 #endif
   NS_IMETHOD SetObserver(nsIStreamObserver* anObserver);
-#if 0
   NS_IMETHOD GetObserver(nsIStreamObserver*& aResult);
-#endif
+  NS_IMETHOD SetDocLoaderObserver(nsIDocumentLoaderObserver* anObserver);
   NS_IMETHOD SetPrefs(nsIPref* aPrefs);
 #if 0
   NS_IMETHOD GetPrefs(nsIPref*& aPrefs);
@@ -194,6 +195,13 @@ public:
   NS_IMETHOD SetName(const PRUnichar* aName);
   NS_IMETHOD FindChildWithName(const PRUnichar* aName,
                                nsIWebShell*& aResult);
+#endif
+		/**
+	 * Set the type of the webshell to be content or chrome.
+   */
+	NS_IMETHOD SetWebShellType(nsWebShellType aWebShellType);
+#if 0
+
   NS_IMETHOD GetMarginWidth (PRInt32& aWidth);
   NS_IMETHOD SetMarginWidth (PRInt32  aWidth);
   NS_IMETHOD GetMarginHeight(PRInt32& aWidth);
@@ -258,9 +266,12 @@ public:
   NS_IMETHOD GetScriptContext(nsIScriptContext **aContext);
   NS_IMETHOD GetScriptGlobalObject(nsIScriptGlobalObject **aGlobal);
   NS_IMETHOD ReleaseScriptContext(nsIScriptContext *aContext);
-
+#endif
   // nsIDocumentLoaderObserver
-  NS_IMETHOD OnConnectionsComplete();
+  NS_IMETHOD OnStartDocumentLoad(nsIDocumentLoader* loader, 
+                                 nsIURL* aURL, 
+                                 const char* aCommand);
+#if 0
 
   // nsIRefreshURL interface methods...
   NS_IMETHOD RefreshURL(nsIURL* aURL, PRInt32 millis, PRBool repeat);
@@ -327,13 +338,14 @@ protected:
   nsIScriptGlobalObject *mScriptGlobal;
   nsIScriptContext* mScriptContext;
 #endif
+  nsIStreamObserver* mObserver;
   nsIWebShellContainer* mContainer;
   nsIContentViewer* mContentViewer;
   nsIDeviceContext* mDeviceContext;
   nsIPref* mPrefs;
   nsIWidget* mWindow;
   nsIDocumentLoader* mDocLoader;
-  nsIStreamObserver* mObserver;
+  nsIDocumentLoaderObserver* mDocLoaderObserver;
   nsINetSupport* mNetSupport;
 
   nsIWebShell* mParent;
@@ -357,23 +369,29 @@ protected:
   PRInt32 mScrolling[2];
   PRBool  mIsFrame;
   nsVoidArray mRefreshments;
+
+	nsWebShellType mWebShellType;
+
+
 #if 0
 
   void ReleaseChildren();
   void DestroyChildren();
   nsresult CreateScriptEnvironment();
+#endif
   nsresult DoLoadURL(const nsString& aUrlSpec,
                      const char* aCommand,
                      nsIPostData* aPostData,
                      nsURLReloadType aType,
                      const PRUint32 aLocalIP);
-
+#if 0
   float mZoom;
 
   static nsIPluginHost    *mPluginHost;
   static nsIPluginManager *mPluginManager;
   static PRUint32          mPluginInitCnt;
 #endif
+  PRBool mProcessedEndDocumentLoad;
 };
 
 //----------------------------------------------------------------------
@@ -389,9 +407,9 @@ static NS_DEFINE_IID(kWebShellCID,            NS_WEB_SHELL_CID);
 // IID's
 static NS_DEFINE_IID(kIContentViewerContainerIID,
                      NS_ICONTENT_VIEWER_CONTAINER_IID);
+#endif
 static NS_DEFINE_IID(kIDocumentLoaderObserverIID, 
                      NS_IDOCUMENT_LOADER_OBSERVER_IID);
-#endif
 static NS_DEFINE_IID(kIDeviceContextIID,      NS_IDEVICE_CONTEXT_IID);
 static NS_DEFINE_IID(kIDocumentLoaderIID,     NS_IDOCUMENTLOADER_IID);
 static NS_DEFINE_IID(kIFactoryIID,            NS_IFACTORY_IID);
@@ -612,11 +630,13 @@ nsWebShell::QueryInterface(REFNSIID aIID, void** aInstancePtr)
     NS_ADDREF_THIS();
     return NS_OK;
   }
+#endif
   if (aIID.Equals(kIDocumentLoaderObserverIID)) {
     *aInstancePtr = (void*)(nsIDocumentLoaderObserver*)this;
     NS_ADDREF_THIS();
     return NS_OK;
   }
+#if 0
   if (aIID.Equals(kIWebShellContainerIID)) {
     *aInstancePtr = (void*)(nsIWebShellContainer*)this;
     NS_ADDREF_THIS();
@@ -826,13 +846,16 @@ NS_IMETHODIMP
 nsWebShell::Destroy()
 {
   nsresult rv = NS_OK;
+
   // Stop any URLs that are currently being loaded...
   Stop();
 
 #if 0
   SetContainer(nsnull);
   SetObserver(nsnull);
-
+#endif
+  SetDocLoaderObserver(nsnull);
+#if 0
   NS_IF_RELEASE(mContentViewer);
 
   // Destroy our child web shells and release references to them
@@ -977,15 +1000,8 @@ nsWebShell::SetContentViewer(nsIContentViewer* aViewer)
   NS_IF_ADDREF(aViewer);
   return NS_OK;
 }
-
-NS_IMETHODIMP
-nsWebShell::GetContentViewer(nsIContentViewer*& aResult)
-{
-  aResult = mContentViewer;
-  NS_IF_ADDREF(mContentViewer);
-  return NS_OK;
-}
 #endif
+
 NS_IMETHODIMP
 nsWebShell::SetContainer(nsIWebShellContainer* aContainer)
 {
@@ -1023,7 +1039,6 @@ nsWebShell::SetObserver(nsIStreamObserver* anObserver)
   }
   return NS_OK;
 }
-#if 0
 
 
 NS_IMETHODIMP 
@@ -1034,7 +1049,18 @@ nsWebShell::GetObserver(nsIStreamObserver*& aResult)
   return NS_OK;
 }
 
-#endif
+
+
+NS_IMETHODIMP
+nsWebShell::SetDocLoaderObserver(nsIDocumentLoaderObserver* anObserver)
+{
+  NS_IF_RELEASE(mDocLoaderObserver);
+
+  mDocLoaderObserver = anObserver;
+  NS_IF_ADDREF(mDocLoaderObserver);
+  return NS_OK;
+}
+
 NS_IMETHODIMP
 nsWebShell::SetPrefs(nsIPref* aPrefs)
 {
@@ -1167,6 +1193,21 @@ nsWebShell::FindChildWithName(const PRUnichar* aName1,
   return NS_OK;
 }
 
+#endif
+NS_IMETHODIMP
+nsWebShell::SetWebShellType(nsWebShellType aWebShellType)
+{
+	if (aWebShellType != nsWebShellChrome && 
+		  aWebShellType != nsWebShellContent)
+  {
+		NS_ERROR("Attempt to set bogus webshell type: values should be content or chrome.");
+		return NS_ERROR_FAILURE;
+	}
+	mWebShellType = aWebShellType;
+	return NS_OK;
+}
+#if 0
+
 NS_IMETHODIMP
 nsWebShell::GetMarginWidth(PRInt32& aWidth)
 {
@@ -1203,9 +1244,12 @@ nsWebShell::GetScrolling(PRInt32& aScrolling)
 }
 
 NS_IMETHODIMP
-nsWebShell::SetScrolling(PRInt32 aScrolling)
+nsWebShell::SetScrolling(PRInt32 aScrolling, PRBool aSetCurrentAndInitial)
 {
-  mScrolling = aScrolling;
+  mScrolling[1] = aScrolling;
+  if (aSetCurrentAndInitial) {
+    mScrolling[0] = aScrolling;
+  }
   return NS_OK;
 }
 #endif
@@ -1268,6 +1312,45 @@ nsWebShell::LoadURL(const PRUnichar *aURLSpec,
   return LoadURL(aURLSpec,"view",aPostData,aModifyHistory,aType, aLocalIP);
 }
 
+nsresult
+nsWebShell::DoLoadURL(const nsString& aUrlSpec,
+                      const char* aCommand,
+                      nsIPostData* aPostData,
+                      nsURLReloadType aType,
+                      const PRUint32 aLocalIP)
+
+
+{
+  // Stop loading the current document (if any...).  This call may result in
+  // firing an EndLoadURL notification for the old document...
+  Stop();
+
+
+  // Tell web-shell-container we are loading a new url
+  if (nsnull != mContainer) {
+    nsresult rv = mContainer->BeginLoadURL(this, aUrlSpec.GetUnicode());
+    if (NS_FAILED(rv)) {
+      return rv;
+    }
+  }
+
+  mProcessedEndDocumentLoad = PR_FALSE;
+
+ /* WebShell was primarily passing the buck when it came to streamObserver.
+  * So, pass on the observer which is already a streamObserver to DocLoder.
+  *  - Radha
+  */
+  
+  return mDocLoader->LoadDocument(aUrlSpec,       // URL string
+                                  aCommand,       // Command
+                                  this,           // Container
+                                  aPostData,      // Post Data
+                                  nsnull,         // Extra Info...
+                                  mObserver,      // Observer
+                                  aType,          // reload type
+                                  aLocalIP);      // load attributes.
+}
+
 NS_IMETHODIMP
 nsWebShell::LoadURL(const PRUnichar *aURLSpec,
                     const char* aCommand,
@@ -1288,13 +1371,31 @@ nsWebShell::LoadURL(const PRUnichar *aURLSpec,
 
   // if no scheme (protocol) is found, assume http.
   if ( ((colon=urlSpec.Find(':')) == -1) // no colon at all
-      || ( (fSlash > -1) && (colon > fSlash) ) // the only colon comes after the first slash
-      || ( (colon < urlSpec.Length()-1) // the first char after the first colon is a digit (i.e. a port)
-            && ((port=urlSpec.CharAt(colon+1)) < '9')
-            && (port > '0') )
-      ) {
-    nsString httpDef("http://");
-    urlSpec.Insert(httpDef, 0, 7);
+       || ( (fSlash > -1) && (colon > fSlash) ) // the only colon comes after the first slash
+       || ( (colon < urlSpec.Length()-1) // the first char after the first colon is a digit (i.e. a port)
+            && ((port=urlSpec.CharAt(colon+1)) <= '9')
+            && (port > '0') )) {
+    // find host name
+    int hostPos = urlSpec.FindCharInSet("./:");
+    if (hostPos == -1) {
+      hostPos = urlSpec.Length();
+    }
+
+    // extract host name
+    nsAutoString hostSpec;
+    urlSpec.Left(hostSpec, hostPos);
+
+    // insert url spec corresponding to host name
+    if (hostSpec.EqualsIgnoreCase("www")) {
+      nsString ftpDef("http://");
+      urlSpec.Insert(ftpDef, 0, 7);
+    } else if (hostSpec.EqualsIgnoreCase("ftp")) {
+      nsString ftpDef("ftp://");
+      urlSpec.Insert(ftpDef, 0, 6);
+    } else {
+      nsString httpDef("http://");
+      urlSpec.Insert(httpDef, 0, 7);
+    }
   }
 
   // Give web-shell-container right of refusal
@@ -1330,29 +1431,7 @@ nsWebShell::LoadURL(const PRUnichar *aURLSpec,
   }
   ShowHistory();
 
-  // Stop loading the current document (if any...).  This call may result in
-  // firing an EndLoadURL notification for the old document...
-  Stop();
-
-  // Tell web-shell-container we are loading a new url
-  if (nsnull != mContainer) {
-    rv = mContainer->BeginLoadURL(this, urlSpec);
-    if (NS_OK != rv) {
-      return rv;
-    }
-  }
-
-  rv = mDocLoader->LoadDocument(urlSpec,       // URL string
-                                  aCommand,       // Command
-                                  this,           // Container
-                                  aPostData,      // Post Data
-                                  nsnull,         // Extra Info...
-                                  mObserver,      // Observer
-                                  aType,          // reload type
-                                  aLocalIP);      // load attributes.
-
-
-  return rv;
+  return DoLoadURL(urlSpec, aCommand, aPostData, aType, aLocalIP);
 }
 
 NS_IMETHODIMP nsWebShell::Stop(void)
@@ -1886,7 +1965,7 @@ nsWebShell::CreateScriptEnvironment()
 
   if (nsnull == mScriptGlobal) {
     res = NS_NewScriptGlobalObject(&mScriptGlobal);
-    if (NS_OK != res) {
+    if (NS_FAILED(res)) {
       return res;
     }
     mScriptGlobal->SetWebShell(this);
@@ -1907,7 +1986,7 @@ nsWebShell::GetScriptContext(nsIScriptContext** aContext)
 
   res = CreateScriptEnvironment();
 
-  if (NS_OK == res) {
+  if (NS_SUCCEEDED(res)) {
     *aContext = mScriptContext;
     NS_ADDREF(mScriptContext);
   }
@@ -1923,7 +2002,7 @@ nsWebShell::GetScriptGlobalObject(nsIScriptGlobalObject** aGlobal)
 
   res = CreateScriptEnvironment();
 
-  if (NS_OK == res) {
+  if (NS_SUCCEEDED(res)) {
     *aGlobal = mScriptGlobal;
     NS_IF_ADDREF(mScriptGlobal);
   }
@@ -1938,13 +2017,21 @@ nsWebShell::ReleaseScriptContext(nsIScriptContext *aContext)
   NS_IF_RELEASE(aContext);
   return NS_OK;
 }
+#endif
 
 NS_IMETHODIMP
-nsWebShell::OnConnectionsComplete()
+nsWebShell::OnStartDocumentLoad(nsIDocumentLoader* loader, 
+                                nsIURL* aURL, 
+                                const char* aCommand)
 {
+  const char* spec;
+  aURL->GetSpec(&spec);
+  printf("nsWebShell::OnStartDocumentLoad:%p: loader=%p url=%s command=%s\n", this, loader, spec, aCommand);
+
+
   nsIDocumentViewer* docViewer;
   nsresult rv = NS_ERROR_FAILURE;
-  
+#if 0  
   if (nsnull != mScriptGlobal) {
     if (nsnull != mContentViewer && 
         NS_OK == mContentViewer->QueryInterface(kIDocumentViewerIID, (void**)&docViewer)) {
@@ -1953,44 +2040,29 @@ nsWebShell::OnConnectionsComplete()
         nsEventStatus status = nsEventStatus_eIgnore;
         nsMouseEvent event;
         event.eventStructType = NS_EVENT;
-        event.message = NS_PAGE_LOAD;
-        rv = mScriptGlobal->HandleDOMEvent(*presContext, &event, nsnull, DOM_EVENT_INIT, status);
+        event.message = NS_PAGE_UNLOAD;
+        rv = mScriptGlobal->HandleDOMEvent(*presContext, &event, nsnull, NS_EVENT_FLAG_INIT, status);
 
         NS_RELEASE(presContext);
       }
       NS_RELEASE(docViewer);
     }
   }
-  
+#endif
+
   /*
-   *Fire the EndLoadURL(...) notification...
+   *Fire the OnStartDocumentLoad of the webshell observer
    */
-  if ((nsnull != mContainer) && (nsnull != mContentViewer)) {
-    nsIDocument* document;
-
-    rv = mContentViewer->QueryInterface(kIDocumentViewerIID, (void**)&docViewer);
-    if (NS_SUCCEEDED(rv)) {
-      rv = docViewer->GetDocument(document);
-      if (NS_SUCCEEDED(rv)) {
-        nsAutoString urlString;
-        nsIURL* url;
-
-        url = document->GetDocumentURL();
-        if (nsnull != url) {
-          urlString = url->GetSpec();
-
-          /* XXX: The load status needs to be passed in... */
-          rv = mContainer->EndLoadURL(this, urlString, /* XXX */ 0 );
-          NS_RELEASE(url);
-        }
-        NS_RELEASE(document);
-      }
-      NS_RELEASE(docViewer);
-    }
+  if ((nsnull != mContainer) && (nsnull != mDocLoaderObserver))
+  {
+     //mDocLoaderObserver->OnStartDocumentLoad(mDocLoader, aURL, aCommand);
   }
+
   
   return rv;
 }
+
+#if 0
 
 /* For use with redirect/refresh url api */
 class refreshData : public nsITimerCallback 

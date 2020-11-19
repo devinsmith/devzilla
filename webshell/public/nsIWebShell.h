@@ -32,6 +32,7 @@ class nsIFactory;
 class nsIPostData;
 class nsIStreamObserver;
 class nsIDocumentLoader;
+class nsIDocumentLoaderObserver;
 class nsIWebShell;
 class nsIWebShellContainer;
 class nsIPref;
@@ -103,7 +104,7 @@ public:
    * contents).  The container can choose to set focus to themselves
    * or ignore the message and let the contained keep focus
    */
-  NS_IMETHOD FocusAvailable(nsIWebShell* aFocusedWebShell) = 0;
+  NS_IMETHOD FocusAvailable(nsIWebShell* aFocusedWebShell, PRBool& aFocusTaken) = 0;
 
   // NS_IMETHOD SetHistoryIndex(PRInt32 aIndex, PRInt32 aMaxIndex) = 0;
 
@@ -204,13 +205,19 @@ public:
    * loaded by the document.
    */
   NS_IMETHOD SetObserver(nsIStreamObserver* anObserver) = 0;
-#if 0
 
   /**
    * Return the current nsIStreamObserver.
    */
   NS_IMETHOD GetObserver(nsIStreamObserver*& aResult) = 0;
-#endif
+
+  /**
+   * Set the DocLoaderObserver which receives all notifications from URLs 
+   * loaded by the document.
+   */
+  NS_IMETHOD SetDocLoaderObserver(nsIDocumentLoaderObserver* anObserver) = 0;
+
+
   /**
    * Set the nsIPref used to get/set preference values...
    */
@@ -271,6 +278,12 @@ public:
   NS_IMETHOD FindChildWithName(const PRUnichar* aName,
                                nsIWebShell*& aResult) = 0;
 #endif
+
+	/**
+	 * Set the type of the webshell to be content or chrome.
+   */
+	NS_IMETHOD SetWebShellType(nsWebShellType aWebShellType) = 0;
+
   //
   // Document load api's
   //

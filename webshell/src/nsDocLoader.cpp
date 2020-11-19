@@ -663,7 +663,7 @@ nsresult nsDocFactoryImpl::InitUAStyleSheet()
         // Translate the input using the argument character set id into unicode
         nsIUnicharInputStream* uin;
         rv = NS_NewConverterStream(&uin, nsnull, in);
-        if (NS_OK == rv) {
+        if (NS_SUCCEEDED(rv)) {
           // Create parser and set it up to process the input file
           nsICSSParser* css;
           rv = NS_NewCSSParser(&css);
@@ -1141,7 +1141,7 @@ NS_IMETHODIMP
 nsDocLoaderImpl::GetDefaultLoadAttributes(nsILoadAttribs*& aLoadAttribs)
 {
   aLoadAttribs = m_LoadAttrib;
-  NS_IF_ADDREF(m_LoadAttrib);
+  NS_IF_ADDREF(aLoadAttribs);
 
   return NS_OK;;
 }

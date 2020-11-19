@@ -21,6 +21,12 @@
 
 #include "nsISupports.h"
 
+// Forward declarations... 
+class nsIURL;
+class nsIContentViewer;
+class nsIDocumentLoader;
+
+
 /* f6b4f550-317c-11d2-bd8c-00805f8ae3f4 */
 #define NS_IDOCUMENT_LOADER_OBSERVER_IID   \
 { 0xf6b4f550, 0x317c, 0x11d2, \
@@ -34,9 +40,12 @@ class nsIDocumentLoaderObserver : public nsISupports
 {
 public:
   /**
-   * Notify the observer that all connections are complete
+   * Notify the observer that a new document will be loaded.  
+   *
+   * This notification occurs before any DNS resolution occurs, or
+   * a connection is established with the server...
    */
-  NS_IMETHOD OnConnectionsComplete() = 0;
+  NS_IMETHOD OnStartDocumentLoad(nsIDocumentLoader* loader, nsIURL* aURL, const char* aCommand) = 0;
 };
 
 

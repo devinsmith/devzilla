@@ -63,6 +63,7 @@ public:
                                   PRInt32 aInitialWidth, PRInt32 aInitialHeight);
 
   NS_IMETHOD CloseTopLevelWindow(nsIWebShellWindow* aWindow);
+  NS_IMETHOD RegisterTopLevelWindow(nsIWebShellWindow* aWindow);
   NS_IMETHOD UnregisterTopLevelWindow(nsIWebShellWindow* aWindow);
 
 
@@ -185,7 +186,24 @@ nsAppShellService::CloseTopLevelWindow(nsIWebShellWindow* aWindow)
   return aWindow->Close();
 }
 
+/*
+ * Register a new top level window (created elsewhere)
+ */
 static NS_DEFINE_IID(kIWebShellContainerIID,  NS_IWEB_SHELL_CONTAINER_IID);
+NS_IMETHODIMP
+nsAppShellService::RegisterTopLevelWindow(nsIWebShellWindow* aWindow)
+{
+  nsresult rv;
+
+  nsIWebShellContainer* wsc;
+  rv = aWindow->QueryInterface(kIWebShellContainerIID, (void **) &wsc);
+  if (NS_SUCCEEDED(rv)) {
+    mWindowList->AppendElement(wsc);
+    NS_RELEASE(wsc);
+  }
+  return rv;
+}
+
 
 NS_IMETHODIMP
 nsAppShellService::UnregisterTopLevelWindow(nsIWebShellWindow* aWindow)

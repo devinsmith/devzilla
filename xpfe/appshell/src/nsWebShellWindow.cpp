@@ -19,16 +19,17 @@
 
 
 #include "nsWebShellWindow.h"
-#include "nsCOMPtr.h"
 
 #include "nsIComponentManager.h"
 #include "nsIServiceManager.h"
 #include "nsIURL.h"
+#include "nsVoidArray.h"
 
 #include "nsGUIEvent.h"
 #include "nsWidgetsCID.h"
 #include "nsIWidget.h"
 #include "nsIAppShell.h"
+#include "nsIXULWindowCallbacks.h"
 
 #include "nsIAppShellService.h"
 #include "nsAppShellCIDs.h"
@@ -46,7 +47,7 @@ static NS_DEFINE_IID(kIWebShellIID,           NS_IWEB_SHELL_IID);
 static NS_DEFINE_IID(kIWebShellContainerIID,  NS_IWEB_SHELL_CONTAINER_IID);
 
 static NS_DEFINE_IID(kIAppShellServiceIID,    NS_IAPPSHELL_SERVICE_IID);
-
+static NS_DEFINE_IID(kIDocumentLoaderObserverIID, NS_IDOCUMENT_LOADER_OBSERVER_IID);
 
 #include "nsIWebShell.h"
 
@@ -93,12 +94,12 @@ nsWebShellWindow::QueryInterface(REFNSIID aIID, void** aInstancePtr)
     NS_ADDREF_THIS();
     return NS_OK;
   }
-/*
   if (aIID.Equals(kIDocumentLoaderObserverIID)) {
     *aInstancePtr = (void*) ((nsIDocumentLoaderObserver*)this);
     NS_ADDREF_THIS();
     return NS_OK;
   }
+/*
 	if ( aIID.Equals(kIBrowserWindowIID) ) {
     *aInstancePtr = (void*) (nsIBrowserWindow*) this;
     NS_ADDREF_THIS();
@@ -128,8 +129,6 @@ nsresult nsWebShellWindow::Initialize(nsIWebShellWindow* aParent,
   nsIID iid;
   char str[40];
 
-  aUrl->GetSpec(&tmpStr);
-  urlString = tmpStr;
 
   // XXX: need to get the default window size from prefs...
   nsRect r(0, 0, aInitialWidth, aInitialHeight);
@@ -137,9 +136,13 @@ nsresult nsWebShellWindow::Initialize(nsIWebShellWindow* aParent,
   nsWidgetInitData initData;
 
 
-  if (nsnull == aUrl) {
-    rv = NS_ERROR_NULL_POINTER;
-    return rv;
+  //if (nsnull == aUrl) {
+  //  rv = NS_ERROR_NULL_POINTER;
+  //  goto done;
+  //}
+  if (nsnull != aUrl)  {
+    aUrl->GetSpec(&tmpStr);
+    urlString = tmpStr;
   }
 
   // Create top level window
@@ -180,13 +183,16 @@ nsresult nsWebShellWindow::Initialize(nsIWebShellWindow* aParent,
                        PR_TRUE,                     // Allow Plugins 
                        PR_TRUE);
   mWebShell->SetContainer(this);
-  //mWebShell->SetObserver((nsIStreamObserver*)this);
-///  webShell->SetPrefs(aPrefs);
+  mWebShell->SetObserver((nsIStreamObserver*)anObserver);
+  mWebShell->SetDocLoaderObserver(this);
 
-  mWebShell->LoadURL(urlString);
-  mWebShell->Show();
+	// The outermost web shell is always considered to be chrome.
+	mWebShell->SetWebShellType(nsWebShellChrome);
 
-  mWindow->Show(PR_TRUE);
+  if (nsnull != aUrl)  {
+    mWebShell->LoadURL(urlString.GetUnicode());
+  }
+
 
   return rv;
 }
@@ -255,8 +261,13 @@ nsWebShellWindow::HandleEvent(nsGUIEvent *aEvent)
       /*
        * Notify the ApplicationShellService that the window is being closed...
        */
-      case NS_DESTROY:
+      case NS_DESTROY: {
+        void* data;
+        aEvent->widget->GetClientData(data);
+        if (data)
+           ((nsWebShellWindow *)data)->Close();
         break;
+      }
     }
   }
   return nsEventStatus_eIgnore;
@@ -283,11 +294,12 @@ nsWebShellWindow::ProgressLoadURL(nsIWebShell* aShell, const PRUnichar* aURL,
 }
 
 NS_IMETHODIMP 
-nsWebShellWindow::EndLoadURL(nsIWebShell* aShell, const PRUnichar* aURL,
+nsWebShellWindow::EndLoadURL(nsIWebShell* aWebShell, const PRUnichar* aURL,
                              PRInt32 aStatus)
 {
   return NS_OK;
 }
+
 
 NS_IMETHODIMP 
 nsWebShellWindow::NewWebShell(PRUint32 aChromeMask, PRBool aVisible,
@@ -305,7 +317,7 @@ NS_IMETHODIMP nsWebShellWindow::FindWebShellWithName(const PRUnichar* aName,
 }
 
 NS_IMETHODIMP 
-nsWebShellWindow::FocusAvailable(nsIWebShell* aFocusedWebShell)
+nsWebShellWindow::FocusAvailable(nsIWebShell* aFocusedWebShell, PRBool& aFocusTaken)
 {
   return NS_OK;
 }
@@ -320,4 +332,162 @@ nsWebShellWindow::Show(PRBool aShow)
   mWindow->Show(aShow);
   return NS_OK;
 }
+
+
+NS_IMETHODIMP 
+nsWebShellWindow::GetWidget(nsIWidget *& aWidget)
+{
+  aWidget = mWindow;
+  NS_ADDREF(mWindow);
+  return NS_OK;
+}
+
+//----------------------------------------
+// nsIDocumentLoaderObserver implementation
+//----------------------------------------
+NS_IMETHODIMP
+nsWebShellWindow::OnStartDocumentLoad(nsIDocumentLoader* loader, 
+                                      nsIURL* aURL, const char* aCommand)
+{
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsWebShellWindow::OnEndDocumentLoad(nsIDocumentLoader* loader, 
+                                    nsIURL* aURL, PRInt32 aStatus)
+{
+#ifdef DEBUG_MENUSDEL
+  printf("OnEndDocumentLoad\n");
+#endif
+#if 0
+
+  /* We get notified every time a page/Frame is loaded. But we need to
+   * Load the menus, run the startup script etc.. only once. So, Use
+   * the mChrome Initialized  member to check whether chrome should be 
+   * initialized or not - Radha
+   */
+  if (mChromeInitialized)
+    return NS_OK;
+
+  mChromeInitialized = PR_TRUE;
+
+  // register as document listener
+  // this is needed for menus
+  nsCOMPtr<nsIContentViewer> cv;
+  mWebShell->GetContentViewer(getter_AddRefs(cv));
+  if (cv) {
+   
+    nsCOMPtr<nsIDocumentViewer> docv(do_QueryInterface(cv));
+    if (!docv)
+      return NS_OK;
+
+    nsCOMPtr<nsIDocument> doc;
+    docv->GetDocument(*getter_AddRefs(doc));
+    if (!doc)
+      return NS_OK;
+
+    doc->AddObserver(NS_STATIC_CAST(nsIDocumentObserver*, this));
+  }
+
+  ExecuteStartupCode();
+
+  ///////////////////////////////
+  // Find the Menubar DOM  and Load the menus, hooking them up to the loaded commands
+  ///////////////////////////////
+  nsCOMPtr<nsIDOMDocument> menubarDOMDoc(GetNamedDOMDoc(nsAutoString("this"))); // XXX "this" is a small kludge for code reused
+  if (menubarDOMDoc)
+  {
+    #ifdef XP_MAC
+    LoadMenus(menubarDOMDoc, mWindow);
+    #else
+    DynamicLoadMenus(menubarDOMDoc, mWindow);
+    #endif
+  }
+
+  SetSizeFromXUL();
+  SetTitleFromXUL();
+
+#if 0
+  nsCOMPtr<nsIDOMDocument> toolbarDOMDoc(GetNamedDOMDoc(nsAutoString("browser.toolbar")));
+  nsCOMPtr<nsIDOMDocument> contentDOMDoc(GetNamedDOMDoc(nsAutoString("browser.webwindow")));
+  nsCOMPtr<nsIDocument> contentDoc(do_QueryInterface(contentDOMDoc));
+  nsCOMPtr<nsIDocument> statusDoc(do_QueryInterface(statusDOMDoc));
+  nsCOMPtr<nsIDocument> toolbarDoc(do_QueryInterface(toolbarDOMDoc));
+
+  nsIWebShell* statusWebShell = nsnull;
+  mWebShell->FindChildWithName(nsAutoString("browser.status"), statusWebShell);
+
+  PRInt32 actualStatusHeight  = GetDocHeight(statusDoc);
+  PRInt32 actualToolbarHeight = GetDocHeight(toolbarDoc);
+
+
+  PRInt32 height = 0;
+  PRInt32 x,y,w,h;
+  PRInt32 contentHeight;
+  PRInt32 toolbarHeight;
+  PRInt32 statusHeight;
+
+  mWebShell->GetBounds(x, y, w, h);
+  toolbarWebShell->GetBounds(x, y, w, toolbarHeight);
+  contentWebShell->GetBounds(x, y, w, contentHeight);
+  statusWebShell->GetBounds(x, y, w, statusHeight); 
+
+  //h = toolbarHeight + contentHeight + statusHeight;
+  contentHeight = h - actualStatusHeight - actualToolbarHeight;
+
+  toolbarWebShell->GetBounds(x, y, w, h);
+  toolbarWebShell->SetBounds(x, y, w, actualToolbarHeight);
+
+  contentWebShell->GetBounds(x, y, w, h);
+  contentWebShell->SetBounds(x, y, w, contentHeight);
+
+  statusWebShell->GetBounds(x, y, w, h);
+  statusWebShell->SetBounds(x, y, w, actualStatusHeight);
+#endif
+#endif
+  return NS_OK;
+}
+
+NS_IMETHODIMP 
+nsWebShellWindow::OnStartURLLoad(nsIDocumentLoader* loader, 
+                                 nsIURL* aURL, 
+                                 const char* aContentType, 
+                                 nsIContentViewer* aViewer)
+{
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsWebShellWindow::OnProgressURLLoad(nsIDocumentLoader* loader, 
+                                    nsIURL* aURL, 
+                                    PRUint32 aProgress, 
+                                    PRUint32 aProgressMax)
+{
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsWebShellWindow::OnStatusURLLoad(nsIDocumentLoader* loader, 
+                                  nsIURL* aURL, nsString& aMsg)
+{
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsWebShellWindow::OnEndURLLoad(nsIDocumentLoader* loader, 
+                               nsIURL* aURL, PRInt32 aStatus)
+{
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsWebShellWindow::HandleUnknownContentType(nsIDocumentLoader* loader, 
+                                           nsIURL* aURL,
+                                           const char *aContentType,
+                                           const char *aCommand )
+{
+  return NS_OK;
+}
+
+
 

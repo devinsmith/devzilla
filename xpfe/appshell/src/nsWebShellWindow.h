@@ -25,7 +25,10 @@
 #include "nsGUIEvent.h"
 #include "nsIWebShell.h"  
 #include "nsIDocumentLoaderObserver.h"
+#include "nsIDocumentObserver.h"
 #include "nsVoidArray.h"
+
+#include "nsCOMPtr.h"
 
 /* Forward declarations.... */
 class nsIURL;
@@ -33,12 +36,12 @@ class nsIAppShell;
 class nsIWidget;
 class nsIWidgetController;
 class nsIStreamObserver;
-
 class nsIXULWindowCallbacks;
 class nsVoidArray;
 
 class nsWebShellWindow : public nsIWebShellWindow,
-                         public nsIWebShellContainer
+                         public nsIWebShellContainer,
+                         public nsIDocumentLoaderObserver
 {
 public:
   nsWebShellWindow();
@@ -71,11 +74,13 @@ public:
   NS_IMETHOD FindWebShellWithName(const PRUnichar* aName,
                                   nsIWebShell*& aResult);
 
-  NS_IMETHOD FocusAvailable(nsIWebShell* aFocusedWebShell);
+  NS_IMETHOD FocusAvailable(nsIWebShell* aFocusedWebShell, PRBool& aFocusTaken);
+
 
   // nsIWebShellWindow methods...
   NS_IMETHOD Show(PRBool aShow);
   NS_IMETHOD Close();
+  NS_IMETHOD GetWidget(nsIWidget *& aWidget);
 
   // nsWebShellWindow methods...
   nsresult Initialize(nsIWebShellWindow * aParent, nsIAppShell* aShell, nsIURL* aUrl,
@@ -83,6 +88,27 @@ public:
                       nsIXULWindowCallbacks *aCallbacks,
                       PRInt32 aInitialWidth, PRInt32 aInitialHeight);
   nsIWidget* GetWidget(void) { return mWindow; }
+
+  // nsIDocumentLoaderObserver
+  NS_IMETHOD OnStartDocumentLoad(nsIDocumentLoader* loader, 
+                                 nsIURL* aURL, const char* aCommand);
+  NS_IMETHOD OnEndDocumentLoad(nsIDocumentLoader* loader, 
+                               nsIURL *aUrl, PRInt32 aStatus);
+  NS_IMETHOD OnStartURLLoad(nsIDocumentLoader* loader, 
+                            nsIURL* aURL, const char* aContentType, 
+                            nsIContentViewer* aViewer);
+  NS_IMETHOD OnProgressURLLoad(nsIDocumentLoader* loader, 
+                               nsIURL* aURL, PRUint32 aProgress, 
+                               PRUint32 aProgressMax);
+  NS_IMETHOD OnStatusURLLoad(nsIDocumentLoader* loader, 
+                             nsIURL* aURL, nsString& aMsg);
+  NS_IMETHOD OnEndURLLoad(nsIDocumentLoader* loader, 
+                          nsIURL* aURL, PRInt32 aStatus);
+  NS_IMETHOD HandleUnknownContentType(nsIDocumentLoader* loader, 
+                                      nsIURL* aURL,
+                                      const char *aContentType,
+                                      const char *aCommand );
+
 
 protected:
   virtual ~nsWebShellWindow();
