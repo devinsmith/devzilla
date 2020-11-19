@@ -51,11 +51,10 @@
 #include "plevent.h"
 #endif
 #include "prprf.h"
-#if 0
 #include "nsIPluginHost.h"
 #include "nsplugin.h"
-#include "nsPluginsCID.h"
-#endif
+//#include "nsPluginsCID.h"
+#include "nsIPluginManager.h"
 #include "nsIPref.h"
 #if 0
 #include "nsIRefreshUrl.h"
