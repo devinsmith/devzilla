@@ -37,10 +37,11 @@ public:
     NS_DECL_ISUPPORTS
 
     nsNetlibService();
-#if 0
+
     /* Implementation of the nsINetService interface */
     NS_IMETHOD OpenStream(nsIURL *aUrl, 
                           nsIStreamListener *aConsumer);
+#if 0
     NS_IMETHOD OpenBlockingStream(nsIURL *aUrl, 
                                   nsIStreamListener *aConsumer,
                                   nsIInputStream **aNewStream);
@@ -126,13 +127,12 @@ private:
     /* XXX: This is temporary until bamwrap.cpp is removed... */
     void *m_stubContext;
     nsIPref *mPref;
-
+#endif
     nsITimer* mPollingTimer;
 
     nsNetlibThread* mNetlibThread;
     nsIEventQueueService* mEventQService;
 
-#endif
     nsHashtable* mProtocols;
 };
 

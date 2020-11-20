@@ -55,7 +55,6 @@ class nsIProtocol;
 struct nsINetService : public nsISupports 
 {
 	static const nsIID& GetIID() { static nsIID iid = NS_INETSERVICE_IID; return iid; }
-#if 0
     /**
      * Initiate an asynchronous URL load.<BR><BR>
      *
@@ -66,6 +65,7 @@ struct nsINetService : public nsISupports
      */ 
     NS_IMETHOD OpenStream(nsIURL *aUrl, 
                           nsIStreamListener *aConsumer) = 0;
+#if 0
 
     /**
      * Initiate a synchronous URL load.<BR><BR>

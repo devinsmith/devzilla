@@ -26,9 +26,7 @@
 #endif
 #include "nsStubContext.h"
 #include "prefapi.h"
-#if 0
 #include "mkprefs.h"
-#endif
 extern "C" {
 #if 0
 #include "mkutils.h"
@@ -50,9 +48,7 @@ extern "C" {
 #include "nsIProtocolConnection.h"
 #include "nsIProtocolURLFactory.h"
 #include "nsIProtocol.h"
-#if 0
 #include "nsIURLGroup.h"
-#endif
 #include "nsIServiceManager.h"
 #include "nsIEventQueueService.h"
 #include "nsXPComCIID.h"
@@ -90,7 +86,7 @@ static HINSTANCE g_hInst = NULL;
 #ifdef NS_NET_FILE
 
 #include "nsNetFile.h"
-#ifdef XP_MAC
+#if defined(XP_MAC) || defined(XP_UNIX)
 static nsNetFileInit* netFileInit = nsnull;
 #else
 static nsNetFileInit netFileInit;
@@ -112,7 +108,8 @@ static void bam_exit_routine(URL_Struct *URL_s, int status, MWContext *window_id
 nsresult PerformNastyWindowsAsyncDNSHack(URL_Struct* URL_s, nsIURL* aURL);
 #endif /* XP_WIN && !NETLIB_THREAD */
 
-char *mangleResourceIntoFileURL(const char* aResourceFileName) ;
+char *mangleResourceIntoFileURL(const char* aResourceFileName);
+
 extern nsIStreamListener* ns_NewStreamListenerProxy(nsIStreamListener* aListener, PLEventQueue* aEventQ);
 
 extern "C" {
@@ -142,7 +139,6 @@ nsNetlibService::nsNetlibService()
   nsresult rv;
 
     NS_INIT_REFCNT();
-#if 0
 
   /*
    * Cache the EventQueueService...
@@ -218,7 +214,6 @@ nsNetlibService::nsNetlibService()
         PR_Free((char *)XP_AppVersion);
     XP_AppVersion = PL_strdup(buf);
 
-#endif
     mProtocols = new nsHashtable();
     PR_ASSERT(mProtocols);
 }
@@ -230,7 +225,7 @@ NS_IMPL_THREADSAFE_ISUPPORTS(nsNetlibService,kINetServiceIID);
 nsNetlibService::~nsNetlibService()
 {
     TRACEMSG(("nsNetlibService is being destroyed...\n"));
-#if 0
+
 
     /*
       if (NULL != m_stubContext) {
@@ -252,7 +247,6 @@ nsNetlibService::~nsNetlibService()
     }
 
     delete mProtocols;
-#endif
 }
 #if 0
 
@@ -334,9 +328,12 @@ void nsNetlibService::SetupURLStruct(nsIURL *aUrl, URL_Struct *aURL_s)
   }
 }
 
+#endif
+
 nsresult nsNetlibService::OpenStream(nsIURL *aUrl,
                                      nsIStreamListener *aConsumer)
 {
+#if 0
     URL_Struct *URL_s;
     nsConnectionInfo *pConn;
     nsINetlibURL *netlibURL;
@@ -453,9 +450,11 @@ nsresult nsNetlibService::OpenStream(nsIURL *aUrl,
      * URL has been completely loaded...
      */
     SchedulePollingTimer();
+#endif
     return NS_OK;
 }
 
+#if 0
 
 nsresult nsNetlibService::OpenBlockingStream(nsIURL *aUrl, 
                                              nsIStreamListener *aConsumer,
@@ -833,7 +832,7 @@ nsNetlibService::SetProxyHTTP(nsString& aProxyHTTP) {
         return NS_FALSE;
     csPort = nsSPort.ToNewCString();
     if (!csPort) {
-        delete proxy;
+        delete[] proxy;
         return NS_FALSE;
     }
 
@@ -845,8 +844,8 @@ nsNetlibService::SetProxyHTTP(nsString& aProxyHTTP) {
     if ( PREF_OK != PREF_SetIntPref(pref_proxyHttpPort, port) ) {
         rv = NS_FALSE;
     }
-    delete proxy;
-    delete csPort;
+    delete[] proxy;
+    delete[] csPort;
 
     NET_SelectProxyStyle(PROXY_STYLE_MANUAL);
 
@@ -995,7 +994,7 @@ nsNetlibService::RegisterProtocol(const nsString& aName,
     }
     pair->mProtocolURLFactory = aProtocolURLFactory;
     pair->mProtocol = aProtocol;
-    void* result = mProtocols->Put(key, pair);
+    mProtocols->Put(key, pair);
     return NS_OK;
 }
 #if 0
@@ -1274,7 +1273,6 @@ nsresult PerformNastyWindowsAsyncDNSHack(URL_Struct *URL_s, nsIURL* aURL)
 #endif
 // This is global so it can be accessed by the NetFactory (nsNetFactory.cpp)
 nsNetlibService *gNetlibService = nsnull;
-#if 0
 
 //
 // Class to manage static initialization of the Netlib DLL...
@@ -1300,11 +1298,10 @@ struct nsNetlibInit {
   }
 };
 
-#ifdef XP_MAC
+#if defined(XP_MAC) || defined(XP_UNIX)
 static nsNetlibInit* netlibInit = nsnull;
 #else
 static nsNetlibInit netlibInit;
-#endif
 #endif
 
 extern "C" {
@@ -1318,7 +1315,7 @@ NS_NET nsresult NS_NewINetService(nsINetService** aInstancePtrResult,
         return NS_ERROR_NO_AGGREGATION;
     }
 
-#ifdef XP_MAC
+#if defined(XP_MAC) || defined(XP_UNIX)
     // Perform static initialization...
     if (nsnull == netlibInit) {
         netlibInit = new nsNetlibInit;

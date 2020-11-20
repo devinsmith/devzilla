@@ -2,6 +2,7 @@
 
 build:
 	@(cd client && $(MAKE))
+	@(cd cnvts && $(MAKE))
 	@(cd main && $(MAKE))
 	@(cd mimetype && $(MAKE))
 	@(cd protocol && $(MAKE))
@@ -10,6 +11,7 @@ build:
 
 clean:
 	@(cd client && $(MAKE) clean)
+	@(cd cnvts && $(MAKE) clean)
 	@(cd main && $(MAKE) clean)
 	@(cd mimetype && $(MAKE) clean)
 	@(cd protocol && $(MAKE) clean)

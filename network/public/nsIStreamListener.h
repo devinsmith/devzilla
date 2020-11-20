@@ -1,4 +1,4 @@
-/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
+/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
  *
  * The contents of this file are subject to the Netscape Public License
  * Version 1.0 (the "NPL"); you may not use this file except in
@@ -19,64 +19,17 @@
 #ifndef nsIStreamListener_h___
 #define nsIStreamListener_h___
 
-#include "prtypes.h"
-#include "nsISupports.h"
+#include "nsIStreamObserver.h"
 
 /* forward declaration */
 class nsIInputStream;
 class nsString;
 class nsIURL;
 
-
-/* 97566110-ff60-11d1-beb9-00805f8a66dc */
-#define NS_ISTREAMOBSERVER_IID   \
-{ 0x97566110, 0xff60, 0x11d1, \
-  {0xbe, 0xb9, 0x00, 0x80, 0x5f, 0x8a, 0x66, 0xdc} }
-
-
-class nsIStreamObserver : public nsISupports {
-public:
-    /**
-     * Notify the observer that the URL has started to load.  This method is
-     * called only once, at the beginning of a URL load.<BR><BR>
-     *
-     * @return The return value is currently ignored.  In the future it may be
-     * used to cancel the URL load..
-     */
-    NS_IMETHOD OnStartBinding(nsIURL* aURL, const char *aContentType) = 0;
-
-    /**
-     * Notify the observer that progress as occurred for the URL load.<BR>
-     */
-    NS_IMETHOD OnProgress(nsIURL* aURL, PRInt32 aProgress, PRInt32 aProgressMax) = 0;
-
-    /**
-     * Notify the observer with a status message for the URL load.<BR>
-     */
-    NS_IMETHOD OnStatus(nsIURL* aURL, const nsString &aMsg) = 0;
-
-    /**
-     * Notify the observer that the URL has finished loading.  This method is 
-     * called once when the networking library has finished processing the 
-     * URL transaction initiatied via the nsINetService::Open(...) call.<BR><BR>
-     * 
-     * This method is called regardless of whether the URL loaded successfully.<BR><BR>
-     * 
-     * @param status    Status code for the URL load.
-     * @param msg   A text string describing the error.
-     * @return The return value is currently ignored.
-     */
-    NS_IMETHOD OnStopBinding(nsIURL* aURL, PRInt32 aStatus, const nsString &aMsg) = 0;
+struct nsStreamBindingInfo {
+    PRBool      seekable;
+    /* ...more... */
 };
-
-/* Generic status codes for OnStopBinding */
-#define NS_BINDING_SUCCEEDED    NS_OK
-#define NS_BINDING_FAILED       ((nsresult)-1)
-#define NS_BINDING_ABORTED      ((nsresult)-2)
-
-
-
-
 
 /* 45d234d0-c6c9-11d1-bea2-00805f8a66dc */
 #define NS_ISTREAMLISTENER_IID   \
@@ -97,12 +50,15 @@ public:
  */
 class nsIStreamListener : public nsIStreamObserver {
 public:
+	 static const nsIID& GetIID() { static nsIID iid = NS_ISTREAMLISTENER_IID; return iid; }
     /**
      * Return information regarding the current URL load.<BR>
+     * The info structure that is passed in is filled out and returned
+     * to the caller. 
      * 
      * This method is currently not called.  
      */
-    NS_IMETHOD GetBindInfo(nsIURL* aURL) = 0;
+    NS_IMETHOD GetBindInfo(nsIURL* aURL, nsStreamBindingInfo* aInfo) = 0;
 
     /**
      * Notify the client that data is available in the input stream.  This
@@ -115,7 +71,7 @@ public:
      * @return The return value is currently ignored.
      */
     NS_IMETHOD OnDataAvailable(nsIURL* aURL, nsIInputStream *aIStream, 
-                               PRInt32 aLength)   = 0;
+                               PRUint32 aLength) = 0;
 };
 
 #endif /* nsIStreamListener_h___ */

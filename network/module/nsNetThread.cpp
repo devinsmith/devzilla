@@ -17,7 +17,7 @@
  * Netscape Communications Corporation.  All Rights Reserved.
  */
 #include "nscore.h"
-#include "nsRepository.h"
+#include "nsIComponentManager.h"
 
 #include "nspr.h"
 #include "plevent.h"
@@ -395,11 +395,6 @@ void PR_CALLBACK ProxyEvent::DestroyPLEvent(PLEvent* aEvent)
   delete ev;
 }
 
-/*
-#if defined(XP_UNIX)
-extern PLEventQueue* gWebShell_UnixEventQueue;
-#endif
-*/
 
 void ProxyEvent::Fire(PLEventQueue* aEventQ) 
 {
@@ -789,7 +784,7 @@ NS_IMETHODIMP
 nsStreamListenerProxy::OnDataAvailable(nsIURL* aURL, nsIInputStream *aIStream, 
                                        PRUint32 aLength)
 {
-  nsresult rv;
+  nsresult rv = NS_OK;
 
   if (PR_GetCurrentThread() == gNetlibThread) {
     OnDataAvailableProxyEvent* ev;
@@ -807,7 +802,7 @@ nsStreamListenerProxy::OnDataAvailable(nsIURL* aURL, nsIInputStream *aIStream,
       }
     }
   } else {
-    mRealListener->OnDataAvailable(aURL, aIStream, aLength);
+    rv = mRealListener->OnDataAvailable(aURL, aIStream, aLength);
   }
   return rv;
 }

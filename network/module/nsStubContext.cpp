@@ -89,7 +89,7 @@ static nsINetSupport *getNetSupport(URL_Struct *URL_s)
 
       /* The nsINetSupport interface will be implemented by the container */
       nsresult err = pConn->pURL->GetContainer(&container);
-      if (err == NS_OK) {
+      if (NS_SUCCEEDED(err) && (nsnull != container)) {
         container->QueryInterface(kINetSupportIID, (void **) &netSupport);
         NS_RELEASE(container);
       }
@@ -524,7 +524,7 @@ void free_stub_context(MWContext *window_id)
 extern "C" MWContext * XP_FindContextOfType (MWContext * context, 
                                              MWContextType type)
 {
-    MWContext *window_id;
+    MWContext *window_id = 0;
 
     /*
      * Return the context that was passed in if it is the correct type
@@ -636,7 +636,7 @@ int stub_put_block(NET_StreamClass *stream, const char *buffer, int32 length)
      *       with the string "Transfer Interrupted!"
      */
     NS_ASSERTION(length >= 0, "negative length");
-    errorCode = pConn->pNetStream->Write(buffer, 0, (PRUint32)length, &bytesWritten);
+    errorCode = pConn->pNetStream->Write(buffer, (PRUint32)length, &bytesWritten);
 
     /* Abort the connection... */
     if (NS_BASE_STREAM_EOF == errorCode) {
@@ -660,7 +660,7 @@ unsigned int stub_is_write_ready(NET_StreamClass *stream)
 {
     nsresult errorCode;
     PRUint32 free_space = 0;
-    URL_Struct *URL_s = (URL_Struct *)stream->data_object;
+    /* URL_Struct *URL_s = (URL_Struct *)stream->data_object; */
     nsConnectionInfo *pConn = GetConnectionInfoFromStream(stream);
 
     errorCode = pConn->pNetStream->GetAvailableSpace(&free_space);
@@ -696,7 +696,6 @@ NET_NGLayoutConverter(FO_Present_Types format_out,
                       MWContext   *context)
 {
     NET_StreamClass *stream = NULL;
-    PRBool bSuccess = PR_TRUE;
 
     /* 
      * Only create a stream if an nsConnectionInfo object is 
