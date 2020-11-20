@@ -26,7 +26,8 @@ CC? = gcc
 AR? = ar
 RM = rm -f
 
-LDFLAGS = -L../cnvts -L../protocol/http -lnetcnvts -lhttpurl
+LDFLAGS = -L../cnvts -L../protocol/file -L../protocol/http -lnetcnvts \
+					-lfileurl -lhttpurl
 
 LIB = libmoznetlib
 SHARED_LIB = $(LIB).so

@@ -106,6 +106,8 @@ struct _NET_ProtoImpl {
 	int32 (*init) (ActiveEntry *ce);
 	int32 (*process)   (ActiveEntry *ce);
 	int32 (*interrupt) (ActiveEntry *ce);
+    void  (*resume)    (ActiveEntry *ce, NET_AuthClosure *, PRBool);
+                                 /* callback to resume paused streams */
 	void  (*cleanup)   (void);   /* note that cleanup can be called more 
 				      			  * than once, when we need to shut down 
 				      			  * connections or free up memory
@@ -138,11 +140,7 @@ extern char * NET_FindProxyHostForUrl(int urltype, char *urladdress);
 /* registers a protocol impelementation for a particular url_type
  * see NET_URL_Type() for types
  */
-#ifdef MODULAR_NETLIB
 PR_EXTERN(void) 
-#else
-extern void
-#endif /* MODULAR_NETLIB */
 NET_RegisterProtocolImplementation(NET_ProtoImpl *impl, int for_url_type);
 
 
