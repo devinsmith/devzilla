@@ -22,6 +22,8 @@ CC? = gcc
 AR? = ar
 RM = rm -f
 
+LDFLAGS = -L../protocol/http -lhttpurl
+
 LIB = libmoznetlib
 SHARED_LIB = $(LIB).so
 STATIC_LIB = $(LIB).a
@@ -30,7 +32,7 @@ ifeq ($(OS),Windows_NT)
 	CC = gcc
 	SHARED_LIB = $(LIB).dll
 	DEFINES += -D_IMPL_NS_NET -DXP_PC -DXP_WIN
-	LDFLAGS = -Wl,--out-implib,$(LIB).a -lwsock32 -lwinmm
+	LDFLAGS += -Wl,--out-implib,$(LIB).a -lwsock32 -lwinmm
 endif
 
 
