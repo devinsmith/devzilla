@@ -32,11 +32,10 @@
     // for |nsresult|, |NS_ADDREF|, et al
 #endif
 
-
-
-/* USER MANUAL
-
-  See also:
+/*
+	Having problems?
+	
+  See the User Manual at:
     <http://www.meer.net/ScottCollins/doc/nsCOMPtr.html>, or
     <http://www.mozilla.org/projects/xpcom/nsCOMPtr.html>
 

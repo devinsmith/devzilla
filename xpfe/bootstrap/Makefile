@@ -14,7 +14,8 @@ INTERNAL_CFLAGS = -Wall -g3 -DXP_UNIX -I../../widget/public \
 	-I../../include -I../../js/src -I../../webshell/public \
 	-I../../nsprpub/lib/libc/include -I../../gfx/public \
 	-I../../view/public -I../../network/public -I../appshell/public \
-	-I../../network/module -fPIC
+	-I../../network/module -I../../modules/plugin/nglsrc \
+	-I../../modules/plugin/public -fPIC
 
 CPPFLAGS += -MMD -MP -MT $@
 LDFLAGS = -L../../xpcom/src -L../../nsprpub/lib/ds \

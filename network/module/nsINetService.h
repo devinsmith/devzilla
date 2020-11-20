@@ -54,6 +54,7 @@ class nsIProtocol;
  */
 struct nsINetService : public nsISupports 
 {
+	static const nsIID& GetIID() { static nsIID iid = NS_INETSERVICE_IID; return iid; }
 #if 0
     /**
      * Initiate an asynchronous URL load.<BR><BR>
@@ -80,7 +81,7 @@ struct nsINetService : public nsISupports
     NS_IMETHOD OpenBlockingStream(nsIURL *aUrl, 
                                   nsIStreamListener *aConsumer,
                                   nsIInputStream **aNewStream) = 0;
-
+#endif
     /**
      * Interrupt an asynchronous URL load.<BR><BR>
      *
@@ -88,7 +89,7 @@ struct nsINetService : public nsISupports
      * @return Returns NS_OK if successful, or NS_ERROR_FAILURE if an error occurred.
      */ 
     NS_IMETHOD InterruptStream(nsIURL* aURL) = 0;
-
+#if 0
     /**
      * Get the complete cookie string associated with the URL
      *

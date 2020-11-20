@@ -383,13 +383,12 @@ protected:
                      nsIPostData* aPostData,
                      nsURLReloadType aType,
                      const PRUint32 aLocalIP);
-#if 0
+
   float mZoom;
 
   static nsIPluginHost    *mPluginHost;
   static nsIPluginManager *mPluginManager;
   static PRUint32          mPluginInitCnt;
-#endif
   PRBool mProcessedEndDocumentLoad;
 };
 
@@ -420,10 +419,13 @@ static NS_DEFINE_IID(kINetSupportIID,         NS_INETSUPPORT_IID);
 static NS_DEFINE_IID(kISupportsIID,           NS_ISUPPORTS_IID);
 static NS_DEFINE_IID(kIWebShellIID,           NS_IWEB_SHELL_IID);
 static NS_DEFINE_IID(kIWidgetIID,             NS_IWIDGET_IID);
-#if 0
+
 static NS_DEFINE_IID(kIPluginManagerIID,      NS_IPLUGINMANAGER_IID);
 static NS_DEFINE_IID(kIPluginHostIID,         NS_IPLUGINHOST_IID);
-static NS_DEFINE_IID(kCPluginHostCID,         NS_PLUGIN_HOST_CID);
+//static NS_DEFINE_IID(kCPluginHostCID,         NS_PLUGIN_HOST_CID);
+static NS_DEFINE_IID(kCPluginManagerCID,      NS_PLUGINMANAGER_CID);
+
+#if 0
 static NS_DEFINE_IID(kIDocumentViewerIID,     NS_IDOCUMENT_VIEWER_IID);
 static NS_DEFINE_IID(kRefreshURLIID,          NS_IREFRESHURL_IID);
 static NS_DEFINE_IID(kITimerCallbackIID,      NS_ITIMERCALLBACK_IID);
@@ -434,19 +436,19 @@ static NS_DEFINE_IID(kIEventQueueServiceIID,  NS_IEVENTQUEUESERVICE_IID);
 
 // XXX not sure
 static NS_DEFINE_IID(kILinkHandlerIID,        NS_ILINKHANDLER_IID);
+#endif
 
 nsIPluginHost *nsWebShell::mPluginHost = nsnull;
 nsIPluginManager *nsWebShell::mPluginManager = nsnull;
 PRUint32 nsWebShell::mPluginInitCnt = 0;
 
-#endif
 nsresult nsWebShell::CreatePluginHost(PRBool aAllowPlugins)
 {
   nsresult rv = NS_OK;
 
   printf("%s - TODO\n", __func__);
-#if 0
 
+#if 0
   if ((PR_TRUE == aAllowPlugins) && (0 == mPluginInitCnt))
   {
     if (nsnull == mPluginManager)
@@ -464,9 +466,9 @@ nsresult nsWebShell::CreatePluginHost(PRBool aAllowPlugins)
       }
     }
   }
+#endif
 
   mPluginInitCnt++;
-#endif
 
   return rv;
 }

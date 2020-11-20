@@ -23,8 +23,9 @@
 #include "nsGfxCIID.h"
 #if 0
 #include "nsViewsCID.h"
+#endif
 #include "nsPluginsCID.h"
-
+#if 0
 #include "nsIBrowserWindow.h"
 #endif
 #include "nsIWebShell.h"
@@ -40,7 +41,7 @@
 #include "nsLayoutCID.h"
 #endif
 #include "nsINetService.h"
-
+#include "nsIPluginManager.h"
 #include "nsSpecialSystemDirectory.h"    // For exe dir
 
 
@@ -89,7 +90,7 @@
 //#endif
 //#define VIEW_DLL   "libraptorview.so"
 #define WEB_DLL    "libraptorwebwidget.so"
-//#define PLUGIN_DLL "raptorplugin.so"
+    #define PLUGIN_DLL "libraptorplugin.so"
 #define PREF_DLL   "./libpref.so"
 //#define PARSER_DLL "libraptorhtmlpars.so"
 //#define DOM_DLL    "libjsdom.so"
@@ -144,7 +145,9 @@ static NS_DEFINE_IID(kWebShellCID, NS_WEB_SHELL_CID);
 static NS_DEFINE_IID(kCDocLoaderServiceCID, NS_DOCUMENTLOADER_SERVICE_CID);
 #if 0
 static NS_DEFINE_IID(kThrobberCID, NS_THROBBER_CID);
+#endif
 static NS_DEFINE_IID(kCPluginHostCID, NS_PLUGIN_HOST_CID);
+#if 0
 static NS_DEFINE_IID(kCParserCID, NS_PARSER_IID);
 static NS_DEFINE_IID(kLookAndFeelCID, NS_LOOKANDFEEL_CID);
 static NS_DEFINE_IID(kCDOMScriptObjectFactory, NS_DOM_SCRIPT_OBJECT_FACTORY_CID);
@@ -167,6 +170,7 @@ static NS_DEFINE_IID(kCMenuBarCID, NS_MENUBAR_CID);
 static NS_DEFINE_IID(kCMenuCID, NS_MENU_CID);
 static NS_DEFINE_IID(kCMenuItemCID, NS_MENUITEM_CID);
 
+static NS_DEFINE_CID(kCPluginManagerCID,          NS_PLUGINMANAGER_CID);
 
 extern "C" void
 NS_SetupRegistry()
@@ -241,7 +245,9 @@ NS_SetupRegistry()
 #if 0
   nsRepository::RegisterFactory(kThrobberCID, WEB_DLL, PR_FALSE, PR_FALSE);
   nsRepository::RegisterFactory(kPrefCID, PREF_DLL, PR_FALSE, PR_FALSE);
-  nsRepository::RegisterFactory(kCPluginHostCID, PLUGIN_DLL, PR_FALSE, PR_FALSE);
+#endif
+  nsComponentManager::RegisterComponent(kCPluginHostCID, NULL, NULL, PLUGIN_DLL, PR_FALSE, PR_FALSE);
+#if 0
   nsRepository::RegisterFactory(kCParserCID, PARSER_DLL, PR_FALSE, PR_FALSE);
   nsRepository::RegisterFactory(kCDOMScriptObjectFactory, DOM_DLL, PR_FALSE, PR_FALSE);
   nsRepository::RegisterFactory(kCDOMNativeObjectRegistry, DOM_DLL, PR_FALSE, PR_FALSE);
@@ -263,4 +269,6 @@ NS_SetupRegistry()
   nsRepository::RegisterFactory(kCMenuItemCID, WIDGET_DLL, PR_FALSE, PR_FALSE);
 #endif
 //  nsRepository::RegisterComponent(kCAppShellServiceCID, NULL, NULL, APPSHELL_DLL, PR_FALSE, PR_FALSE);
+
+  nsComponentManager::RegisterComponent(kCPluginManagerCID, NULL, NULL, PLUGIN_DLL,      PR_FALSE, PR_FALSE);
 }

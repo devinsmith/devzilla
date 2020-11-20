@@ -14,3 +14,4 @@ gfx/xlib depends on widget/xlib
 but on Windows:
 widget/xlib depends on gfx/xlib
 
+modules/plugin needs a lot of work

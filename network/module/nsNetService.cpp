@@ -47,9 +47,7 @@ extern "C" {
 
 #include "nsString.h"
 #include "nsINetlibURL.h"
-#if 0
 #include "nsIProtocolConnection.h"
-#endif
 #include "nsIProtocolURLFactory.h"
 #include "nsIProtocol.h"
 #if 0
@@ -624,7 +622,9 @@ loser:
     return NS_FALSE;
 }
 
+#endif
 static NS_DEFINE_IID(kIProtocolConnectionIID, NS_IPROTOCOLCONNECTION_IID);
+
 
 NS_IMETHODIMP
 nsNetlibService::InterruptStream(nsIURL* aURL)
@@ -656,6 +656,7 @@ nsNetlibService::InterruptStream(nsIURL* aURL)
 done:
   return rv;
 }
+#if 0
 
 
 NS_IMETHODIMP
