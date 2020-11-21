@@ -12,6 +12,7 @@ INCLUDES = -I../../../nsprpub/lib/libc/include -I../../../nsprpub/pr/include \
 					 -I../../../include -I../../../nsprpub/lib/ds \
 					 -I../../../modules/libimg/public -I../../../modules/libutil/public \
 					 -I../../../modules/libpref/public \
+					 -I../../mimetype -I../../cache \
 					 -I../../view/public \
 					 -I../../../js/src -I../protocol/http -I../../../modules/security/freenav \
 					 -I../../../lib/liblayer/include -I../../main -I../protocol/file \

@@ -2,15 +2,18 @@
 
 .PHONY: all clean
 
-C_SRCS = allxpstr.c xp_hash.c xp_qsort.c
+C_SRCS = allxpstr.c xp_file.c xp_hash.c xp_qsort.c xp_regexp.c
 
 OBJS = $(C_SRCS:.c=.o) $(SRCS:.cpp=.o)
 DEPS = $(C_SRCS:.c=.d) $(SRCS:.cpp=.d)
 
 INCLUDES = -I../../include -I../../nsprpub/pr/include \
+					 -I../../nsprpub/lib/libc/include \
 					 -I../../modules/security/freenav \
 					 -I../../modules/libutil/public \
 					 -I../../modules/libimg/public \
+					 -I../../modules/libpref/public \
+					 -I../../js/src \
 					 -I../liblayer/include
 CFLAGS = -Wall -O2
 

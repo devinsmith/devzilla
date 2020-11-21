@@ -2,7 +2,7 @@
 
 .PHONY: all clean
 
-SRCS = extcache.c mkcache.c mkextcac.c
+SRCS = extcache.c mkcache.c mkextcac.c mkmemcac.c
 
 OBJS = $(SRCS:.c=.o)
 DEPS = $(SRCS:.c=.d)
@@ -17,7 +17,7 @@ INCLUDES = -I../../nsprpub/lib/libc/include -I../../nsprpub/pr/include \
 					 -I../protocol/ftp -I../protocol/about -I../protocol/gopher \
 					 -I../protocol/js -I../protocol/remote -I../protocol/dataurl \
 					 -I../cache
-DEFINES= -DNETSCAPE -DMOZILLA_CLIENT -DNO_MEMORY_CACHE
+DEFINES= -DNETSCAPE -DMOZILLA_CLIENT
 CFLAGS = -Wall -g3
 
 CC? = gcc

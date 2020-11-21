@@ -3,8 +3,9 @@
 .PHONY: all clean
 
 CPP_SRCS =
-SRCS = jsautocf.c mkautocf.c mkconect.c mkhelp.c mkfsort.c mkgeturl.c mkparse.c \
-			 mkselect.c mksort.c mkstream.c mktrace.c mkutils.c
+SRCS = jsautocf.c jscookie.c mkautocf.c mkconect.c mkhelp.c mkfsort.c \
+			 mkgeturl.c mkparse.c \
+			 mkselect.c mksockrw.c mksort.c mkstream.c mktrace.c mkutils.c
 
 OBJS = $(SRCS:.c=.o) $(CPP_SRCS:.cpp=.o)
 DEPS = $(SRCS:.c=.d) $(CPP_SRCS:.cpp=.d)
