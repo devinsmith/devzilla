@@ -2,18 +2,19 @@
 
 .PHONY: all clean
 
-SRCS = mkhttp.c
+SRCS = mkaccess.c mkhttp.c
 
 OBJS = $(SRCS:.c=.o)
 DEPS = $(SRCS:.c=.d)
 
-INCLUDES = -I../../nsprpub/lib/libc/include -I../../nsprpub/pr/include \
-					 -I../../xpcom/public -I../public -I. -I../../base/src \
-					 -I../../include -I../../nsprpub/lib/ds -I../../widget/public \
-					 -I../../modules/libimg/public -I../../modules/libutil/public \
+INCLUDES = -I../../../nsprpub/lib/libc/include -I../../../nsprpub/pr/include \
+					 -I../../../xpcom/public -I../public -I. -I../../base/src \
+					 -I../../../include -I../../../nsprpub/lib/ds \
+					 -I../../../modules/libimg/public -I../../../modules/libutil/public \
+					 -I../../../modules/libpref/public \
 					 -I../../view/public \
-					 -I../../js/src -I../protocol/http -I../../modules/security/freenav \
-					 -I../../lib/liblayer/include -I../main -I../protocol/file \
+					 -I../../../js/src -I../protocol/http -I../../../modules/security/freenav \
+					 -I../../../lib/liblayer/include -I../../main -I../protocol/file \
 					 -I../protocol/ftp -I../protocol/about -I../protocol/gopher \
 					 -I../protocol/js -I../protocol/remote -I../protocol/dataurl \
 					 -I../cache

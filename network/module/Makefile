@@ -3,8 +3,8 @@
 .PHONY: all clean
 
 SRCS = nsLoadAttribs.cpp nsHttpUrl.cpp nsHttpURLFactory.cpp \
-			 nsNetFactory.cpp nsNetService.cpp nsNetThread.cpp \
-			 nsStubContext.cpp
+			 nsNetFactory.cpp nsNetService.cpp nsNetStubs.cpp \
+			 nsNetThread.cpp nsStubContext.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 DEPS = $(SRCS:.cpp=.d)
@@ -18,7 +18,7 @@ INCLUDES = -I../../nsprpub/lib/libc/include -I../../nsprpub/pr/include \
 					 -I../../lib/liblayer/include -I../protocol/sockstub \
 					 -I../protocol/file -I../protocol/ftp -I../protocol/about \
 					 -I../protocol/gopher -I../protocol/remote -I../cnvts \
-					 -I../cache
+					 -I../cache -I../../modules/security/freenav
 DEFINES= -DNETSCAPE
 CFLAGS = -Wall -g3
 
@@ -26,8 +26,7 @@ CC? = gcc
 AR? = ar
 RM = rm -f
 
-LDFLAGS = -L../cnvts -L../protocol/file -L../protocol/http -lnetcnvts \
-					-lfileurl -lhttpurl
+LDFLAGS =
 
 LIB = libmoznetlib
 SHARED_LIB = $(LIB).so

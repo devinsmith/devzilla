@@ -373,7 +373,7 @@ TimingStopClock(PRTime* result, const char* clock)
         PL_HashTableRemove(_timingClockTable, clock);
         return PR_TRUE;
     } else {
-        *result = LL_ZERO;
+        *result = 0;
         return PR_FALSE;
     }
 }

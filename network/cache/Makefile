@@ -1,30 +1,30 @@
-# Makefile for libmoznetwork
+# Makefile for libnetcache
 
 .PHONY: all clean
 
-CPP_SRCS =
-SRCS = jsautocf.c mkautocf.c mkconect.c mkhelp.c mkfsort.c mkgeturl.c mkparse.c \
-			 mkselect.c mksort.c mkstream.c mktrace.c mkutils.c
+SRCS = extcache.c mkcache.c mkextcac.c
 
-OBJS = $(SRCS:.c=.o) $(CPP_SRCS:.cpp=.o)
-DEPS = $(SRCS:.c=.d) $(CPP_SRCS:.cpp=.d)
+OBJS = $(SRCS:.c=.o)
+DEPS = $(SRCS:.c=.d)
 
 INCLUDES = -I../../nsprpub/lib/libc/include -I../../nsprpub/pr/include \
 					 -I../../xpcom/public -I../public -I. -I../../base/src \
 					 -I../../include -I../../nsprpub/lib/ds -I../../widget/public \
 					 -I../../modules/libimg/public -I../../modules/libutil/public \
-					 -I../../view/public -I../../modules/libpref/public \
+					 -I../../view/public \
 					 -I../../js/src -I../protocol/http -I../../modules/security/freenav \
-					 -I../../lib/liblayer/include -I../mimetype -I../cache -I../client \
-					 -I../cnvts -I../util -I../../sun-java/stubs/include
-DEFINES= -DNETSCAPE -DMODULAR_NETLIB -DMOZILLA_CLIENT
+					 -I../../lib/liblayer/include -I../main -I../protocol/file \
+					 -I../protocol/ftp -I../protocol/about -I../protocol/gopher \
+					 -I../protocol/js -I../protocol/remote -I../protocol/dataurl \
+					 -I../cache
+DEFINES= -DNETSCAPE -DMOZILLA_CLIENT -DNO_MEMORY_CACHE
 CFLAGS = -Wall -g3
 
 CC? = gcc
 AR? = ar
 RM = rm -f
 
-LIB = libmoznetwork
+LIB = libnetcache
 SHARED_LIB = $(LIB).so
 STATIC_LIB = $(LIB).a
 
@@ -44,7 +44,7 @@ $(STATIC_LIB): $(OBJS)
 	ranlib $(STATIC_LIB)
 
 $(SHARED_LIB): $(OBJS)
-	$(CXX) -shared -o $@ $(OBJS) $(LDFLAGS)
+	$(CC) -shared -o $@ $(OBJS) $(LDFLAGS)
 
 .c.o:
 	$(CC) $(CFLAGS) $(INCLUDES) $(DEFINES) -fPIC -MMD -MP -MT $@ -o $@ -c $<
