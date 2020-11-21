@@ -792,6 +792,7 @@ typedef struct _mdata {
 #define NET_AUTH_FAILED_DISPLAY_DOCUMENT    2
 #define NET_AUTH_SUCCEEDED                  3
 #define NET_RETRY_WITH_AUTH                 4
+#define NET_WAIT_FOR_AUTH                   5
 
 #ifdef  XP_UNIX
 #define NET_COMMAND_NETSCAPE        "internal"
@@ -802,6 +803,17 @@ typedef struct _mdata {
 #define NET_COMMAND_DELETED     "deleted"
 #define NET_MOZILLA_FLAGS       "x-mozilla-flags"
 #endif
+
+/* this is the interface struct for password auth with
+   the front-end dialog. this is a hack to bridge the
+   new and old parts of netlib XXX */
+typedef struct _NET_AuthClosure {
+  char * msg;
+  char * user;
+  char * pass;
+  void * _private;
+} NET_AuthClosure;
+
 
 /* the entry file info structure contains information about
  * an ftp directory entry broken down into components
@@ -914,11 +926,7 @@ extern XP_Bool NET_HaveConverterForMimeType(char *content_type);
 /* builds an outgoing stream and returns a stream class structure
  * containing a stream function table
  */
-#ifdef MODULAR_NETLIB
 PR_EXTERN(NET_StreamClass *)
-#else
-extern NET_StreamClass * 
-#endif /* MODULAR_NETLIB */
            NET_StreamBuilder (
            FO_Present_Types  format_out,
            URL_Struct *      anchor,
@@ -1063,6 +1071,7 @@ extern Bool NET_SupressRefererForAnonymity();
 
 #if defined(CookieManagement)
 extern void NET_DisplayCookieInfoAsHTML(MWContext *context);
+extern void NET_CookieViewerReturn();
 extern void NET_DisplayCookieInfoOfSiteAsHTML(MWContext *context, char * URLName);
 extern int NET_CookiePermission(char* URLName);
 extern int NET_CookieCount(char * URLName);
