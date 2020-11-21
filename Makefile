@@ -10,6 +10,7 @@ DIRS = nsprpub \
 	 $(NULL)
 
 DIRS += xpcom \
+	 lib \
 	 $(NULL)
 
 DIRS += modules/libutil \
