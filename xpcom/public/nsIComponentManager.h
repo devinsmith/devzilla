@@ -140,15 +140,20 @@ public:
 
   //////////////////////////////////////////////////////////////////////////////
   // DLL registration support
-  /* Autoregistration will try only files with these extensions.
-   * All extensions are case insensitive.
-   * ".dll",    // Windows
-   * ".dso",    // Unix
-   * ".so",     // Unix
-   * ".sl",     // Unix: HP
-   * "_dll",    // Mac
-   * ".dlm",    // new for all platforms
-   */
+  // Autoregistration will try only files with these extensions.
+  // All extensions are case insensitive.
+  // ".dll",    // Windows
+  // ".dso",    // Unix
+  // ".so",     // Unix
+  // ".sl",     // Unix: HP
+  // "_dll",    // Mac
+  // ".dlm",    // new for all platforms
+  //
+  // Directory and fullname are what NSPR will accept. For eg.
+  // 	WIN	y:/home/dp/mozilla/dist/bin
+  //	UNIX	/home/dp/mozilla/dist/bin
+  //	MAC	/Hard drive/mozilla/dist/apprunner
+  //
   enum RegistrationTime {
 	NS_Startup = 0,
 	NS_Script = 1,
@@ -201,15 +206,6 @@ public:
                                  nsISupports *aDelegate,
                                  const nsIID &aIID,
                                  void **aResult);
-
-  // Creates a class instance for a specific class ID
-  /*
-  static nsresult CreateInstance2(const nsCID &aClass, 
-                                  nsISupports *aDelegate,
-                                  const nsIID &aIID,
-                                  void *aSignature,
-                                  void **aResult);
-  */
 
   // Manually registry a factory for a class
   static nsresult RegisterFactory(const nsCID &aClass,
