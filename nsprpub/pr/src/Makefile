@@ -7,7 +7,7 @@ SRCS = io/prio.c io/priometh.c io/prlog.c io/prfdcach.c \
 			 io/prprf.c \
 			 malloc/prmalloc.c malloc/prmem.c linking/prlink.c \
 			 misc/prerror.c misc/prinit.c pthreads/ptsynch.c memory/prseg.c \
-			 md/prosdep.c misc/pratom.c \
+			 md/prosdep.c misc/pratom.c misc/prtime.c  \
 			 misc/prinrval.c pthreads/ptthread.c \
 			 misc/prenv.c misc/prerr.c \
 			 pthreads/ptio.c \

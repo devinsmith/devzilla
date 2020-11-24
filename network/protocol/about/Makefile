@@ -1,31 +1,31 @@
-# Makefile for libmozcnetinit
+# Makefile for libabouturl
 
 .PHONY: all clean
 
-SRCS = cvactive.c cvchunk.c cvextcon.c cvjscfg.c cvsimple.c cvunzip.c
+SRCS = mkabout.c
 
 OBJS = $(SRCS:.c=.o)
 DEPS = $(SRCS:.c=.d)
 
-INCLUDES = -I../../nsprpub/lib/libc/include -I../../nsprpub/pr/include \
-					 -I../../xpcom/public -I../public -I. -I../../base/src \
-					 -I../../include -I../../nsprpub/lib/ds -I../../widget/public \
-					 -I../../modules/libimg/public -I../../modules/libutil/public \
-					 -I../../modules/libpref/public \
-					 -I../../view/public -I../mimetype \
-					 -I../../js/src -I../protocol/http -I../../modules/security/freenav \
-					 -I../../lib/liblayer/include -I../main -I../protocol/file \
+INCLUDES = -I../../../nsprpub/lib/libc/include -I../../../nsprpub/pr/include \
+					 -I../../../xpcom/public -I../public -I. -I../../../base/src \
+					 -I../../../include -I../../../nsprpub/lib/ds -I../../../widget/public \
+					 -I../../../modules/libimg/public -I../../../modules/libutil/public \
+					 -I../../../modules/libpref/public -I../../../view/public \
+					 -I../../../js/src -I../protocol/http -I../../../modules/security/freenav \
+					 -I../../../lib/liblayer/include -I../../main -I../protocol/file \
+					 -I../../mimetype \
 					 -I../protocol/ftp -I../protocol/about -I../protocol/gopher \
 					 -I../protocol/js -I../protocol/remote -I../protocol/dataurl \
-					 -I../cache
-DEFINES= -DNETSCAPE -DMOZILLA_CLIENT
+					 -I../cache -I../../../network/cache -I../http
+DEFINES= -DNETSCAPE -DSTANDALONE_IMAGE_LIB
 CFLAGS = -Wall -g3
 
 CC? = gcc
 AR? = ar
 RM = rm -f
 
-LIB = libnetcnvts
+LIB = libabouturl
 SHARED_LIB = $(LIB).so
 STATIC_LIB = $(LIB).a
 

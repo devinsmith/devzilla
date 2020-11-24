@@ -142,13 +142,13 @@ net_ReduceURL (char *url)
 
 		/* find the path so we only change that and not the host
 		 */
-		path_ptr = PL_strchr(url, '/');
+		path_ptr = strchr(url, '/');
 
 		if(!path_ptr)
 		    return(url);
 
 		if(*(path_ptr+1) == '/')
-		    path_ptr = PL_strchr(path_ptr+2, '/');
+		    path_ptr = strchr(path_ptr+2, '/');
 			
 		if(!path_ptr)
 		    return(url);
@@ -278,7 +278,7 @@ NET_MakeAbsoluteURL(char * absolute_url, char * relative_url)
          * or a messed up one of the type proto:/path
          * but notice the missing host.
          */
-		char * colon = PL_strchr(relative_url, ':'); /* must be there */
+		char * colon = strchr(relative_url, ':'); /* must be there */
 
 		if( (colon && *(colon+1) == '/' && *(colon+2) == '/') || 
 			(url_type != GOPHER_TYPE_URL
@@ -302,7 +302,7 @@ NET_MakeAbsoluteURL(char * absolute_url, char * relative_url)
 			 * remove the stuff before and at the colon and treat it as a normal
 			 * relative url
 			 */
-			char * colon = PL_strchr(relative_url, ':');
+			char * colon = strchr(relative_url, ':');
 
 			relative_url = colon+1;
 		  }
@@ -367,9 +367,9 @@ NET_MakeAbsoluteURL(char * absolute_url, char * relative_url)
 
 		/* find the colon after the protocol
 		 */
-		cat_point = PL_strchr(absolute_url, ':');
+		cat_point = strchr(absolute_url, ':');
 		if (cat_point && base_type == WYSIWYG_TYPE_URL)
-			cat_point = PL_strchr(cat_point + 1, ':');
+			cat_point = strchr(cat_point + 1, ':');
 
 		/* append after the colon
 		 */
@@ -385,9 +385,9 @@ NET_MakeAbsoluteURL(char * absolute_url, char * relative_url)
 
 		/* find the colon after the protocol 
          */
-        char *colon = PL_strchr(absolute_url, ':');
+        char *colon = strchr(absolute_url, ':');
 		if (colon && base_type == WYSIWYG_TYPE_URL)
-			colon = PL_strchr(colon + 1, ':');
+			colon = strchr(colon + 1, ':');
 
 		if(colon)
 		  {
@@ -395,7 +395,7 @@ NET_MakeAbsoluteURL(char * absolute_url, char * relative_url)
 			  {
 				/* find the next slash 
 				 */
-				cat_point = PL_strchr(colon+3, '/');
+				cat_point = strchr(colon+3, '/');
 
 				if(!cat_point)
 				  {
@@ -428,11 +428,11 @@ NET_MakeAbsoluteURL(char * absolute_url, char * relative_url)
 		 * any # punctuation the url might have
 	 	 *
 		 */
-		char * hash = PL_strchr(absolute_url, '#');
+		char * hash = strchr(absolute_url, '#');
 	
 		if(hash)
 		  {
-			char * ques_mark = PL_strchr(absolute_url, '?');
+			char * ques_mark = strchr(absolute_url, '?');
    
 			if(ques_mark)
 			  {
@@ -463,8 +463,8 @@ NET_MakeAbsoluteURL(char * absolute_url, char * relative_url)
 		 *
 		 * append after the last slash
 		 */
-		char * ques = PL_strchr(absolute_url, '?');
-		char * hash = PL_strchr(absolute_url, '#');
+		char * ques = strchr(absolute_url, '?');
+		char * hash = strchr(absolute_url, '#');
 
 		if(ques)
 			*ques = '\0';
@@ -472,12 +472,12 @@ NET_MakeAbsoluteURL(char * absolute_url, char * relative_url)
 		if(hash)
 			*hash = '\0';
 
-		cat_point = PL_strrchr(absolute_url, '/');
+		cat_point = strrchr(absolute_url, '/');
 
 		/* if there are no slashes then append right after the colon after the protocol
 		 */
 		if(!cat_point)
-		    cat_point = PL_strchr(absolute_url, ':');
+		    cat_point = strchr(absolute_url, ':');
 
 		/* set the value back 
 		 */
@@ -599,7 +599,7 @@ NET_ParseDate(char *date_string)
 
     /* Whatever format we're looking at, it will start with weekday. */
     /* Skip to first space. */
-    if(!(ip = PL_strchr(date_string,' ')))
+    if(!(ip = strchr(date_string,' ')))
         return 0;
     else
         while(NET_IS_SPACE(*ip))
@@ -696,7 +696,7 @@ NET_ParseURL (const char *url, int parts_requested)
 
 	if(!url)
 		return(StrAllocCat(rv, ""));
-	colon = PL_strchr(url, ':'); /* returns a const char */
+	colon = strchr(url, ':'); /* returns a const char */
 
 	/* Get the protocol part, not including anything beyond the colon */
 	if (parts_requested & GET_PROTOCOL_PART) {
@@ -729,11 +729,11 @@ NET_ParseURL (const char *url, int parts_requested)
 			&& (*(colon+2) == '/')
 			&& (*(colon+3) != '\0')) {
 
-			if ( (slash = PL_strchr(colon+3, '/')) != NULL)
+			if ( (slash = strchr(colon+3, '/')) != NULL)
 				*slash = '\0';
-			if ( (atSign = PL_strchr(colon+3, '@')) != NULL) {
+			if ( (atSign = strchr(colon+3, '@')) != NULL) {
 				*atSign = '\0';
-				if ( (passwordColon = PL_strchr(colon+3, ':')) != NULL)
+				if ( (passwordColon = strchr(colon+3, ':')) != NULL)
 					*passwordColon = '\0';
 				StrAllocCat(rv, colon+3);
 
@@ -760,22 +760,22 @@ NET_ParseURL (const char *url, int parts_requested)
         if(colon) {
 			if(*(colon+1) == '/' && *(colon+2) == '/')
 			  {
-				slash = PL_strchr(colon+3, '/');
+				slash = strchr(colon+3, '/');
 
 				if(slash)
 					*slash = '\0';
 
-				if( (atSign = PL_strchr(colon+3, '@')) != NULL)
+				if( (atSign = strchr(colon+3, '@')) != NULL)
 					host = atSign+1;
 				else
 					host = colon+3;
 				
-				ques_mark = PL_strchr(host, '?');
+				ques_mark = strchr(host, '?');
 
 				if(ques_mark)
 					*ques_mark = '\0';
 
-				gtThan = PL_strchr(host, '>');
+				gtThan = strchr(host, '>');
 
 				if (gtThan)
 					*gtThan = '\0';
@@ -829,7 +829,7 @@ NET_ParseURL (const char *url, int parts_requested)
             if(*(colon+1) == '/' && *(colon+2) == '/')
               {
 				/* skip host part */
-                slash = PL_strchr(colon+3, '/');
+                slash = strchr(colon+3, '/');
 			  }
 			else 
               {
@@ -840,8 +840,8 @@ NET_ParseURL (const char *url, int parts_requested)
                 
 			if(slash)
 			  {
-			    ques_mark = PL_strchr(slash, '?');
-			    hash_mark = PL_strchr(slash, '#');
+			    ques_mark = strchr(slash, '?');
+			    hash_mark = strchr(slash, '#');
 
 			    if(ques_mark)
 				    *ques_mark = '\0';
@@ -861,11 +861,11 @@ NET_ParseURL (const char *url, int parts_requested)
       }
 		
     if(parts_requested & GET_HASH_PART) {
-		hash_mark = PL_strchr(url, '#'); /* returns a const char * */
+		hash_mark = strchr(url, '#'); /* returns a const char * */
 
 		if(hash_mark)
 		  {
-			ques_mark = PL_strchr(hash_mark, '?');
+			ques_mark = strchr(hash_mark, '?');
 
 			if(ques_mark)
 				*ques_mark = '\0';
@@ -878,11 +878,11 @@ NET_ParseURL (const char *url, int parts_requested)
 	  }
 
     if(parts_requested & GET_SEARCH_PART) {
-        ques_mark = PL_strchr(url, '?'); /* returns a const char * */
+        ques_mark = strchr(url, '?'); /* returns a const char * */
 
         if(ques_mark)
           {
-            hash_mark = PL_strchr(ques_mark, '#');
+            hash_mark = strchr(ques_mark, '#');
 
             if(hash_mark)
                 *hash_mark = '\0';
@@ -1217,12 +1217,12 @@ int NET_MakeRelativeURL( char *base_url,
     /* Similar to NET_ParseURL(GET_PATH_PART),
      *  but we don't strip named anchors and search strings
      */
-    colon = (char*) PL_strchr(base_url, ':'); /* returns a const char * */
+    colon = (char*) strchr(base_url, ':'); /* returns a const char * */
 
     if(colon) {
         if(*(colon+1) == '/' && *(colon+2) == '/') {
 			/* skip host part */
-            slash = PL_strchr(colon+3, '/');
+            slash = strchr(colon+3, '/');
         } else {
 		    /* path is right after the colon */
             slash = colon+1;
@@ -1235,7 +1235,7 @@ int NET_MakeRelativeURL( char *base_url,
         goto CLEAN_UP;
     }
 
-    colon = (char*) PL_strchr(absolute_url, ':');
+    colon = (char*) strchr(absolute_url, ':');
 
     /* For url_path, find beginning of path in our 
      * already-allocated "absolute_url" string
@@ -1243,7 +1243,7 @@ int NET_MakeRelativeURL( char *base_url,
     */
     if(colon) {
         if(*(colon+1) == '/' && *(colon+2) == '/') {
-            url_path = PL_strchr(colon+3, '/');
+            url_path = strchr(colon+3, '/');
         } else {
             url_path = colon+1;
         }
@@ -1255,8 +1255,8 @@ int NET_MakeRelativeURL( char *base_url,
     /* TODO: MODIFY FOR NETWORK FILENAMES: //netname//blah */
 
     /* Find location of drive separator */
-    base_ptr = (char*) PL_strchr(base_path, '|');
-    url_ptr = (char*) PL_strchr(url_path, '|');
+    base_ptr = (char*) strchr(base_path, '|');
+    url_ptr = (char*) strchr(url_path, '|');
 
     /* Test if drive is different */
     if ( base_ptr && url_ptr &&
@@ -1322,7 +1322,7 @@ int NET_MakeRelativeURL( char *base_url,
         /* We are in the same directory if there are no slashes
          *  in the final relative path
          */
-        if ( subdir_count == 0 && NULL == PL_strchr(url_ptr, '/') ){
+        if ( subdir_count == 0 && NULL == strchr(url_ptr, '/') ){
             Result = NET_URL_SAME_DIRECTORY;
         } else {
             Result = NET_URL_SAME_DEVICE;
@@ -1415,7 +1415,7 @@ char * NET_MakeTargetURL( char *base_url,
     /* Find where to concatenate the source
      *  we must have a slash or our base isn't valid!
     */
-    base_end = PL_strrchr(base_url, '/');
+    base_end = strrchr(base_url, '/');
     if ( !base_end ){
         return NULL;
     } 
@@ -1423,7 +1423,7 @@ char * NET_MakeTargetURL( char *base_url,
 
 
     /* Find start of source (usually filename) right after the last slash */
-    src_start = PL_strrchr(src_url, '/');
+    src_start = strrchr(src_url, '/');
     if (src_start){
         src_start++;
     } else {
@@ -1432,8 +1432,8 @@ char * NET_MakeTargetURL( char *base_url,
     }
 
     /* Find end at neareast '#' or '?'  */
-    src_end = PL_strchr(src_start, '#');
-    question = PL_strchr(src_start, '?');
+    src_end = strchr(src_start, '#');
+    question = strchr(src_start, '?');
 
     if ( question &&
         ( !src_end || question < src_end ) ){
@@ -1792,7 +1792,7 @@ NET_HTTPIndexParserPut(HTTPIndexParserData *obj, char *data, int32 len)
 		data_line = XP_StripLine(obj->line_buffer);
 
 		/* get the line code */
-		colon = PL_strchr(data_line, ':');
+		colon = strchr(data_line, ':');
 
 		if(!colon)
 			goto end_of_line;

@@ -24,6 +24,9 @@
  * Modified by Judson Valeski '97
  */
 
+#define _GNU_SOURCE
+#include <string.h>
+
 #include "rosetta.h"
 #include "mkutils.h"
 #include "netutils.h"
@@ -198,7 +201,7 @@ int NET_SetSocksHost(char * host)
 		/* If there's no port or it's zero, fail out so user gets
 		 * an error and checks his configuration.
 		 */
-		if ( ((cp = PL_strrchr(host, ':')) != NULL) 
+		if ( ((cp = strrchr(host, ':')) != NULL) 
 			&& (*(cp+1) != '\0') 
 			&& (*(cp+1) != '0') ) {
 			*cp = 0;
@@ -570,7 +573,7 @@ net_FindAddress (const char *host_ptr,
 			if(socket != NULL) {
 				char *padHost=NET_ParseURL(MK_padPacURL, GET_HOST_PART);
 				if(padHost && *padHost) {
-					char *colon=PL_strchr(padHost, ':');
+					char *colon=strchr(padHost, ':');
 					int status;
 #ifndef ASYNC_DNS
 					char dbbuf[PR_NETDB_BUF_SIZE];
@@ -608,7 +611,7 @@ net_FindAddress (const char *host_ptr,
 		return -1;
 
     /* Parse port number if present */  
-	port = PL_strchr(host_port, ':');  
+	port = strchr(host_port, ':');  
     if (port) {
         *port++ = 0;       
         if (NET_IS_DIGIT(*port)) {
@@ -688,8 +691,8 @@ net_FindAddress (const char *host_ptr,
 		 */
 		if((!PL_strncasecmp(host_port, "home.", 5)
 		    || !PL_strncasecmp(host_port, "rl.", 3))
-			&& (PL_strcasestr(host_port+2, ".netscape.com")
-				|| PL_strcasestr(host_port+2, ".mcom.com"))) {
+			&& (strcasestr(host_port+2, ".netscape.com")
+				|| strcasestr(host_port+2, ".mcom.com"))) {
 			time_t cur_time = time(NULL);
 			char temp_string[32];
 			XP_Bool is_rl_host;
@@ -975,7 +978,7 @@ net_connection_failed(CONST char *hostname)
 		return FALSE;
 
 	/* Look for a port */
-	if( (port = PL_strchr(hostCopy, ':')) != NULL )
+	if( (port = strchr(hostCopy, ':')) != NULL )
 		*port = '\0';
 
 	dns_entry = net_CheckDNSCache(hostCopy);
@@ -1188,7 +1191,7 @@ HG71089
 
 		StrAllocCopy(althost, ip_address_string);
 
-		port = PL_strchr(host, ':');
+		port = strchr(host, ':');
 		if ( port ) {
 			StrAllocCat(althost, port);
 		}

@@ -74,14 +74,14 @@ PRIVATE int net_ChunkedWrite (NET_StreamClass *stream, char* s, int32 l)
 		 	 *
 		 	 * make sure the line has a CRLF
 	 	 	 */
-			if((line_feed = PL_strnchr(obj->in_buf, LF, obj->in_buf_size)) == NULL)
+			if((line_feed = memchr(obj->in_buf, LF, obj->in_buf_size)) == NULL)
 			{
 				return 1;  /* need more data */
 			}
 			
             *line_feed = '\0';
 
-            semicolon = PL_strnchr(obj->in_buf, ';', line_feed-obj->in_buf);
+            semicolon = memchr(obj->in_buf, ';', line_feed-obj->in_buf);
 
             if(semicolon)
                 *semicolon = '\0';
@@ -146,7 +146,7 @@ PRIVATE int net_ChunkedWrite (NET_StreamClass *stream, char* s, int32 l)
 		}
         else if(obj->cur_state == STRIP_CRLF)
         {
-            if(PL_strnchr(obj->in_buf, LF, obj->in_buf_size) == NULL)
+            if(memchr(obj->in_buf, LF, obj->in_buf_size) == NULL)
             {
                 return 1; /* No LF, need more data. */ 
             }
@@ -198,7 +198,7 @@ PRIVATE int net_ChunkedWrite (NET_StreamClass *stream, char* s, int32 l)
             char *value;
 
             /* parse until we see two CRLF's in a row */
-            if((line_feed = PL_strnchr(obj->in_buf, LF, obj->in_buf_size)) == NULL)
+            if((line_feed = memchr(obj->in_buf, LF, obj->in_buf_size)) == NULL)
 			{
 				return 1;  /* need more data */
 			}
@@ -217,7 +217,7 @@ PRIVATE int net_ChunkedWrite (NET_StreamClass *stream, char* s, int32 l)
 
             /* names are separated from values with a colon
             */
-            value = PL_strchr(obj->in_buf, ':');
+            value = strchr(obj->in_buf, ':');
             if(value)
                 value++;
 

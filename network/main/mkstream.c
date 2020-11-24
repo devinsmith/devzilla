@@ -98,7 +98,7 @@ net_compare_mime_types(char * absolute, char * partial)
    if(!PL_strcmp(partial, "*"))
 	  return(NET_WILDCARD_MATCH);
 
-   if((star = PL_strchr(partial, '*')) == 0)
+   if((star = strchr(partial, '*')) == 0)
 	  return(0);  /* not a wildcard mime type */
 
    /* compare just the part before the slash star
@@ -376,7 +376,7 @@ net_RegisterGenericConverterOrDecoder(XP_List        ** conv_list,
     /* find out the type of entry format_in is
      */
     f_in_type = NET_MIME_EXACT_MATCH;
-    if(PL_strchr(format_in, '*'))
+    if(strchr(format_in, '*'))
       {
 	    if(!PL_strcmp(format_in, "*"))
 	        f_in_type = NET_WILDCARD_MATCH;
@@ -488,7 +488,7 @@ net_RegisterGenericConverterOrDecoder(XP_List        ** conv_list,
         list_ptr = pList;
         while((converter_struct_ptr = (net_ConverterStruct *) XP_ListNextObject(list_ptr)) != 0)
           {
-            if(PL_strchr(converter_struct_ptr->format_in, '*'))
+            if(strchr(converter_struct_ptr->format_in, '*'))
 	          {
 		        XP_ListInsertObject (pList, 
 									 converter_struct_ptr, 

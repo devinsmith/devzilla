@@ -27,6 +27,9 @@
 /* #define TRUST_LABELS 1 */
 #endif
 
+#define _GNU_SOURCE
+#include <string.h>
+
 #include "rosetta.h"
 #include "mkutils.h"
 #include "net_xp_file.h"
@@ -322,7 +325,7 @@ NET_MakeUploadURL( char **full_location, char *location,
     **full_location = '\0';
 
     /* Find start just past http:// or ftp:// */
-    start = PL_strstr(location, "//");
+    start = strstr(location, "//");
     if( !start ) return FALSE;
 
     /* Point to just past the host part */
@@ -334,7 +337,7 @@ NET_MakeUploadURL( char **full_location, char *location,
     *destination = '\0';
 
     /* Skip over any user:password in supplied location */
-    at_ptr = PL_strchr(start, '@');
+    at_ptr = strchr(start, '@');
     if( at_ptr ){
         start = at_ptr + 1;
     }
@@ -380,7 +383,7 @@ NET_ParseUploadURL( char *full_location, char **location,
     unamePwd = NET_ParseURL(full_location, GET_USERNAME_PART | GET_PASSWORD_PART);
 
     /* get the username & password out of the combo string */
-    if( (colon = PL_strchr(unamePwd, ':')) != NULL )
+    if( (colon = strchr(unamePwd, ':')) != NULL )
     {
         *colon='\0';
         username = PL_strdup(unamePwd);
@@ -1091,7 +1094,7 @@ NET_ParseMimeHeader(FO_Present_Types outputFormat,
         value = empty_string;
       }
 
-    colon_ptr = PL_strchr(name, ':');
+    colon_ptr = strchr(name, ':');
     if (colon_ptr) {
         *colon_ptr = '\0';
         }
@@ -1625,9 +1628,9 @@ NET_ParseMimeHeader(FO_Present_Types outputFormat,
               {
                 found_one = TRUE;
 
-                if(PL_strcasestr(value, "NETSITE"))
+                if(strcasestr(value, "NETSITE"))
                     URL_s->is_netsite = TRUE;
-                else if(PL_strcasestr(value, "NETSCAPE"))
+                else if(strcasestr(value, "NETSCAPE"))
                     URL_s->is_netsite = TRUE;
               }
             break;
@@ -2087,18 +2090,18 @@ NET_ScanHTMLForURLs(const char* input)
                 case '<':
                     if ((linestart[1] == 'a' || linestart[1] == 'A') &&
                         linestart[2] == ' ') {
-                        lineend = PL_strcasestr(linestart, "</a");
+                        lineend = strcasestr(linestart, "</a");
                         if (lineend) {
-                            lineend = PL_strchr(lineend, '>');
+                            lineend = strchr(lineend, '>');
                             if (lineend) lineend++;
                         }
                     } else {
-                        lineend = PL_strchr(linestart, '>');
+                        lineend = strchr(linestart, '>');
                         if (lineend) lineend++;
                     }
                     break;
                 case '&':
-                    lineend = PL_strchr(linestart, ';');
+                    lineend = strchr(linestart, ';');
                     if (lineend) lineend++;
                     break;
                 default:
@@ -2135,13 +2138,13 @@ NET_IsFQDNMailAddress(const char * string)
 {
     /* first make sure that an @ exists
      */
-    char * at_sign = PL_strchr(string, '@');
+    char * at_sign = strchr(string, '@');
 
     if(at_sign)
       {
         /* make sure it has at least one period 
          */
-        if(PL_strchr(at_sign, '.'))
+        if(strchr(at_sign, '.'))
             return(TRUE);
       }
 
@@ -2567,7 +2570,7 @@ NET_AddLOSubmitDataToURLStruct(LO_FormSubmitData * sub_data,
                 if(value_array[i])
                 {
                     /* only write the filename, not the whole path */
-                    char * slash = PL_strrchr(value_array[i], '/');
+                    char * slash = strrchr(value_array[i], '/');
                     if(slash)
                         slash++;
                     else
@@ -2661,7 +2664,7 @@ NET_AddLOSubmitDataToURLStruct(LO_FormSubmitData * sub_data,
                 if(value_array[i])
                   {
                     /* only write the filename, not the whole path */
-                    char * slash = PL_strrchr(value_array[i], '/');
+                    char * slash = strrchr(value_array[i], '/');
                     if(slash)
                         slash++;
                     else
@@ -2808,10 +2811,10 @@ NET_AddLOSubmitDataToURLStruct(LO_FormSubmitData * sub_data,
 
             /* get rid of ? or # in the url string since we are adding it
              */
-            punc = PL_strchr(url_struct->address, '?');
+            punc = strchr(url_struct->address, '?');
             if(punc)
                *punc = '\0';  /* terminate here */
-            punc = PL_strchr(url_struct->address, '#');
+            punc = strchr(url_struct->address, '#');
             if(punc)
                *punc = '\0';  /* terminate here */
 
@@ -2980,10 +2983,10 @@ NET_AddCoordinatesToURLStruct(URL_Struct * url_struct, int32 x_coord, int32 y_co
 #ifdef STRIP_SEARCH_DATA_FROM_ISMAP_URLS
       {
         char *punc;
-        punc = PL_strchr(url_struct->address, '?');
+        punc = strchr(url_struct->address, '?');
         if(punc)
             *punc = '\0';  /* terminate here */
-        punc = PL_strchr(url_struct->address, '#');
+        punc = strchr(url_struct->address, '#');
         if(punc)
             *punc = '\0';  /* terminate here */
       }

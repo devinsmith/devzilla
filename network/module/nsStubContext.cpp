@@ -32,6 +32,9 @@
 #include "nsNetStream.h"
 
 
+/* forward declaration */
+extern "C" void NET_ResumeWithAuth (void *);
+
 void free_stub_context(MWContext *window_id);
 
 
@@ -253,12 +256,16 @@ stub_PromptUsernameAndPassword(MWContext *context,
 }
 
 PRIVATE
-char *stub_PromptPassword(MWContext *context,
-                          const char *msg)
+char *_stub_PromptPassword(MWContext *context,
+                           char *msg,
+                           XP_Bool *remember,
+                           XP_Bool is_secure,
+                           void *closure)
 {
   nsINetSupport *ins;
   char *result = nsnull;
 
+#ifndef XP_UNIX
   if (nsnull != (ins = getNetSupport(context->modular_data))) {
     nsAutoString str(msg);
     nsAutoString res;
@@ -270,19 +277,36 @@ char *stub_PromptPassword(MWContext *context,
 
   } 
   /* No nsINetSupport interface... */
-  else {
+  else
+#endif /* !XP_UNIX */
+  {
+    NET_AuthClosure *auth_closure = (NET_AuthClosure *) closure;
     char buf[256];
 
     printf("%s\n", msg);
     printf("%cPassword: ", '\007');
     fgets(buf, sizeof buf, stdin);
     if (PL_strlen(buf)) {
-      result = PL_strdup(buf);
+      auth_closure->pass = PL_strdup(buf);
+      auth_closure->pass[strlen(buf)-1] = '\0';
+      NET_ResumeWithAuth (closure);
     }
   }
 
   return result;
 }
+
+extern "C" char *
+stub_PromptPassword(MWContext *context,
+                           char *msg,
+                           XP_Bool *remember,
+                           XP_Bool is_secure,
+                           void * closure)
+{
+    return _stub_PromptPassword(context, msg, remember,
+                                is_secure, closure);
+}
+
 
 PRIVATE void stub_GraphProgressInit(MWContext  *context, 
                                     URL_Struct *URL_s, 

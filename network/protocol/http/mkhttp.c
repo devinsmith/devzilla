@@ -27,6 +27,9 @@
 /* #define TRUST_LABELS 1 */
 #endif
 
+#define _GNU_SOURCE
+#include <string.h>
+
 #include "rosetta.h"
 #include "xp.h"
 #include "netutils.h"
@@ -384,10 +387,10 @@ net_check_for_company_hostname(ActiveEntry *ce)
         */
         char * host = NET_ParseURL(ce->URL_s->address, GET_HOST_PART);
   
-        if(host && *host && !(dot = PL_strchr(host, '.'))) {
+        if(host && *host && !(dot = strchr(host, '.'))) {
             add_www = add_com = TRUE;
 
-        } else if(dot && !PL_strchr(dot+1, '.')) {
+        } else if(dot && !strchr(dot+1, '.')) {
             /* there is only one dot in the host name
              * so it's probably of the form of "netscape.com"
              * or "ukans.edu".   Add a "www." on the front
@@ -401,7 +404,7 @@ net_check_for_company_hostname(ActiveEntry *ce)
 
         if(add_www) {
             /* no dots in hostname */
-            if (goBrowsing && !PL_strchr(ce->URL_s->address, '/')) {     
+            if (goBrowsing && !strchr(ce->URL_s->address, '/')) {     
                 char *pUrl;
                 if ( (PREF_OK == PREF_CopyCharPref(pref_searchUrl,&pUrl))
                     && pUrl) {
@@ -734,7 +737,7 @@ net_send_proxy_tunnel_request (ActiveEntry *ce)
     StrAllocCopy(command, "CONNECT ");
   StrAllocCat(command, host);
 
-  if(!PL_strchr(host, ':'))
+  if(!strchr(host, ':'))
       {
       char small_buf[20];
     sprintf(small_buf, ":%d", DEF_HTTPS_PORT);
@@ -885,11 +888,11 @@ net_begin_upload_file (ActiveEntry *ce)
   ce->URL_s->files_to_post[i-1] = NULL;
 
 #ifdef XP_MAC
-    filename = PL_strrchr(file_to_post, '/');
+    filename = strrchr(file_to_post, '/');
 #elif defined(XP_WIN)
-    filename = PL_strrchr(file_to_post, '\\');
+    filename = strrchr(file_to_post, '\\');
 #else
-    filename = PL_strrchr(file_to_post, '/');
+    filename = strrchr(file_to_post, '/');
 #endif
 
     if(!filename)
@@ -939,7 +942,7 @@ net_begin_upload_file (ActiveEntry *ce)
        /* strip the filename from the last slash and append the
        * new filename to the URL
        */
-      last_slash = PL_strrchr(ce->URL_s->address, '/');
+      last_slash = strrchr(ce->URL_s->address, '/');
       if(last_slash)
         *last_slash = '\0';
       StrAllocCat(ce->URL_s->address, "/");
@@ -1257,7 +1260,7 @@ net_build_http_request (URL_Struct * URL_s,
                      * the username and password here so this info isn't revealed in the 
                      * referer header. */
 
-                    colon=PL_strchr(URL_s->referer, ':');
+                    colon=strchr(URL_s->referer, ':');
                     if(colon
                         && *(colon+1) == '/'
                         && *(colon+2) == '/'
@@ -1266,9 +1269,9 @@ net_build_http_request (URL_Struct * URL_s,
                         char *atSign=NULL;            
                         char *path=NULL;
 
-                        if( (path=PL_strchr(colon+3, '/')) != 0)
+                        if( (path=strchr(colon+3, '/')) != 0)
                             *path='\0';
-                        if( (atSign=PL_strchr(colon, '@')) != 0) {
+                        if( (atSign=strchr(colon, '@')) != 0) {
                             /* We found a username and/or a password, don't let it through */
                             char temp;
                             if(path)
@@ -1323,7 +1326,7 @@ net_build_http_request (URL_Struct * URL_s,
             if(URL_s->range_header) {
 #ifndef AIX
                 char *tmp_str = CRLF;
-                PR_ASSERT(!PL_strstr(URL_s->range_header, tmp_str));
+                PR_ASSERT(!strstr(URL_s->range_header, tmp_str));
 #endif
 #define REQUEST_RANGE_HEADER "Range: "
                 tmpSize = PL_strlen(REQUEST_RANGE_HEADER);
@@ -1350,7 +1353,7 @@ net_build_http_request (URL_Struct * URL_s,
             if(URL_s->range_header) {
 #ifndef AIX
                 char *tmp_str = CRLF;
-                PR_ASSERT(!PL_strstr(URL_s->range_header, tmp_str));
+                PR_ASSERT(!strstr(URL_s->range_header, tmp_str));
 #endif
 #undef REQUEST_RANGE_HEADER
 #define REQUEST_RANGE_HEADER "Request-Range: "
@@ -1950,7 +1953,7 @@ net_parse_http_mime_headers (ActiveEntry *ce)
         return(0);
     }
 
-    value = PL_strchr(line, ':');
+    value = strchr(line, ':');
     if(value)
         value++;
     NET_ParseMimeHeader(ce->format_out, ce->window_id, ce->URL_s, line, value, TRUE);
@@ -2168,7 +2171,7 @@ net_parse_first_http_line (ActiveEntry *ce) {
                     /* Get the length of the response as a string. The end
                      * of the response is a double CRLF sequence. */
 
-                    endOfResp=PL_strstr(cd->line_buffer, CRLF CRLF);
+                    endOfResp=strstr(cd->line_buffer, CRLF CRLF);
 
                     /* If we can't find the end of the response, either we
                      * haven't received it all yet, or it's a malformed
@@ -2697,9 +2700,9 @@ net_finish_setup_http_stream(ActiveEntry * ce)
                 return MK_INTERRUPTED;
             }
 
-            if ( (curPort = PL_strchr(curURLHost, ':')) != NULL)
+            if ( (curPort = strchr(curURLHost, ':')) != NULL)
                 *curPort='\0';
-            if ( (redirectPort = PL_strchr(redirectURLHost, ':')) != NULL)
+            if ( (redirectPort = strchr(redirectURLHost, ':')) != NULL)
                 *redirectPort='\0';
 
             if(PL_strcasecmp(curURLHost, redirectURLHost)) {
@@ -3457,7 +3460,7 @@ net_HTTPLoad (ActiveEntry * ce)
           {
 
           if(!PL_strncasecmp(tmp_con->hostname, "rl.", 3)
-              && PL_strcasestr(tmp_con->hostname+2, ".netscape.com"))
+              && strcasestr(tmp_con->hostname+2, ".netscape.com"))
             {
             /* if there is max plus one we are done, else
              * continue on and remove one 

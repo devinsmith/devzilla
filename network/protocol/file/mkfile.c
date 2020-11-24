@@ -26,6 +26,9 @@
 /* #define TRUST_LABELS 1 */
 #endif
 
+#define _GNU_SOURCE
+#include <string.h>
+
 #include "xp.h"
 #include "net_xp_file.h"
 #include "plstr.h"
@@ -668,11 +671,11 @@ net_setup_file_stream (ActiveEntry * cur_entry)
 		int32 low=0, high=0;
 		char *cp, *dash;
 
-		cp = PL_strchr(CD_BYTERANGE_STRING, ',');
+		cp = strchr(CD_BYTERANGE_STRING, ',');
 		if(cp)
 		    *cp = '\0';
 
-		dash = PL_strchr(CD_BYTERANGE_STRING, '-');
+		dash = strchr(CD_BYTERANGE_STRING, '-');
 
 		if(!dash)
 		  {
@@ -1241,12 +1244,12 @@ net_FileLoad (ActiveEntry * cur_entry)
      * away
 	 */
 #define URL_BYTERANGE_TOKEN ";"BYTERANGE_TOKEN
-	if (con_data->is_cache_file && (cp = PL_strcasestr(cur_entry->URL_s->address, URL_BYTERANGE_TOKEN)) != NULL)
+	if (con_data->is_cache_file && (cp = strcasestr(cur_entry->URL_s->address, URL_BYTERANGE_TOKEN)) != NULL)
 	  {
 		StrAllocCopy(CD_BYTERANGE_STRING, cp+PL_strlen(URL_BYTERANGE_TOKEN));
 		strtok(CD_BYTERANGE_STRING, ";");
 	  }
-	else if ((cp = PL_strcasestr(con_data->filename, URL_BYTERANGE_TOKEN)) != NULL)
+	else if ((cp = strcasestr(con_data->filename, URL_BYTERANGE_TOKEN)) != NULL)
 	  {
 		*cp = '\0';
 		/* remove any other weird ; stuff */
@@ -1559,7 +1562,7 @@ PRIVATE void net_IdxConvComplete(NET_StreamClass *inputStream)
     */
     if(path && *path != '\0')
     {
-        char *cp = PL_strrchr(path, '/');
+        char *cp = strrchr(path, '/');
         PL_strcpy(out_buf, "<A HREF=\"");
         PD_PUTS(out_buf);
         if(cp)

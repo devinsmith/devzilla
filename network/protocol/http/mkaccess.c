@@ -33,6 +33,9 @@
 #define EDITOR 1
 #endif
 
+#define _GNU_SOURCE
+#include <string.h>
+
 #define alphabetize 1
 #include "rosetta.h"
 #include "xp.h"
@@ -220,7 +223,7 @@ net_CheckForAuthorization(char * address, Bool exact_match)
     * http://uname:pwd@host.com, so make sure we don't compare an address
     * passed in with one with an auth struct->path until we remove/reduce the 
     * address passed in. */
-    if( (afterProto=PL_strstr(address, "://")) != 0 ) {
+    if( (afterProto=strstr(address, "://")) != 0 ) {
     afterProto=afterProto+3;
     tmp=*afterProto;
     *afterProto='\0';
@@ -228,9 +231,9 @@ net_CheckForAuthorization(char * address, Bool exact_match)
     *afterProto=tmp;
 
     /* temporarily truncate after first slash, if any. */
-    if( (fSlash=PL_strchr(afterProto, '/')) != 0)
+    if( (fSlash=strchr(afterProto, '/')) != 0)
       *fSlash='\0';
-    atSign=PL_strchr(afterProto, '@');
+    atSign=strchr(afterProto, '@');
     if(fSlash)
       *fSlash='/';
     if(atSign)
@@ -275,7 +278,7 @@ PUBLIC Bool
 NET_AuthorizationRequired(char * address)
 {
     net_AuthStruct * rv;
-	char * last_slash = PL_strrchr(address, '/');
+	char * last_slash = strrchr(address, '/');
 
 	if(last_slash)
 		*last_slash = '\0';
@@ -420,7 +423,7 @@ separate_http_key(char *key, char **address, char **realm)
 	if(!key)
 		return;
 
-	tab = PL_strchr(key, '\t');
+	tab = strchr(key, '\t');
 
 	if(!tab)
 		return;
@@ -611,7 +614,7 @@ NET_AskForAuthString(MWContext *context,
 	    /* See if username and password are still in the address */
         unamePwd=NET_ParseURL(address, GET_USERNAME_PART | GET_PASSWORD_PART);
 	    /* get the username & password out of the combo string */
-	    if( (colon = PL_strchr(unamePwd, ':')) != NULL ) {
+	    if( (colon = strchr(unamePwd, ':')) != NULL ) {
 		    *colon='\0';
 		    username=PL_strdup(unamePwd);
             /* Use password we found above? */
@@ -631,7 +634,7 @@ NET_AskForAuthString(MWContext *context,
 	if (new_address[PL_strlen(new_address)-1] != '/')
 	{
 		/* remove everything after the last slash */
-		slash = PL_strrchr(new_address, '/');
+		slash = strrchr(new_address, '/');
 		if(++slash)
 			*slash = '\0';
 	}
@@ -642,7 +645,7 @@ NET_AskForAuthString(MWContext *context,
 	  }
 	else
 	  {
-		realm = PL_strchr(authenticate, '"');
+		realm = strchr(authenticate, '"');
 	
 		if(realm)
 		  {
@@ -948,8 +951,8 @@ NET_AskForAuthString(MWContext *context,
         prev_auth->password = password;
 		prev_auth->path = 0;
        /* Don't save username/password info in the auth struct path. */
-        if( (atSign=PL_strchr(new_address, '@')) != 0) {
-          if( (host=PL_strstr(new_address, "://")) != 0) {
+        if( (atSign=strchr(new_address, '@')) != 0) {
+          if( (host=strstr(new_address, "://")) != 0) {
             char tmp;
             host+=3;
             tmp=*host;
@@ -957,12 +960,12 @@ NET_AskForAuthString(MWContext *context,
             StrAllocCopy(prev_auth->path, new_address);
             *host=tmp;
         
-            fSlash=PL_strchr(host, '/');
+            fSlash=strchr(host, '/');
             if(fSlash)
               *fSlash='\0';
             /* Do the atSign check again so we're sure to get one between the 
              * protocol part and the first slash. */
-            atSign=PL_strchr(host, '@');
+            atSign=strchr(host, '@');
             if(fSlash)
               *fSlash='/';
 
@@ -1688,7 +1691,7 @@ NET_CookiePermission(char* URLName) {
     host = NET_ParseURL(URLName, GET_HOST_PART);
 
     /* remove port number from URL name */
-    colon = PL_strchr(host, ':');
+    colon = strchr(host, ':');
     if(colon) {
         *colon = '\0';
     }
@@ -1856,7 +1859,7 @@ NET_GetCookie(MWContext * context, char * address)
 				/* make sure we don't have a previous
 				 * name mapping already in the string
 				 */
-				if(!rv || !PL_strstr(rv, name))
+				if(!rv || !strstr(rv, name))
 			      {	
             	    StrAllocCat(rv, name);
             	    StrAllocCat(rv, cookie_s->cookie);
@@ -1887,7 +1890,7 @@ NET_GetCookie(MWContext * context, char * address)
      * 2) See if the specific site has asked for and received
      *    permission to be sent the cookie.
      */
-    if (PL_strstr(address, "iiop/BRPROF")) {
+    if (strstr(address, "iiop/BRPROF")) {
       extern PRBool BP_GetProfile(char* *aProfileCookie);
       char* profile;
       if (BP_GetProfile(&profile)) {
@@ -2027,7 +2030,7 @@ NET_CookieCount(char * URLName) {
     host = NET_ParseURL(URLName, GET_HOST_PART);
 
     /* remove port number from URL name */
-    colon = PL_strchr(host, ':');
+    colon = strchr(host, ':');
     if(colon) {
         *colon = '\0';
     }
@@ -2170,7 +2173,7 @@ net_IntSetCookieString(MWContext * context,
 	/* parse path and expires attributes from header if
  	 * present
 	 */
-	semi_colon = PL_strchr(set_cookie_header, ';');
+	semi_colon = strchr(set_cookie_header, ';');
 
 	if(semi_colon)
 	  {
@@ -2184,7 +2187,7 @@ net_IntSetCookieString(MWContext * context,
 
 		/* look for the path attribute
 		 */
-		ptr = PL_strcasestr(semi_colon, "path=");
+		ptr = strcasestr(semi_colon, "path=");
 
 		if(ptr) {
 			/* allocate more than we need */
@@ -2205,7 +2208,7 @@ net_IntSetCookieString(MWContext * context,
 		 */
 
 		/* look for a domain */
-        ptr = PL_strcasestr(semi_colon, "domain=");
+        ptr = strcasestr(semi_colon, "domain=");
 
         if(ptr) {
 			char *domain_from_header=NULL;
@@ -2233,9 +2236,9 @@ net_IntSetCookieString(MWContext * context,
 			 * Also make sure that there is more stuff after
 			 * the second dot to prevent ".com."
              */
-            dot = PL_strchr(domain_from_header, '.');
+            dot = strchr(domain_from_header, '.');
 			if(dot)
-                dot = PL_strchr(dot+1, '.');
+                dot = strchr(dot+1, '.');
 
 			if(!dot || *(dot+1) == '\0') {
 				/* did not pass two dot test. FAIL
@@ -2254,7 +2257,7 @@ net_IntSetCookieString(MWContext * context,
 			/* strip port numbers from the current host
 			 * for the domain test
 			 */
-			colon = PL_strchr(cur_host, ':');
+			colon = strchr(cur_host, ':');
 			if(colon)
 			   *colon = '\0';
 
@@ -2319,7 +2322,7 @@ net_IntSetCookieString(MWContext * context,
 		 * NOTE: that this part of the parsing
 		 * destroys the original part of the string
 		 */
-		ptr = PL_strcasestr(semi_colon, "expires=");
+		ptr = strcasestr(semi_colon, "expires=");
 
 		if(ptr) {
 			char *date =  ptr+8;
@@ -2343,7 +2346,7 @@ net_IntSetCookieString(MWContext * context,
         /* strip down everything after the last slash
          * to get the path.
          */
-        char * slash = PL_strrchr(cur_path, '/');
+        char * slash = strrchr(cur_path, '/');
         if(slash)
             *slash = '\0';
 
@@ -2362,7 +2365,7 @@ net_IntSetCookieString(MWContext * context,
 		set_cookie_header[MAX_BYTES_PER_COOKIE-1] = '\0';
 
 	/* separate the name from the cookie */
-	equal = PL_strchr(set_cookie_header, '=');
+	equal = strchr(set_cookie_header, '=');
 
 	if(equal) {
 		*equal = '\0';
@@ -2769,8 +2772,8 @@ NET_SameDomain(char * currentHost, char * inlineHost)
 	if(PL_strcasecmp(currentHost, inlineHost) == 0)
 		return 1;
 
-	currentDomain = PL_strchr(currentHost, '.');
-	inlineDomain = PL_strchr(inlineHost, '.');
+	currentDomain = strchr(currentHost, '.');
+	inlineDomain = strchr(inlineHost, '.');
 
 	if(!currentDomain || !inlineDomain)
 		return 0;
@@ -2778,9 +2781,9 @@ NET_SameDomain(char * currentHost, char * inlineHost)
 	/* check for at least two dots before continuing, if there are
 	   not two dots we don't have enough information to determine
 	   whether or not the inlineDomain is within the currentDomain */
-	dot = PL_strchr(inlineDomain, '.');
+	dot = strchr(inlineDomain, '.');
 	if(dot)
-		dot = PL_strchr(dot+1, '.');
+		dot = strchr(dot+1, '.');
 	else
 		return 0;
 
@@ -2835,10 +2838,10 @@ NET_SetCookieStringFromHttp(FO_Present_Types outputFormat,
 			}
 
 			/* strip ports */
-			theColon = PL_strchr(curHost, ':');
+			theColon = strchr(curHost, ':');
 			if(theColon)
 			   *theColon = '\0';
-			theColon = PL_strchr(curSessionHistHost, ':');
+			theColon = strchr(curSessionHistHost, ':');
 			if(theColon)
 				*theColon = '\0';
 
@@ -2860,7 +2863,7 @@ NET_SetCookieStringFromHttp(FO_Present_Types outputFormat,
 	   not the TZ environment variable was set on the client. */
 
 	/* Get the time the cookie is supposed to expire according to the attribute*/
-	ptr = PL_strcasestr(set_cookie_header, "expires=");
+	ptr = strcasestr(set_cookie_header, "expires=");
 	if(ptr)
 	{
 		char *date =  ptr+8;
@@ -3020,7 +3023,7 @@ net_ReadCookiePermissions(char * filename)
 
         host = buffer;
         /* isolate the host field which is the first field on the line */
-        if( !(p = PL_strchr(host, '\t')) ) {
+        if( !(p = strchr(host, '\t')) ) {
             continue; /* no permission field */
         }
         *p++ = '\0';
@@ -3245,37 +3248,37 @@ NET_ReadCookies(char * filename)
 
 		host = buffer;
 		
-		if( !(is_domain = PL_strchr(host, '\t')) )
+		if( !(is_domain = strchr(host, '\t')) )
 			continue;
 		*is_domain++ = '\0';
 		if(*is_domain == CR || *is_domain == LF || *is_domain == 0)
 			continue;
 		
-		if( !(path = PL_strchr(is_domain, '\t')) )
+		if( !(path = strchr(is_domain, '\t')) )
 			continue;
 		*path++ = '\0';
 		if(*path == CR || *path == LF || *path == 0)
 			continue;
 
-		if( !(xxx = PL_strchr(path, '\t')) )
+		if( !(xxx = strchr(path, '\t')) )
 			continue;
 		*xxx++ = '\0';
 		if(*xxx == CR || *xxx == LF || *xxx == 0)
 			continue;
 
-		if( !(expires = PL_strchr(xxx, '\t')) )
+		if( !(expires = strchr(xxx, '\t')) )
 			continue;
 		*expires++ = '\0';
 		if(*expires == CR || *expires == LF || *expires == 0)
 			continue;
 
-        if( !(name = PL_strchr(expires, '\t')) )
+        if( !(name = strchr(expires, '\t')) )
 			continue;
 		*name++ = '\0';
 		if(*name == CR || *name == LF || *name == 0)
 			continue;
 
-        if( !(cookie = PL_strchr(name, '\t')) )
+        if( !(cookie = strchr(name, '\t')) )
 			continue;
 		*cookie++ = '\0';
 		if(*cookie == CR || *cookie == LF || *cookie == 0)
@@ -3874,7 +3877,7 @@ Bool net_InSequence(char* sequence, int number) {
     for (ptr = sequence ; ptr ; ptr = endptr) {
 
 	/* get to next comma */
-        endptr = PL_strchr(ptr, ',');
+        endptr = strchr(ptr, ',');
 
         /* if comma found, process it */
         if (endptr) {
@@ -4748,7 +4751,7 @@ net_FixQuoted(char* s) {
     int count = PL_strlen(s);
     char *quote = s;
     unsigned int i, j;
-    while (quote = PL_strchr(quote, '"')) {
+    while (quote = strchr(quote, '"')) {
         count = count++;
         quote++;
     }
@@ -5379,7 +5382,7 @@ NET_DisplayCookieInfoOfSiteAsHTML(MWContext * context, char * URLName)
     host = NET_ParseURL(URLName, GET_HOST_PART);
 
     /* remove port number from URL name */
-    colon = PL_strchr(host, ':');
+    colon = strchr(host, ':');
     if(colon) {
         *colon = '\0';
     }

@@ -21,6 +21,9 @@
  *
  * Updated and Documented by Judson Valeski 11/19/1997
  */
+#define _GNU_SOURCE
+#include <string.h>
+
 #include "mkutils.h"    /* LF */
 #include "mktcp.h"
 #include "netutils.h"
@@ -368,7 +371,7 @@ PRIVATE Bool fill_return_values(PACF_Type   type,
 	char *p, *host = NULL;
 
 	StrAllocCopy(host, node->addr);
-	p = PL_strchr(host, ':');
+	p = strchr(host, ':');
 	if (p) {
 	    *p++ = '\0';
 	    node->socks_port = (short)atoi(p);
@@ -481,7 +484,7 @@ pacf_get_proxy_addr(MWContext *context, char *list, char **ret_proxy_addr,
     TRACEMSG(("Getting proxy addr from config list: %s", list));
 
 	do {
-	    p = PL_strchr(cur, ';');
+	    p = strchr(cur, ';');
 		if (p) {
 		    do {
 				*p++ = '\0';
@@ -1136,19 +1139,19 @@ MODULE_PRIVATE char *pacf_find_proxies_for_url(MWContext *context,
 
     host[0] = '\0';
 
-    p = PL_strstr(safe_url, "://");
+    p = strstr(safe_url, "://");
     if (p) {
 	p += 3;
-	q = PL_strchr(p, '/');
+	q = strchr(p, '/');
 	if (q)
 	    *q = '\0';
-	r = PL_strchr(p, '@');
+	r = strchr(p, '@');
 	if (r)
 		p = r + 1;
 	PL_strcpy(host, p);
 	if (q)
 	    *q = '/';
-	p = PL_strchr(host, ':');
+	p = strchr(host, ':');
 	if (p)
 	    *p = '\0';
     }
@@ -1249,7 +1252,7 @@ proxy_isPlainHostName(JSContext *mc, JSObject *obj, unsigned int argc,
     if (argc >= 1 && JSVAL_IS_STRING(argv[0])) {
 	const char *h = JS_GetStringBytes(JSVAL_TO_STRING(argv[0]));
 
-	if (h && !PL_strchr(h, '.')) {
+	if (h && !strchr(h, '.')) {
 	    *rval = JSVAL_TRUE;
 	    return JS_TRUE;
 	}
@@ -1316,8 +1319,8 @@ proxy_localHostOrDomainIs(JSContext *mc, JSObject *obj, unsigned int argc,
 	char *hp, *pp;
 
 	if (h && p) {
-	    hp = PL_strchr(h, '.');
-	    pp = PL_strchr(p, '.');
+	    hp = strchr(h, '.');
+	    pp = strchr(p, '.');
 
 	    if (hp || !pp) {
 		if (!PL_strcasecmp(h,p)) {
@@ -1495,7 +1498,7 @@ PRIVATE unsigned long convert_addr(const char *ip) {
 	p = buf = PL_strdup(ip);
     if (ip && p) {
 	for(i=0; p && i<4; i++) {
-	    q = PL_strchr(p, '.');
+	    q = strchr(p, '.');
 	    if (q) {
 		*q = '\0';
 	    }
@@ -1590,7 +1593,7 @@ char *weekdays = "SUNMONTUEWEDTHUFRISAT";
 char *monnames = "JANFEBMARAPRMAYJUNJULAUGSEPOCTNOVDEC";
 
 PRIVATE int get_no(const char *nam, char *arr) {
-    char *p = PL_strcasestr(arr, nam);
+    char *p = strcasestr(arr, nam);
     return p ? (((int)(p - arr)) / 3) : -1;
 }
 

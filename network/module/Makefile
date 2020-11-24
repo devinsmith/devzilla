@@ -3,8 +3,8 @@
 .PHONY: all clean
 
 SRCS = nsLoadAttribs.cpp nsHttpUrl.cpp nsHttpURLFactory.cpp \
-			 nsNetFactory.cpp nsNetService.cpp nsNetStubs.cpp \
-			 nsNetThread.cpp nsStubContext.cpp
+			 nsNetFactory.cpp nsNetService.cpp nsNetStream.cpp nsNetStubs.cpp \
+			 nsNetThread.cpp nsRelatedLinks.cpp nsStubContext.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 DEPS = $(SRCS:.cpp=.d)

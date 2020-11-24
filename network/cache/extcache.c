@@ -609,7 +609,7 @@ net_GenCacheDBKey(char *address, char *post_data, int32 post_data_size)
 		return(rv);
 	  } 
 
-	hash = PL_strchr(address, '#');
+	hash = strchr(address, '#');
 
 	/* don't include '#' in a key */
 	if(hash)

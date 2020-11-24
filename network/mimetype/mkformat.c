@@ -343,13 +343,13 @@ net_cinfo_find_type_or_encoding (char *uri, XP_Bool type_p)
   NET_cinfo *result = &default_cinfo_type;
   XP_Bool saw_encoding = FALSE;
 
-  c = PL_strrchr (uri, '/');
+  c = strrchr (uri, '/');
   if (c) start = c;
 
   end = start + PL_strlen (start);
-  c = PL_strrchr (start, '?');
+  c = strrchr (start, '?');
   if (c) end = c;
-  c = PL_strrchr (start, '#');
+  c = strrchr (start, '#');
   if (c && c < end) end = c;
 
 AGAIN:

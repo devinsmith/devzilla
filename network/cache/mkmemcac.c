@@ -28,6 +28,9 @@
 
 #ifdef MOZILLA_CLIENT
 
+#define _GNU_SOURCE
+#include <string.h>
+
 #include "mkcache.h"
 #include "mkselect.h"
 #include "netutils.h"
@@ -385,7 +388,7 @@ PRIVATE int net_CacheHashComp(net_MemoryCacheObject * obj1,
 		|| NET_TO_UPPER(obj1->cache_obj.address[0]) == 'S')
 	    &&  NET_URL_Type(obj1->cache_obj.address) == NEWS_TYPE_URL)
 	  {
-		ques1 = PL_strchr(obj1->cache_obj.address, '?');
+		ques1 = strchr(obj1->cache_obj.address, '?');
 		if(ques1) 
 			*ques1 = '\0';
 	  }
@@ -394,7 +397,7 @@ PRIVATE int net_CacheHashComp(net_MemoryCacheObject * obj1,
         || NET_TO_UPPER(obj2->cache_obj.address[0]) == 'S')
         &&  NET_URL_Type(obj2->cache_obj.address) == NEWS_TYPE_URL)
       {
-        ques2 = PL_strchr(obj2->cache_obj.address, '?');
+        ques2 = strchr(obj2->cache_obj.address, '?');
         if(ques2)
             *ques2 = '\0';
       }
@@ -403,14 +406,14 @@ PRIVATE int net_CacheHashComp(net_MemoryCacheObject * obj1,
 	/* do the same for IMAP */
 	if(!PL_strncasecmp(obj1->cache_obj.address,"mailbox://",10))
 	  {
-		ques3 = PL_strstr(obj1->cache_obj.address, "&part=");
+		ques3 = strstr(obj1->cache_obj.address, "&part=");
 		if(ques3) 
 			*ques3 = '\0';
 	  }
 
 	if(!PL_strncasecmp(obj2->cache_obj.address,"mailbox://",10))
       {
-        ques4 = PL_strstr(obj2->cache_obj.address, "&part=");
+        ques4 = strstr(obj2->cache_obj.address, "&part=");
         if(ques4)
             *ques4 = '\0';
       }
@@ -420,8 +423,8 @@ PRIVATE int net_CacheHashComp(net_MemoryCacheObject * obj1,
 	 * really represent the same
 	 * document
 	 */
-	hash1 = PL_strchr(obj1->cache_obj.address, '#');
-	hash2 = PL_strchr(obj2->cache_obj.address, '#');
+	hash1 = strchr(obj1->cache_obj.address, '#');
+	hash2 = strchr(obj2->cache_obj.address, '#');
 
 	if(hash1)
 		*hash1 = '\0';
@@ -1734,15 +1737,15 @@ NET_DisplayMemCacheInfoAsHTML(ActiveEntry * cur_entry)
 		return;
 	  }
 
-	if(PL_strcasestr(cur_entry->URL_s->address, "?long"))
+	if(strcasestr(cur_entry->URL_s->address, "?long"))
 		long_form = TRUE;
-	else if(PL_strcasestr(cur_entry->URL_s->address, "?traceon"))
+	else if(strcasestr(cur_entry->URL_s->address, "?traceon"))
 #ifdef NU_CACHE
 		CacheTrace_Enable(TRUE);
 #else
 		NET_CacheTraceOn = TRUE;
 #endif
-	else if(PL_strcasestr(cur_entry->URL_s->address, "?traceoff"))
+	else if(strcasestr(cur_entry->URL_s->address, "?traceoff"))
 #ifdef NU_CACHE
 		CacheTrace_Enable(FALSE);
 #else

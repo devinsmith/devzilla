@@ -699,10 +699,10 @@ nsNetlibService::SetCookieString(nsIURL *aURL, const nsString& aCookie)
     return NS_OK;
 }
 
-#ifdef SingleSignon
+#ifdef CookieManagement
 NS_IMETHODIMP
-nsNetlibService::SI_DisplaySignonInfoAsHTML(){
-    ::SI_DisplaySignonInfoAsHTML(NULL);
+nsNetlibService::NET_DisplayCookieInfoAsHTML(){
+    ::NET_DisplayCookieInfoAsHTML(NULL);
     return NS_OK;
 }
 
@@ -712,22 +712,7 @@ nsNetlibService::SI_RememberSignonData
     ::SI_RememberSignonData(URLName, submit);
     return NS_OK;
 }
-
-NS_IMETHODIMP
-nsNetlibService::SI_RestoreSignonData
-        (char* URLName, char* name, char** value) {
-    ::SI_RestoreSignonData(URLName, name, value);
-    return NS_OK;
-}
-
 #endif
-
-#ifdef CookieManagement
-NS_IMETHODIMP
-nsNetlibService::NET_DisplayCookieInfoAsHTML(){
-    ::NET_DisplayCookieInfoAsHTML(NULL);
-    return NS_OK;
-}
 
 #ifdef PrivacySiteInfo
 NS_IMETHODIMP
@@ -749,6 +734,8 @@ nsNetlibService::NET_CookieCount(char* URLName, PRInt32* count){
 
 #endif
 #endif
+
+#if 0
 
 NS_IMETHODIMP
 nsNetlibService::NET_AnonymizeCookies(){
@@ -1120,6 +1107,7 @@ NS_NET nsresult NS_MakeAbsoluteURL(nsIURL* aURL,
     }
     else {
         const char* str;
+        NS_ASSERTION(nsnull != aURL, "url is null");
         aURL->GetSpec(&str);
         nsresult err = NS_NewURL(&base, str);
         if (err != NS_OK) return err;
@@ -1409,7 +1397,7 @@ static void bam_exit_routine(URL_Struct *URL_s, int status, MWContext *window_id
         NET_FreeURLStruct(URL_s);
     }
 }
-
+#endif
 /*
  * Ugly hack to free contexts
  */
@@ -1432,6 +1420,7 @@ extern "C" void net_ReleaseContext(MWContext *context)
    }
  }
 }
+#if 0
 
 
 /*

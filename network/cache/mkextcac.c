@@ -161,11 +161,11 @@ net_OpenExtCacheFat(MWContext *ctxt, ExtCacheDBInfo *db_info)
 
 		/* figure out the path to the database */
 #ifdef XP_PC
-  		slash = PL_strrchr(db_info->path, '\\');						
+  		slash = strrchr(db_info->path, '\\');						
 #elif defined(XP_MAC)
-  		slash = PL_strrchr(db_info->path, '/');						
+  		slash = strrchr(db_info->path, '/');						
 #else
-  		slash = PL_strrchr(db_info->path, '/');						
+  		slash = strrchr(db_info->path, '/');						
 #endif
 
 		if(slash)
@@ -940,7 +940,7 @@ cache_ReadCacheInfo(XP_File fp, XP_List **list_ptr, int type)
 		/* remove /r and /n from the end of the line */
 		XP_StripLine(buf);
 
-		name = PL_strchr(buf, '\t');
+		name = strchr(buf, '\t');
 
 		if(!name)
 			continue;

@@ -75,7 +75,6 @@ PRThread* gNetlibThread = nsnull;
 
 extern "C" void NET_ClientProtocolInitialize()
 {
-    NET_InitSockStubProtocol();
     NET_InitFileProtocol();
     NET_InitHTTPProtocol();
 #ifdef NU_CACHE

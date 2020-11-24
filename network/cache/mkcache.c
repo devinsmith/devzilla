@@ -26,6 +26,9 @@
 
 /* dbm code */
 
+#define _GNU_SOURCE
+#include <string.h>
+
 #include "mkcache.h"
 #include "rosetta.h"
 #include "extcache.h"
@@ -295,7 +298,7 @@ net_OpenCacheFatDB(void)
 
                         NET_XP_FileClose(fp);
 
-                        if(PL_strstr(buffer, 
+                        if(strstr(buffer, 
 								     "Cache-file-allocation-table-format"))
                           NET_XP_FileRemove("", xpCacheFAT);
 
@@ -1802,7 +1805,7 @@ NET_CacheConverter (FO_Present_Types format_out,
           suffix = allocSuffix = NULL;
 
           if (URL_s->content_name){
-              suffix = (URL_s->content_name ? PL_strrchr (URL_s->content_name, '.') : 0);
+              suffix = (URL_s->content_name ? strrchr (URL_s->content_name, '.') : 0);
           }
           else if ((URL_s->address) && 
                (!PL_strncasecmp(URL_s->address, "mailbox:", 8)
@@ -1826,8 +1829,8 @@ NET_CacheConverter (FO_Present_Types format_out,
           
           if (!suffix)
           {
-              tail = PL_strrchr (URL_s->address, '/');
-              suffix = (tail ? PL_strrchr (tail, '.') : 0);
+              tail = strrchr (URL_s->address, '/');
+              suffix = (tail ? strrchr (tail, '.') : 0);
           }
           end = suffix + (suffix ? PL_strlen (suffix) : 0);
           junk=0;         
@@ -2066,7 +2069,7 @@ NET_CacheConverter (FO_Present_Types format_out,
 				suffix = allocSuffix = NULL;
 
 				if (URL_s->content_name){
-					suffix = (URL_s->content_name ? PL_strrchr (URL_s->content_name, '.') : 0);
+					suffix = (URL_s->content_name ? strrchr (URL_s->content_name, '.') : 0);
 				}
 				else if ((URL_s->address) && 
 						(!PL_strncasecmp(URL_s->address, "mailbox:", 8)
@@ -2090,8 +2093,8 @@ NET_CacheConverter (FO_Present_Types format_out,
 				
 				if (!suffix)
 				{
-				    tail = PL_strrchr (cache_object->address, '/');
-					suffix = (tail ? PL_strrchr (tail, '.') : 0);
+				    tail = strrchr (cache_object->address, '/');
+					suffix = (tail ? strrchr (tail, '.') : 0);
 				}
 				end = suffix + (suffix ? PL_strlen (suffix) : 0);
 				junk=0;				
@@ -2733,13 +2736,13 @@ NET_FindURLInCache(URL_Struct * URL_s, MWContext *ctxt)
 			return(NET_FindURLInExtCache(URL_s, ctxt));
 	  }
 
-    byterange = PL_strcasestr(URL_s->address, ";bytes=");
+    byterange = strcasestr(URL_s->address, ";bytes=");
     
     /* this might be a cached imap url.  Ignore the mime
        part when going back for attachments, otherwise we'll
        reload the attachment from the server */
     if (!byterange)
-    	byterange = PL_strcasestr(URL_s->address, "&part=");
+    	byterange = strcasestr(URL_s->address, "&part=");
 
     if(byterange)
       {
@@ -2777,8 +2780,8 @@ NET_FindURLInCache(URL_Struct * URL_s, MWContext *ctxt)
 	  {
 		char *slash;
 
-		slash = PL_strrchr(URL_s->address, '/');
-		if(slash && !PL_strchr(slash, '.') && *(slash+1) != '\0')
+		slash = strrchr(URL_s->address, '/');
+		if(slash && !strchr(slash, '.') && *(slash+1) != '\0')
 		  {
 			/* no extension.  Add the slash and
 			 * look for it in the database
@@ -3530,11 +3533,11 @@ NET_DisplayCacheInfoAsHTML(ActiveEntry * cur_entry)
 		return;
 	  }
 
-	if(PL_strcasestr(cur_entry->URL_s->address, "?long"))
+	if(strcasestr(cur_entry->URL_s->address, "?long"))
 		long_form = TRUE;
-	else if(PL_strcasestr(cur_entry->URL_s->address, "?traceon"))
+	else if(strcasestr(cur_entry->URL_s->address, "?traceon"))
 		NET_CacheTraceOn = TRUE;
-	else if(PL_strcasestr(cur_entry->URL_s->address, "?traceoff"))
+	else if(strcasestr(cur_entry->URL_s->address, "?traceoff"))
 		NET_CacheTraceOn = FALSE;
 
 	StrAllocCopy(cur_entry->URL_s->content_type, TEXT_HTML);

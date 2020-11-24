@@ -281,7 +281,7 @@ NET_ParseNetHelpURL(URL_Struct *URL_s)
 
 	XP_Bool appendProjFile = FALSE;
 	
-	remote_addr_ptr = PL_strchr(URL_s->address, '@');
+	remote_addr_ptr = strchr(URL_s->address, '@');
 	
 	if (!remote_addr_ptr) {
 		char *default_URL = 0;
@@ -318,9 +318,9 @@ NET_ParseNetHelpURL(URL_Struct *URL_s)
 	/* By now, the URL_s->address has been stripped of any location information */
 	/* First, remove the scheme, which is guaranteed to be there. */
 	
-	scheme_specific = PL_strchr(URL_s->address, ':') + 1;
+	scheme_specific = strchr(URL_s->address, ':') + 1;
 	
-	topic_ptr = PL_strchr(scheme_specific, ':');
+	topic_ptr = strchr(scheme_specific, ':');
 	
 	if (!topic_ptr) {
 		/* This is an error case, but we'll handle it anyway by defaulting to
@@ -595,7 +595,7 @@ net_ParseHTMLHelpLine(HTMLHelpParseObj *obj, char *line_data)
 												NULL);
 
 			if(window_size)
-				comma = PL_strchr(window_size, ',');
+				comma = strchr(window_size, ',');
 
 			if(comma)
 			  {

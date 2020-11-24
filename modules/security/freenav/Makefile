@@ -1,27 +1,28 @@
-# Makefile for libxp
+# Makefile for libsecfree
 
 .PHONY: all clean
 
-C_SRCS = allxpstr.c xp_file.c xp_hash.c xp_list.c xp_qsort.c xp_regexp.c
+C_SRCS = navstubs.c
 
 OBJS = $(C_SRCS:.c=.o) $(SRCS:.cpp=.o)
 DEPS = $(C_SRCS:.c=.d) $(SRCS:.cpp=.d)
 
-INCLUDES = -I../../include -I../../nsprpub/pr/include \
-					 -I../../nsprpub/lib/libc/include \
-					 -I../../modules/security/freenav \
-					 -I../../modules/libutil/public \
-					 -I../../modules/libimg/public \
-					 -I../../modules/libpref/public \
-					 -I../../js/src \
-					 -I../liblayer/include
+INCLUDES = -I../../../include -I../../../nsprpub/pr/include \
+					 -I../../../nsprpub/lib/libc/include \
+					 -I../../../nsprpub/lib/ds \
+					 -I../../../lib/liblayer/include \
+					 -I. \
+					 -I../../../modules/libutil/public \
+					 -I../../../modules/libimg/public \
+					 -I../../../modules/libpref/public \
+					 -I../../../js/src
 CFLAGS = -Wall -O2
 
 CC? = gcc
 AR? = ar
 RM = rm -f
 
-LIB = libxp
+LIB = libsecfree
 SHARED_LIB = $(LIB).so
 STATIC_LIB = $(LIB).a
 

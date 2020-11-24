@@ -270,7 +270,7 @@ PRIVATE int net_MultipleDocumentWrite (NET_StreamClass *stream, CONST char* s, i
 				      {
 				    	/* Pass all other headers to the MIME header parser 
 				     	 */
-						char *value = PL_strchr(line, ':');
+						char *value = strchr(line, ':');
     					if(value)
         					value++;
     					NET_ParseMimeHeader(NET_AllowForeignCookies,

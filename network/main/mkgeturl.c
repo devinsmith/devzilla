@@ -26,6 +26,9 @@
 /* #define TRUST_LABELS 1 */
 #endif
 
+#define _GNU_SOURCE
+#include <string.h>
+
 #include "rosetta.h"
 #include "xp_error.h"
 #include "mkutils.h"
@@ -1566,9 +1569,9 @@ NET_SanityCheckDNS (MWContext *context)
   /* Strip off everything after last colon. */
   {
     char *s;
-    if (proxy && (s = PL_strrchr (proxy, ':')))
+    if (proxy && (s = strrchr (proxy, ':')))
 	  *s = 0;
-    if (socks && (s = PL_strrchr (socks, ':')))
+    if (socks && (s = strrchr (socks, ':')))
 	  *s = 0;
   }
 
@@ -2170,7 +2173,7 @@ NET_GetURL (URL_Struct *URL_s,
 		 */
 		char *new_address=0;
 		/* the colon is guarenteed to be there */
-		StrAllocCopy(new_address, PL_strchr(URL_s->address, ':')+1);
+		StrAllocCopy(new_address, strchr(URL_s->address, ':')+1);
 		FREE(URL_s->address);
 		URL_s->address = new_address;
 		URL_s->allow_content_change = TRUE;
@@ -2193,12 +2196,12 @@ NET_GetURL (URL_Struct *URL_s,
 			char *new_address;
 			/* Replace castanet:// with http:// */
 			/* Allocate space for 'http' + the rest of the string */
-			new_address = PR_Malloc(PL_strlen(PL_strchr(URL_s->address, ':'))+5);
+			new_address = PR_Malloc(PL_strlen(strchr(URL_s->address, ':'))+5);
 
 			PR_ASSERT(new_address);
 			*new_address=0;
 			PL_strcat(new_address,"http");
-			PL_strcat(new_address,PL_strchr(URL_s->address, ':'));
+			PL_strcat(new_address,strchr(URL_s->address, ':'));
 
 			FREE(URL_s->address);
 			URL_s->address = new_address;
@@ -2259,8 +2262,8 @@ NET_GetURL (URL_Struct *URL_s,
 				   && type != HTML_PANEL_HANDLER_TYPE_URL
 					HG87237
 
-			  && !PL_strcasestr(URL_s->address, "mcom.com")
-			       &&  !PL_strcasestr(URL_s->address, "netscape.com"))
+			  && !strcasestr(URL_s->address, "mcom.com")
+			       &&  !strcasestr(URL_s->address, "netscape.com"))
 		  {
 			char * alert = NET_ExplainErrorDetails(MK_TIMEBOMB_URL_PROHIBIT);
 
@@ -2424,7 +2427,7 @@ NET_GetURL (URL_Struct *URL_s,
 		/* if it starts with a question mark or has a space it's
 		 * a search URL
 		 */
-		if(*URL_s->address == '?' || PL_strchr(URL_s->address, ' '))
+		if(*URL_s->address == '?' || strchr(URL_s->address, ' '))
 		  {
 			/* URL contains spaces.  Treat it as search text. */
 			char *escaped;
@@ -3197,6 +3200,49 @@ redo_load_switch:   /* come here on file/ftp retry */
 #ifdef NOTDEF /* this is the real code here */
     LIBNET_UNLOCK_AND_RETURN(status);
 #endif
+}
+
+/* this thing is a hack that will allow http streams
+   waiting on passwd auth to resume XXX */
+PUBLIC void NET_ResumeWithAuth (void *closure)
+{
+    XP_List * iter = NULL;
+    ActiveEntry * tmpEntry = NULL;
+    NET_AuthClosure *auth_closure = (NET_AuthClosure *) closure;
+
+    /* check to see if our entry is in the list */
+    if (XP_ListIsEmpty(net_EntryList)) {
+      TRACEMSG (("NET_ResumeWithAuth: no list! we're busted ..."));
+      return;
+    }
+    iter = net_EntryList;
+
+    while ((tmpEntry = (ActiveEntry *) XP_ListNextObject(iter))) {
+      if (tmpEntry == (ActiveEntry *) auth_closure->_private) {
+        break;
+      }
+    }
+
+    if (!tmpEntry)
+        return;
+
+    if (auth_closure && auth_closure->pass && *auth_closure->pass) {
+
+      TRACEMSG (("NET_ResumeWithAuth: auth succeeded: %s", tmpEntry->URL_s->address));
+
+      /* now try it again */
+      if (tmpEntry->proto_impl->resume)
+          tmpEntry->proto_impl->resume (tmpEntry, auth_closure, PR_TRUE);
+
+    } else {
+      TRACEMSG (("NET_ResumeWithAuth(): auth failed: %s", tmpEntry->URL_s->address));
+      if (tmpEntry->proto_impl->resume)
+          tmpEntry->proto_impl->resume (tmpEntry, auth_closure, PR_FALSE);
+    }
+
+    /* now free the closure struct */
+    PR_Free(auth_closure);
+    return;
 }
 
 /* process_net is called from the client's main event loop and
@@ -4517,7 +4563,7 @@ net_FreeURLAllHeaders (URL_Struct * URL_s)
  */
 PRIVATE void add_slash_to_URL (URL_Struct *URL_s)
 {
-	char *colon=PL_strchr(URL_s->address,':');  /* must find colon */
+	char *colon=strchr(URL_s->address,':');  /* must find colon */
 	char *slash;
 
 	/* make sure there is a hostname
@@ -4526,12 +4572,12 @@ PRIVATE void add_slash_to_URL (URL_Struct *URL_s)
 	/* should probably be XP at some stage */
 	if (PL_strncmp("file://", URL_s->address, 7) == 0)
 	{
-		 slash = PL_strchr(colon + 4,'/');
+		 slash = strchr(colon + 4,'/');
 	}
 	else
 #endif
 	if(*(colon+1) == '/' && *(colon+2) == '/')
-	    slash = PL_strchr(colon+3,'/');
+	    slash = strchr(colon+3,'/');
 	else
 		return;
 
@@ -4678,7 +4724,7 @@ PRIVATE Bool override_proxy (CONST char * URL)
 	return NO;
       }
 
-    p = PL_strchr(host, ':');
+    p = strchr(host, ':');
     if (p)     /* Port specified */
       {
 	*p++ = 0;                       /* Chop off port */
@@ -4996,7 +5042,7 @@ int32 net_MailtoLoad (ActiveEntry * cur_entry)
 			  {
 				char *token = rest;
 				char *value = 0;
-				char *eq = PL_strchr (token, '=');
+				char *eq = strchr (token, '=');
 				if (eq)
 				  {
 					value = eq+1;
@@ -5005,12 +5051,12 @@ int32 net_MailtoLoad (ActiveEntry * cur_entry)
 				switch (*token)
 				  {
 				  case 'A': case 'a':
-					if (!PL_strcasecmp (token, "attachment") &&
+					if (!strcasecmp (token, "attachment") &&
 						CE_URL_S->internal_url)
 					  StrAllocCopy (attachment, value);
 					break;
 				  case 'B': case 'b':
-					if (!PL_strcasecmp (token, "bcc"))
+					if (!strcasecmp (token, "bcc"))
 					  {
 						if (bcc && *bcc)
 						  {
@@ -5022,7 +5068,7 @@ int32 net_MailtoLoad (ActiveEntry * cur_entry)
 							StrAllocCopy (bcc, value);
 						  }
 					  }
-					else if (!PL_strcasecmp (token, "body"))
+					else if (!strcasecmp (token, "body"))
 					  {
 						if (body && *body)
 						  {
@@ -5036,7 +5082,7 @@ int32 net_MailtoLoad (ActiveEntry * cur_entry)
 					  }
 					break;
 				  case 'C': case 'c':
-					if (!PL_strcasecmp (token, "cc"))
+					if (!strcasecmp (token, "cc"))
 					  {
 						if (cc && *cc)
 						  {
@@ -5051,50 +5097,50 @@ int32 net_MailtoLoad (ActiveEntry * cur_entry)
 					break;
 				  HG16262
 				  case 'F': case 'f':
-					if (!PL_strcasecmp (token, "followup-to"))
+					if (!strcasecmp (token, "followup-to"))
 					  StrAllocCopy (followup_to, value);
-					else if (!PL_strcasecmp (token, "from") &&
+					else if (!strcasecmp (token, "from") &&
 							 CE_URL_S->internal_url)
 					  StrAllocCopy (from, value);
-					else if (!PL_strcasecmp (token, "force-plain-text") &&
+					else if (!strcasecmp (token, "force-plain-text") &&
 							 CE_URL_S->internal_url)
 						force_plain_text = TRUE;
 					break;
 				  case 'H': case 'h':
-					  if (!PL_strcasecmp(token, "html-part") &&
+					  if (!strcasecmp(token, "html-part") &&
 						  CE_URL_S->internal_url) {
 						StrAllocCopy(html_part, value);
 					  }
 				  case 'N': case 'n':
-					if (!PL_strcasecmp (token, "newsgroups"))
+					if (!strcasecmp (token, "newsgroups"))
 					  StrAllocCopy (newsgroups, value);
-					else if (!PL_strcasecmp (token, "newshost") &&
+					else if (!strcasecmp (token, "newshost") &&
 							 CE_URL_S->internal_url)
 					  StrAllocCopy (newshost, value);
 					break;
 				  case 'O': case 'o':
-					if (!PL_strcasecmp (token, "organization") &&
+					if (!strcasecmp (token, "organization") &&
 						CE_URL_S->internal_url)
 					  StrAllocCopy (organization, value);
 					break;
 				  case 'R': case 'r':
-					if (!PL_strcasecmp (token, "references"))
+					if (!strcasecmp (token, "references"))
 					  StrAllocCopy (references, value);
-					else if (!PL_strcasecmp (token, "reply-to") &&
+					else if (!strcasecmp (token, "reply-to") &&
 							 CE_URL_S->internal_url)
 					  StrAllocCopy (reply_to, value);
 					break;
 				  case 'S': case 's':
-					if(!PL_strcasecmp (token, "subject"))
+					if(!strcasecmp (token, "subject"))
 					  StrAllocCopy (subject, value);
 					HG72661
 					break;
 				  case 'P': case 'p':
-					if (!PL_strcasecmp (token, "priority"))
+					if (!strcasecmp (token, "priority"))
 					  StrAllocCopy (priority, value);
 					break;
 				  case 'T': case 't':
-					if (!PL_strcasecmp (token, "to"))
+					if (!strcasecmp (token, "to"))
 					  {
 						if (to && *to)
 						  {
@@ -5135,7 +5181,7 @@ int32 net_MailtoLoad (ActiveEntry * cur_entry)
 		if(newshost)
 		  {
 			char *prefix = "news://";
-			char *slash = PL_strrchr (newshost, '/');
+			char *slash = strrchr (newshost, '/');
 			HG32828
 			newspost_url = (char *) PR_Malloc (PL_strlen (prefix) +
 											  PL_strlen (newshost) + 10);
