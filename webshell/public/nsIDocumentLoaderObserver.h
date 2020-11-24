@@ -48,10 +48,20 @@ public:
   NS_IMETHOD OnStartDocumentLoad(nsIDocumentLoader* loader, nsIURL* aURL, const char* aCommand) = 0;
 
   /**
+   * Notify the observer that a document has been completely loaded.
+   */
+  NS_IMETHOD OnEndDocumentLoad(nsIDocumentLoader* loader, nsIURL *aUrl, PRInt32 aStatus) = 0;
+
+  /**
    * Notify the observer that status text is available regarding the URL
    * being loaded...
    */
   NS_IMETHOD OnStatusURLLoad(nsIDocumentLoader* loader, nsIURL* aURL, nsString& aMsg) = 0;
+
+  /**
+   * Notify the observer that the specified nsIURL has finished loading.
+   */
+  NS_IMETHOD OnEndURLLoad(nsIDocumentLoader* loader, nsIURL* aURL, PRInt32 aStatus) = 0;
 
 };
 

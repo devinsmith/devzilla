@@ -46,6 +46,7 @@ extern "C" {
 #include "nsString.h"
 #include "nsINetlibURL.h"
 #include "nsIProtocolConnection.h"
+#include "nsINetlibURL.h"
 #include "nsIProtocolURLFactory.h"
 #include "nsIProtocol.h"
 #include "nsIURLGroup.h"
@@ -248,7 +249,6 @@ nsNetlibService::~nsNetlibService()
 
     delete mProtocols;
 }
-#if 0
 
 
 
@@ -328,12 +328,9 @@ void nsNetlibService::SetupURLStruct(nsIURL *aUrl, URL_Struct *aURL_s)
   }
 }
 
-#endif
-
 nsresult nsNetlibService::OpenStream(nsIURL *aUrl,
                                      nsIStreamListener *aConsumer)
 {
-#if 0
     URL_Struct *URL_s;
     nsConnectionInfo *pConn;
     nsINetlibURL *netlibURL;
@@ -450,7 +447,6 @@ nsresult nsNetlibService::OpenStream(nsIURL *aUrl,
      * URL has been completely loaded...
      */
     SchedulePollingTimer();
-#endif
     return NS_OK;
 }
 
@@ -1170,6 +1166,8 @@ NS_NET nsresult NS_OpenURL(nsIURL* aURL, nsIInputStream* *aNewStream,
 
 ////////////////////////////////////////////////////////////////////////////////
 
+#endif
+
 void nsNetlibService::SchedulePollingTimer()
 {
 #if !defined(NETLIB_THREAD)
@@ -1209,6 +1207,7 @@ void nsNetlibService::NetPollSocketsCallback(nsITimer* aTimer, void* aClosure)
 ///        }
     }
 }
+#if 0
 
 #if defined(XP_WIN)
 /*
@@ -1345,7 +1344,6 @@ NS_NET nsresult NS_ShutdownINetService()
 }
 
 } /* extern "C" */
-#if 0
 
 /*
  * This is the generic exit routine for all URLs loaded via the new
@@ -1384,7 +1382,7 @@ static void bam_exit_routine(URL_Struct *URL_s, int status, MWContext *window_id
             if ((nsConnectionActive == pConn->mStatus) && 
                 (nsnull != pConn->pConsumer)) {
                 nsAutoString status;
-                pConn->pConsumer->OnStopBinding(pConn->pURL, NS_BINDING_FAILED, status);
+                pConn->pConsumer->OnStopBinding(pConn->pURL, NS_BINDING_FAILED, status.GetUnicode());
                 NS_RELEASE(pConn->pConsumer);
             }
 
@@ -1397,7 +1395,7 @@ static void bam_exit_routine(URL_Struct *URL_s, int status, MWContext *window_id
         NET_FreeURLStruct(URL_s);
     }
 }
-#endif
+
 /*
  * Ugly hack to free contexts
  */
@@ -1420,7 +1418,6 @@ extern "C" void net_ReleaseContext(MWContext *context)
    }
  }
 }
-#if 0
 
 
 /*
@@ -1498,7 +1495,13 @@ char *mangleResourceIntoFileURL(const char* aResourceFileName)
 
 	resourceBase = XP_STRDUP(nsUnixMozillaHomePath);
 #ifdef DEBUG
-    printf("Using '%s' as the resource: base\n", resourceBase);
+    {
+        static PRBool firstTime = PR_TRUE;
+        if (firstTime) {
+            firstTime = PR_FALSE;
+            printf("Using '%s' as the resource: base\n", resourceBase);
+        }
+    }
 #endif
 
 #endif /* XP_UNIX */
@@ -1568,5 +1571,3 @@ BOOL WINAPI DllMain(HINSTANCE hDllInst,
 
 
 #endif /* XP_PC */
-
-#endif

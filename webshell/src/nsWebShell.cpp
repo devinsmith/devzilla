@@ -272,9 +272,15 @@ public:
   NS_IMETHOD OnStartDocumentLoad(nsIDocumentLoader* loader, 
                                  nsIURL* aURL, 
                                  const char* aCommand);
+  NS_IMETHOD OnEndDocumentLoad(nsIDocumentLoader* loader, 
+                               nsIURL* aURL, 
+                               PRInt32 aStatus);
 
   NS_IMETHOD OnStatusURLLoad(nsIDocumentLoader* loader, 
                              nsIURL* aURL, nsString& aMsg);
+  NS_IMETHOD OnEndURLLoad(nsIDocumentLoader* loader, 
+                          nsIURL* aURL, PRInt32 aStatus);
+
 
 #if 0
 
@@ -2073,6 +2079,70 @@ nsWebShell::OnStartDocumentLoad(nsIDocumentLoader* loader,
   return rv;
 }
 
+
+
+NS_IMETHODIMP
+nsWebShell::OnEndDocumentLoad(nsIDocumentLoader* loader, 
+                              nsIURL* aURL, 
+                              PRInt32 aStatus)
+{
+#if 1
+  const char* spec;
+  aURL->GetSpec(&spec);
+  printf("nsWebShell::OnEndDocumentLoad:%p: loader=%p url=%s status=%d\n", this, loader, spec, aStatus);
+#endif  
+  nsresult rv = NS_ERROR_FAILURE;
+
+  if (!mProcessedEndDocumentLoad) {
+    mProcessedEndDocumentLoad = PR_TRUE;    
+
+#if 0
+    if (nsnull != mScriptGlobal) {
+      nsIDocumentViewer* docViewer;
+      if (nsnull != mContentViewer && 
+          NS_OK == mContentViewer->QueryInterface(kIDocumentViewerIID, (void**)&docViewer)) {
+        nsIPresContext *presContext;
+        if (NS_OK == docViewer->GetPresContext(presContext)) {
+          nsEventStatus status = nsEventStatus_eIgnore;
+          nsMouseEvent event;
+          event.eventStructType = NS_EVENT;
+          event.message = NS_PAGE_LOAD;
+          rv = mScriptGlobal->HandleDOMEvent(*presContext, &event, nsnull, NS_EVENT_FLAG_INIT, status);
+
+          NS_RELEASE(presContext);
+        }
+        NS_RELEASE(docViewer);
+      }
+    }
+#endif
+
+    // Fire the EndLoadURL of the web shell container
+    if (nsnull != aURL) {
+       nsAutoString urlString;
+       const char* spec;
+       rv = aURL->GetSpec(&spec);
+       if (NS_SUCCEEDED(rv)) {
+         urlString = spec;
+         if (nsnull != mContainer) {
+            rv = mContainer->EndLoadURL(this, urlString.GetUnicode(), 0);
+         }  
+       }
+    }
+
+    /*
+     * Fire the OnEndDocumentLoad of the DocLoaderobserver
+     */
+    if ((nsnull != mContainer) && (nsnull != mDocLoaderObserver) && (nsnull != aURL)){
+       mDocLoaderObserver->OnEndDocumentLoad(mDocLoader, aURL, aStatus);
+    }
+  }
+  else {
+    rv = NS_OK;
+  }
+
+  return rv;
+}
+
 NS_IMETHODIMP
 nsWebShell::OnStatusURLLoad(nsIDocumentLoader* loader, 
                             nsIURL* aURL, 
@@ -2089,6 +2159,26 @@ nsWebShell::OnStatusURLLoad(nsIDocumentLoader* loader,
   return NS_OK;
 }
 
+NS_IMETHODIMP
+nsWebShell::OnEndURLLoad(nsIDocumentLoader* loader, 
+                         nsIURL* aURL, 
+                         PRInt32 aStatus)
+{
+#if 0
+  const char* spec;
+  aURL->GetSpec(&spec);
+  printf("nsWebShell::OnEndURLLoad:%p: loader=%p url=%s status=%d\n", this, loader, spec, aStatus);
+#endif
+  /*
+   *Fire the OnStartDocumentLoad of the webshell observer
+   */
+  if ((nsnull != mContainer) && (nsnull != mDocLoaderObserver))
+  {
+      mDocLoaderObserver->OnEndURLLoad(mDocLoader, aURL, aStatus);
+  }
+
+  return NS_OK;
+}
 
 #if 0
 

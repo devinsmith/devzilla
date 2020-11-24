@@ -745,13 +745,25 @@ public:
 
     // Implementation specific methods...
     void FireOnStartDocumentLoad(nsIURL* aURL, const char* aCOmmand);
+    void FireOnEndDocumentLoad(PRInt32 aStatus);
+
+    void FireOnStartURLLoad(nsIURL* aURL, const char* aContentType, 
+                            nsIContentViewer* aViewer);
+
     void FireOnStatusURLLoad(nsIURL* aURL, nsString& aMsg);
+
+    void FireOnEndURLLoad(nsIURL* aURL, PRInt32 aStatus);
+
     void LoadURLComplete(nsIURL* aURL, nsISupports* aLoader, PRInt32 aStatus);
     void SetParent(nsDocLoaderImpl* aParent);
     void SetDocumentUrl(nsIURL* aUrl);
 
 protected:
     virtual ~nsDocLoaderImpl();
+
+    void ChildDocLoaderFiredEndDocumentLoad(nsDocLoaderImpl* aChild,
+                                            PRInt32 aStatus);
+
 private:
 #if 0
     static PRBool StopBindInfoEnumerator (nsISupports* aElement, void* aData);
@@ -1231,6 +1243,43 @@ void nsDocLoaderImpl::FireOnStartDocumentLoad(nsIURL* aURL,
   }
 }
 
+void nsDocLoaderImpl::FireOnEndDocumentLoad(PRInt32 aStatus)
+{
+    PRInt32 count = mDocObservers.Count();
+    PRInt32 index;
+
+    /*
+     * First notify any observers that the document load has finished...
+     */
+    for (index = 0; index < count; index++) {
+        nsIDocumentLoaderObserver* observer = (nsIDocumentLoaderObserver*)
+            mDocObservers.ElementAt(index);
+        observer->OnEndDocumentLoad((nsIDocumentLoader*)this, mDocumentUrl,
+                                    aStatus);
+    }
+
+    /*
+     * Finally notify the parent...
+     */
+    if (nsnull != mParent) {
+        mParent->ChildDocLoaderFiredEndDocumentLoad(this, aStatus);
+    }
+}
+
+void
+nsDocLoaderImpl::ChildDocLoaderFiredEndDocumentLoad(nsDocLoaderImpl* aChild,
+                                                    PRInt32 aStatus)
+{
+    PRBool busy;
+    IsBusy(busy);
+    if (!busy) {
+        // If the parent is no longer busy because a child document
+        // loader finished, then its time for the parent to fire its
+        // on-end-document-load notification.
+        FireOnEndDocumentLoad(aStatus);
+    }
+}
+
 void nsDocLoaderImpl::FireOnStatusURLLoad(nsIURL* aURL, nsString& aMsg)
 {
   PRInt32 count = mDocObservers.Count();
@@ -1252,67 +1301,93 @@ void nsDocLoaderImpl::FireOnStatusURLLoad(nsIURL* aURL, nsString& aMsg)
   }
 }
 
-
-#if 0
-
-void nsDocLoaderImpl::LoadURLComplete(nsIURL* aURL, nsISupports* aBindInfo, PRInt32 aStatus)
+void nsDocLoaderImpl::FireOnEndURLLoad(nsIURL* aURL, PRInt32 aStatus)
 {
-  PRBool rv;
-  PRBool bIsForegroundURL = PR_FALSE;
+  PRInt32 count = mDocObservers.Count();
+  PRInt32 index;
 
   /*
-   * If the entry is not found in the list, then it must have been cancelled
-   * via Stop(...). So ignore just it... 
+   * First notify any observers that the URL load has begun...
    */
-  rv = m_LoadingDocsList->RemoveElement(aBindInfo);
-  if (PR_FALSE != rv) {
-    nsILoadAttribs* loadAttributes;
-    nsURLLoadType loadType = nsURLLoadNormal;
+  for (index = 0; index < count; index++) {
+    nsIDocumentLoaderObserver* observer = (nsIDocumentLoaderObserver*)mDocObservers.ElementAt(index);
+    observer->OnEndURLLoad((nsIDocumentLoader*) this, aURL, aStatus);
+  }
 
-    loadAttributes = aURL->GetLoadAttribs();
-    if (nsnull != loadAttributes) {
-      rv = loadAttributes->GetLoadType(&loadType);
-      if (NS_FAILED(rv)) {
-        loadType = nsURLLoadNormal;
-      }
-      NS_RELEASE(loadAttributes);
-    }
-    if (nsURLLoadBackground != loadType) {
-      mForegroundURLs -= 1;
-      bIsForegroundURL = PR_TRUE;
-    }
-    mTotalURLs -= 1;
-
-    NS_ASSERTION((mTotalURLs >= mForegroundURLs), "Foreground URL count is wrong.");
-
-    /* 
-     * If this was the last URL for the entire document (including any sub 
-     * documents) then fire an OnConnectionsComplete(...) notification.
-     *
-     * If the URL was a background URL, then ignore it...
-     */
-    if (PR_FALSE != bIsForegroundURL) {
-      PRBool bIsBusy;
-
-      IsBusy(bIsBusy);
-
-      if (! bIsBusy) {
-        PRInt32 count = mDocObservers.Count();
-        PRInt32 index;
-
-        PR_LOG(gDocLoaderLog, PR_LOG_DEBUG, 
-               ("DocLoader [%p] - OnConnectionsComplete(...) called.\n", this));
-
-        for (index = 0; index < count; index++) {
-          nsIDocumentLoaderObserver* observer = (nsIDocumentLoaderObserver*)mDocObservers.ElementAt(index);
-          observer->OnConnectionsComplete();
-        }
-      }
-    }
+  /*
+   * Finally notify the parent...
+   */
+  if (nsnull != mParent) {
+    mParent->FireOnEndURLLoad(aURL, aStatus);
   }
 }
 
-#endif
+
+
+void nsDocLoaderImpl::LoadURLComplete(nsIURL* aURL, nsISupports* aBindInfo, PRInt32 aStatus)
+{
+    PRBool isForegroundURL = PR_FALSE;
+
+    /*
+     * If the entry is not found in the list, then it must have been cancelled
+     * via Stop(...). So ignore just it... 
+     */
+    PRBool removed = m_LoadingDocsList->RemoveElement(aBindInfo);
+    if (removed) {
+        nsILoadAttribs* loadAttributes;
+        nsURLLoadType loadType = nsURLLoadNormal;
+
+        nsresult rv = aURL->GetLoadAttribs(&loadAttributes);
+        if (NS_SUCCEEDED(rv) && loadAttributes) {
+            rv = loadAttributes->GetLoadType(&loadType);
+            if (NS_FAILED(rv)) {
+                loadType = nsURLLoadNormal;
+            }
+            NS_RELEASE(loadAttributes);
+        }
+        if (nsURLLoadBackground != loadType) {
+            mForegroundURLs--;
+            isForegroundURL = PR_TRUE;
+        }
+        mTotalURLs -= 1;
+
+        NS_ASSERTION(mTotalURLs >= mForegroundURLs,
+                     "Foreground URL count is wrong.");
+
+#if defined(DEBUG)
+        const char* buffer;
+
+        aURL->GetSpec(&buffer);
+        PR_LOG(gDocLoaderLog, PR_LOG_DEBUG, 
+               ("DocLoader:%p: LoadURLComplete(...) called for %s; Foreground URLs: %d; Total URLs: %d\n", 
+                this, buffer, mForegroundURLs, mTotalURLs));
+#endif /* DEBUG */
+    }
+
+    /*
+     * Fire the OnEndURLLoad notification to any observers...
+     */
+    FireOnEndURLLoad(aURL, aStatus);
+
+    /*
+     * Fire the OnEndDocumentLoad notification to any observers...
+     */
+    PRBool busy;
+    IsBusy(busy);
+    if (isForegroundURL && !busy) {
+#if defined(DEBUG)
+        const char* buffer;
+
+        mDocumentUrl->GetSpec(&buffer);
+        PR_LOG(gDocLoaderLog, PR_LOG_DEBUG, 
+               ("DocLoader:%p: OnEndDocumentLoad(...) called for %s.\n",
+                this, buffer));
+#endif /* DEBUG */
+
+        FireOnEndDocumentLoad(aStatus);
+    }
+}
+
 void nsDocLoaderImpl::SetParent(nsDocLoaderImpl* aParent)
 {
   NS_IF_RELEASE(mParent);

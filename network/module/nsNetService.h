@@ -52,16 +52,11 @@ public:
     NS_IMETHOD GetCookieString(nsIURL *aURL, nsString& aCookie);
     NS_IMETHOD SetCookieString(nsIURL *aURL, const nsString& aCookie);
 
-#ifdef SingleSignon
-    NS_IMETHOD SI_DisplaySignonInfoAsHTML();
-    NS_IMETHOD SI_RememberSignonData
-        (char* URLName, LO_FormSubmitData *submit);
-    NS_IMETHOD SI_RestoreSignonData
-        (char* URLNAME, char* name, char** value);
-#endif
-
 #ifdef CookieManagement
     NS_IMETHOD NET_DisplayCookieInfoAsHTML();
+#ifndef HTMLDialogs
+    NS_IMETHOD NET_CookieViewerReturn();
+#endif
 #ifdef PrivacySiteInfo
     NS_IMETHOD 	NET_DisplayCookieInfoOfSiteAsHTML(char * URLName);
     NS_IMETHOD  NET_CookiePermission(char* URLName, PRInt32* permission);
@@ -113,17 +108,19 @@ protected:
 
     nsresult StartNetlibThread(void);
     nsresult StopNetlibThread(void);
-
+#endif
     void SchedulePollingTimer();
     void CleanupPollingTimer(nsITimer* aTimer);
     static void NetPollSocketsCallback(nsITimer* aTimer, void* aClosure);
+#if 0
 
 #if defined(NETLIB_THREAD)
     static void NetlibThreadMain(void *aParam);
 #endif /* NETLIB_THREAD */
-
+#endif
 private:
     void SetupURLStruct(nsIURL *aURL, URL_Struct *aURL_s);
+#if 0
     /* XXX: This is temporary until bamwrap.cpp is removed... */
     void *m_stubContext;
     nsIPref *mPref;

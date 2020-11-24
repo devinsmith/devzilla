@@ -19,7 +19,7 @@ INCLUDES = -I../../nsprpub/lib/libc/include -I../../nsprpub/pr/include \
 					 -I../protocol/file -I../protocol/ftp -I../protocol/about \
 					 -I../protocol/gopher -I../protocol/remote -I../cnvts \
 					 -I../cache -I../../modules/security/freenav
-DEFINES= -DNETSCAPE
+DEFINES= -DNETSCAPE -DMOZILLA_CLIENT
 CFLAGS = -Wall -g3
 
 CC? = gcc
