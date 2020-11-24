@@ -22,7 +22,6 @@
 #include <pthread.h>
 #include "prthread.h"
 
-#if defined(PTHREADS_USER)
 /*
 ** Thread Local Storage 
 */
@@ -49,7 +48,8 @@ extern pthread_key_t intsoff_key;
 
 #define _MD_SET_INTSOFF(_val)
 #define _MD_GET_INTSOFF()	1
-	
+
+#if 0
 /*
 ** Initialize the thread context preparing it to execute _main.
 */
@@ -259,6 +259,6 @@ PR_EXTERN(void) _MD_SetPriority(struct _MDThread *thread,
 	PRThreadPriority newPri);
 #define _MD_SET_PRIORITY _MD_SetPriority
 
-#endif /* PTHREADS_USER */
+#endif
 
 #endif /* nspr_pthread_defs_h___ */

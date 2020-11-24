@@ -1269,6 +1269,8 @@ PRStatus _MD_setsockopt(PRFileDesc *fd, PRInt32 level,
     return rv==0?PR_SUCCESS:PR_FAILURE;
 }
 
+#endif /* _PR_PTHREADS */
+
 PRStatus _MD_set_fd_inheritable(PRFileDesc *fd, PRBool inheritable)
 {
     int rv;
@@ -1280,6 +1282,7 @@ PRStatus _MD_set_fd_inheritable(PRFileDesc *fd, PRBool inheritable)
     }
     return PR_SUCCESS;
 }
+#if !defined(_PR_PTHREADS)
 
 /************************************************************************/
 #if !defined(_PR_USE_POLL)

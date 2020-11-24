@@ -44,7 +44,7 @@ ifeq ($(OS),Windows_NT)
 else
 	DEFINES += -D_PR_PTHREADS -DLINUX -Dlinux -DXP_UNIX -DPR_LOGGING
 	SRCS += md/unix/unix.c md/unix/unix_errors.c md/unix/uxproces.c \
-					md/unix/uxpoll.c md/unix/linux.c md/unix/unixio.c
+					md/unix/linux.c md/unix/unixio.c
 endif
 
 OBJS = $(SRCS:.c=.o)

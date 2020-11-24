@@ -2179,7 +2179,7 @@ _PR_MD_CLOSE(PRInt32 osfd, PRBool socket)
 }
 
 PRStatus
-_PR_MD_SET_FD_INHERITABLE(PRFileDesc *fd, PRBool inheritable)
+_MD_set_fd_inheritable(PRFileDesc *fd, PRBool inheritable)
 {
     BOOL rv;
 

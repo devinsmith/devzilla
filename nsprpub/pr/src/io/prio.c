@@ -76,6 +76,7 @@ PR_IMPLEMENT(PRFileDesc*) PR_GetSpecialFD(PRSpecialFD osfd)
 }
 #endif
 
+#if 0
 PR_IMPLEMENT(PRFileDesc*) PR_AllocFileDesc(
     PRInt32 osfd, const PRIOMethods *methods)
 {
@@ -101,6 +102,7 @@ PR_IMPLEMENT(PRFileDesc*) PR_AllocFileDesc(
 
     return fd;
 }
+#endif
 
 PR_IMPLEMENT(void) PR_FreeFileDesc(PRFileDesc *fd)
 {
@@ -108,13 +110,15 @@ PR_IMPLEMENT(void) PR_FreeFileDesc(PRFileDesc *fd)
     _PR_Putfd(fd);
 }
 
+#if 0
 /*
 ** Wait for some i/o to finish on one or more more poll descriptors.
 */
 PR_IMPLEMENT(PRInt32) PR_Poll(PRPollDesc *pds, PRIntn npds, PRIntervalTime timeout)
 {
-	return(_PR_MD_PR_POLL(pds, npds, timeout));
+	return(_MD_pr_poll(pds, npds, timeout));
 }
+#endif
 
 /*
 ** Set the inheritance attribute of a file descriptor.
@@ -133,10 +137,10 @@ PR_IMPLEMENT(PRStatus) PR_SetFDInheritable(
         return PR_FAILURE;
     }
     if (fd->secret->inheritable != inheritable) {
-        if (_PR_MD_SET_FD_INHERITABLE(fd, inheritable) == PR_FAILURE) {
+      if (_MD_set_fd_inheritable(fd, inheritable) == PR_FAILURE) {
             return PR_FAILURE;
-        }
-        fd->secret->inheritable = inheritable;
+      }
+      fd->secret->inheritable = inheritable;
     }
     return PR_SUCCESS;
 #else

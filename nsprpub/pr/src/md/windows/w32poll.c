@@ -45,7 +45,7 @@ _PR_MD_select_thread(void *cdata)
 
 #endif /* !defined(_PR_GLOBAL_THREADS_ONLY) */
 
-PRInt32 _PR_MD_PR_POLL(PRPollDesc *pds, PRIntn npds, PRIntervalTime timeout)
+PRInt32 _MD_pr_poll(PRPollDesc *pds, PRIntn npds, PRIntervalTime timeout)
 {
     int ready, err;
     fd_set rd, wt, ex;
