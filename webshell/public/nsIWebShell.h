@@ -235,12 +235,12 @@ public:
    * outermost WebShell.
    */
   NS_IMETHOD GetRootWebShell(nsIWebShell*& aResult) = 0;
-
+#endif
   /**
    * Set the parent WebShell.
    */
   NS_IMETHOD SetParent(nsIWebShell* aParent) = 0;
-
+#if 0
   /**
    * Return the parent WebShell.
    */

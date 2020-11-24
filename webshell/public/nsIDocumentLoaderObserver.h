@@ -46,6 +46,13 @@ public:
    * a connection is established with the server...
    */
   NS_IMETHOD OnStartDocumentLoad(nsIDocumentLoader* loader, nsIURL* aURL, const char* aCommand) = 0;
+
+  /**
+   * Notify the observer that status text is available regarding the URL
+   * being loaded...
+   */
+  NS_IMETHOD OnStatusURLLoad(nsIDocumentLoader* loader, nsIURL* aURL, nsString& aMsg) = 0;
+
 };
 
 

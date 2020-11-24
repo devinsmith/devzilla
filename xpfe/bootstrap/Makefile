@@ -20,17 +20,25 @@ INTERNAL_CFLAGS = -Wall -g3 -DXP_UNIX -I../../widget/public \
 CPPFLAGS += -MMD -MP -MT $@
 LDFLAGS = -L../../xpcom/src -L../../nsprpub/lib/ds \
 	-L../../nsprpub/pr/src -L../../nsprpub/lib/libc/src \
-	-L../appshell/src \
-	-L../../network/module \
+	-L../appshell/src -L../../modules/libpref/src \
+	-L../../network/module -L../../network/main \
 	-L../../base/src \
 	-L../../js/src \
 	-L../../modules/libimg/src \
 	-L../../modules/libreg/src \
-	-L../../modules/libutil/src \
+	-L../../modules/libutil/src -L../../network/protocol/gopher \
+	-L../../network/protocol/file -L../../network/protocol/http \
+	-L../../network/protocol/about -L../../network/protocol/ftp \
+	-L../../network/protocol/remote \
+	-L../../lib/xp -L../../network/cache -L../../network/mimetype \
+	-L../../lib/libpwcac -L../../network/cnvts \
+	-L../../modules/security/freenav \
 	-Wl,--no-as-needed
-#LIBS = -lnsappshell -lmoznetlib -lraptorbase -lxpcom -lmozjs -lplds -limg -lmozreg -lmozutil -lnspr -lnsprc -lXm -lX11 -lXt -ldl
-#LIBS = -lmoznetlib -lraptorbase -lxpcom -lmozjs -lplds -limg -lmozreg -lmozutil -lnspr -lnsprc -lXm -lX11 -lXt -ldl
-LIBS = -lmoznetlib -lraptorbase -lxpcom -lmozjs -lplds -limg -lmozreg -lmozutil -lnspr -lnsprc -ldl
+LIBS = -lxp -lfileurl -lhttpurl -labouturl -lpref -lnetcache -lnetcnvts \
+			 -lmozmimetypes -lmoznetwork -lmoznetlib -lftpurl -lgophurl \
+			 -lraptorbase -lxpcom -lmozjs -lsecfree -lremoturl \
+			 -lplds -limg -lmozreg -lpwcac \
+			 -lmozutil -lnspr -lnsprc -ldl -lz
 EXE = apprunner
 
 

@@ -110,23 +110,23 @@ static PRLogModuleInfo* gLogModule = PR_NewLogModule("webshell");
 #else
 #define WEB_TRACE(_bit,_args)
 #endif
-#if 0
 
 
-#if XP_UNIX
-  // XXX. This should be changed. 
-  // Allow the event queue to be setup from outside
-  // the webshell.
+#if OLD_EVENT_QUEUE
+  /* The following is not used for the GTK version of the browser.
+   * It is still lurking around  for Motif 
+   */
 PLEventQueue* gWebShell_UnixEventQueue;
 
 void nsWebShell_SetUnixEventQueue(PLEventQueue* aEventQueue)
 {
   gWebShell_UnixEventQueue = aEventQueue;
 }
-#endif
+#endif  /* OLD_EVENT_QUEUE  */
+
 
 //----------------------------------------------------------------------
-#endif
+
 class nsWebShell : public nsIWebShell,/*
                    public nsIWebShellContainer,
                    public nsILinkHandler,
@@ -185,7 +185,9 @@ public:
 #if 0
   NS_IMETHOD GetPrefs(nsIPref*& aPrefs);
   NS_IMETHOD GetRootWebShell(nsIWebShell*& aResult);
+#endif
   NS_IMETHOD SetParent(nsIWebShell* aParent);
+#if 0
   NS_IMETHOD GetParent(nsIWebShell*& aParent);
   NS_IMETHOD GetChildCount(PRInt32& aResult);
   NS_IMETHOD AddChild(nsIWebShell* aChild);
@@ -270,6 +272,10 @@ public:
   NS_IMETHOD OnStartDocumentLoad(nsIDocumentLoader* loader, 
                                  nsIURL* aURL, 
                                  const char* aCommand);
+
+  NS_IMETHOD OnStatusURLLoad(nsIDocumentLoader* loader, 
+                             nsIURL* aURL, nsString& aMsg);
+
 #if 0
 
   // nsIRefreshURL interface methods...
@@ -375,7 +381,9 @@ protected:
 #if 0
 
   void ReleaseChildren();
+#endif
   void DestroyChildren();
+#if 0
   nsresult CreateScriptEnvironment();
 #endif
   nsresult DoLoadURL(const nsString& aUrlSpec,
@@ -589,7 +597,7 @@ nsWebShell::ReleaseChildren()
   }
   mChildren.Clear();
 }
-
+#endif
 void
 nsWebShell::DestroyChildren()
 {
@@ -602,7 +610,6 @@ nsWebShell::DestroyChildren()
   }
   mChildren.Clear();
 }
-#endif
 
 NS_IMPL_THREADSAFE_ADDREF(nsWebShell)
 NS_IMPL_THREADSAFE_RELEASE(nsWebShell)
@@ -851,17 +858,18 @@ nsWebShell::Destroy()
   // Stop any URLs that are currently being loaded...
   Stop();
 
-#if 0
   SetContainer(nsnull);
   SetObserver(nsnull);
-#endif
   SetDocLoaderObserver(nsnull);
-#if 0
+
+  if (nsnull != mDocLoader) {
+    mDocLoader->SetContainer(nsnull);
+  }
+
   NS_IF_RELEASE(mContentViewer);
 
   // Destroy our child web shells and release references to them
   DestroyChildren();
-#endif
   return rv;
 }
 #if 0
@@ -1097,7 +1105,7 @@ nsWebShell::GetRootWebShell(nsIWebShell*& aResult)
   aResult = top;
   return NS_OK;
 }
-
+#endif
 NS_IMETHODIMP
 nsWebShell::SetParent(nsIWebShell* aParent)
 {
@@ -1106,6 +1114,7 @@ nsWebShell::SetParent(nsIWebShell* aParent)
   NS_IF_ADDREF(aParent);
   return NS_OK;
 }
+#if 0
 
 NS_IMETHODIMP
 nsWebShell::GetParent(nsIWebShell*& aParent)
@@ -1322,6 +1331,8 @@ nsWebShell::DoLoadURL(const nsString& aUrlSpec,
 
 
 {
+  printf("nsWebShell::DoLoadURL - TODO (cache reload)\n");
+
   // Stop loading the current document (if any...).  This call may result in
   // firing an EndLoadURL notification for the old document...
   Stop();
@@ -1360,7 +1371,6 @@ nsWebShell::LoadURL(const PRUnichar *aURLSpec,
                     nsURLReloadType aType,
                     const PRUint32 aLocalIP)
 {
-  printf("nsWebShell::LoadURL - TODO\n");
 
   nsresult rv;
   PRInt32 colon, fSlash;
@@ -2056,12 +2066,29 @@ nsWebShell::OnStartDocumentLoad(nsIDocumentLoader* loader,
    */
   if ((nsnull != mContainer) && (nsnull != mDocLoaderObserver))
   {
-     //mDocLoaderObserver->OnStartDocumentLoad(mDocLoader, aURL, aCommand);
+     mDocLoaderObserver->OnStartDocumentLoad(mDocLoader, aURL, aCommand);
   }
 
   
   return rv;
 }
+
+NS_IMETHODIMP
+nsWebShell::OnStatusURLLoad(nsIDocumentLoader* loader, 
+                            nsIURL* aURL, 
+                            nsString& aMsg)
+{
+  /*
+   *Fire the OnStartDocumentLoad of the webshell observer and container...
+   */
+  if ((nsnull != mContainer) && (nsnull != mDocLoaderObserver))
+  {
+     mDocLoaderObserver->OnStatusURLLoad(mDocLoader, aURL, aMsg);
+  }
+
+  return NS_OK;
+}
+
 
 #if 0
 
