@@ -45,6 +45,7 @@ $(STATIC_LIB): $(OBJS)
 
 $(SHARED_LIB): $(OBJS)
 	$(CC) -shared -o $@ $(OBJS) $(LDFLAGS)
+	cp $(SHARED_LIB) ../../xpfe/bootstrap
 
 .c.o:
 	$(CC) $(CFLAGS) $(INCLUDES) $(DEFINES) -fPIC -MMD -MP -MT $@ -o $@ -c $<

@@ -38,6 +38,9 @@ $(STATIC_LIB): $(OBJS)
 
 $(SHARED_LIB): $(OBJS)
 	$(CXX) -shared -o $@ $(OBJS) $(LDFLAGS)
+	mkdir -p ../../bootstrap/components
+	cp $(SHARED_LIB) ../../bootstrap
+	cp $(SHARED_LIB) ../../bootstrap/components
 
 .c.o:
 	$(CC) $(INTERNAL_CFLAGS) $(CPPFLAGS) -o $@ -c $<

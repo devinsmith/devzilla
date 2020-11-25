@@ -46,6 +46,7 @@ all: $(SHARED_LIB)
 
 $(SHARED_LIB): $(OBJS)
 	$(CXX) -shared -o $@ $(OBJS) $(LD_FLAGS) -ljpeg
+	cp $(SHARED_LIB) ../../../xpfe/bootstrap
 
 $(STATIC_LIB): $(OBJS)
 	$(RM) $(STATIC_LIB)

@@ -73,6 +73,7 @@ all: $(SHARED_LIB)
 
 $(SHARED_LIB): $(OBJS)
 	$(CXX) -shared -o $@ $(OBJS) $(LDFLAGS)
+	cp $(SHARED_LIB) ../../xpfe/bootstrap
 
 .c.o:
 	$(CC) $(CFLAGS) $(INCLUDES) -MMD -MP -MT $@ -o $@ -c $<

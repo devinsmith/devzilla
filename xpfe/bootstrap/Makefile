@@ -23,8 +23,8 @@ LDFLAGS = -L../../xpcom/src -L../../nsprpub/lib/ds \
 	-L../appshell/src -L../../modules/libpref/src \
 	-L../../network/module -L../../network/main \
 	-L../../base/src \
-	-L../../js/src \
-	-L../../modules/libimg/src \
+	-L../../js/src -L../../gfx/src \
+	-L../../modules/libimg/src -L../../widget/src \
 	-L../../modules/libreg/src \
 	-L../../modules/libutil/src -L../../network/protocol/gopher \
 	-L../../network/protocol/file -L../../network/protocol/http \
@@ -37,7 +37,7 @@ LDFLAGS = -L../../xpcom/src -L../../nsprpub/lib/ds \
 LIBS = -lxp -lfileurl -lhttpurl -labouturl -lpref -lnetcache -lnetcnvts \
 			 -lmozmimetypes -lmoznetwork -lmoznetlib -lftpurl -lgophurl \
 			 -lraptorbase -lxpcom -lmozjs -lsecfree -lremoturl \
-			 -lplds -limg -lmozreg -lpwcac \
+			 -lplds -limg -lmozreg -lpwcac -lraptorwidget \
 			 -lmozutil -lnspr -lnsprc -ldl -lz
 EXE = apprunner
 
@@ -57,6 +57,10 @@ clean:
 	rm -f $(OBJS)
 	rm -f $(DEPS)
 	rm -f $(EXE)
+
+pristine: clean
+	rm -f *.so
+	rm -rf components
 
 # Include automatically generated dependency files
 -include $(DEPS)
