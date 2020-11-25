@@ -170,7 +170,7 @@ struct MWContext_ {
     int          fileSort;  /* file sorting method */
     char       * save_as_name;	/* name to save current file as */
     char       * title;		/* title (if supplied) of current document */
-    Bool       is_grid_cell;	/* Is this a grid cell */
+    int       is_grid_cell;	/* Is this a grid cell */
     struct MWContext_ *grid_parent;	/* pointer to parent of grid cell */
     XP_List *	 grid_children;	/* grid children of this context */
     int      convertPixX;	/* convert from pixels to fe-specific coords */

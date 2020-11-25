@@ -18,7 +18,7 @@ INCLUDES = -I../../../nsprpub/lib/libc/include -I../../../nsprpub/pr/include \
 					 -I../protocol/ftp -I../protocol/about -I../protocol/gopher \
 					 -I../protocol/js -I../protocol/remote -I../protocol/dataurl \
 					 -I../cache
-DEFINES= -DNETSCAPE
+DEFINES= -DNETSCAPE -DMOZILLA_CLIENT
 CFLAGS = -Wall -g3
 
 CC? = gcc
