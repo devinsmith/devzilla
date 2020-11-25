@@ -55,6 +55,7 @@ public:
                                   PRInt32 aInitialWidth, PRInt32 aInitialHeight) = 0;
 
   NS_IMETHOD CloseTopLevelWindow(nsIWebShellWindow* aWindow) = 0;
+  NS_IMETHOD RegisterTopLevelWindow(nsIWebShellWindow* aWindow) = 0;
   NS_IMETHOD UnregisterTopLevelWindow(nsIWebShellWindow* aWindow) = 0;
 };
 

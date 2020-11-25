@@ -129,6 +129,31 @@ nsAppShellService::Run(void)
 NS_IMETHODIMP
 nsAppShellService::Shutdown(void)
 {
+
+#if 1
+  mAppShell->Exit();
+#else
+  while (mWindowList->Count() > 0) {
+    nsISupports * winSupports = mWindowList->ElementAt(0);
+    nsCOMPtr<nsIWidget> window(do_QueryInterface(winSupports));
+    if (window) {
+      mWindowList->RemoveElementAt(0);
+      CloseTopLevelWindow(window);
+    } else {
+      nsCOMPtr<nsIWebShellWindow> webShellWin(do_QueryInterface(winSupports));
+      if (webShellWin) {
+        nsIWidget * win;
+        webShellWin->GetWidget(win);
+        CloseTopLevelWindow(win);
+      }
+      //nsCOMPtr<nsIWebShellContainer> wsc(do_QueryInterface(winSupports));
+      //if (wsc) {
+      //
+      //}
+      break;
+    }
+  }
+#endif
   return NS_OK;
 }
 
@@ -170,8 +195,7 @@ nsAppShellService::CreateTopLevelWindow(nsIWebShellWindow *aParent,
                             aInitialWidth, aInitialHeight);
     if (NS_SUCCEEDED(rv)) {
       rv = window->QueryInterface(kIWebShellWindowIID, (void **) &aResult);
-      mWindowList->AppendElement((nsIWebShellContainer*)window);
-      //aResult = window->GetWidget();
+      RegisterTopLevelWindow(window);
       window->Show(PR_TRUE);
     }
   }

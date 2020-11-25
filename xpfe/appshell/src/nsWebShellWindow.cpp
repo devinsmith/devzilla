@@ -32,6 +32,7 @@
 #include "nsIXULWindowCallbacks.h"
 
 #include "nsIAppShellService.h"
+#include "nsIWidgetController.h"
 #include "nsAppShellCIDs.h"
 
 /* Define Class IDs */
@@ -59,6 +60,7 @@ nsWebShellWindow::nsWebShellWindow()
   mWebShell = nsnull;
   mWindow   = nsnull;
   mContinueModalLoop = PR_FALSE;
+  mChromeInitialized = PR_FALSE;
 }
 
 
@@ -305,7 +307,11 @@ NS_IMETHODIMP
 nsWebShellWindow::NewWebShell(PRUint32 aChromeMask, PRBool aVisible,
                               nsIWebShell *&aNewWebShell)
 {
-  return NS_ERROR_FAILURE;
+	// Don't return a web shell, since the shell that will hold our content
+  // hasn't been instantiated yet.  We'll have to wait and set up the linkage
+  // at a later date.
+	aNewWebShell = nsnull;
+  return NS_OK;
 }
 
 
@@ -356,10 +362,9 @@ NS_IMETHODIMP
 nsWebShellWindow::OnEndDocumentLoad(nsIDocumentLoader* loader, 
                                     nsIURL* aURL, PRInt32 aStatus)
 {
-#ifdef DEBUG_MENUSDEL
-  printf("OnEndDocumentLoad\n");
+#if 1
+  printf("nsWebShellWindow::OnEndDocumentLoad TODO\n");
 #endif
-#if 0
 
   /* We get notified every time a page/Frame is loaded. But we need to
    * Load the menus, run the startup script etc.. only once. So, Use
@@ -370,7 +375,7 @@ nsWebShellWindow::OnEndDocumentLoad(nsIDocumentLoader* loader,
     return NS_OK;
 
   mChromeInitialized = PR_TRUE;
-
+#if 0
   // register as document listener
   // this is needed for menus
   nsCOMPtr<nsIContentViewer> cv;

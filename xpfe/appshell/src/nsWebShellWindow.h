@@ -119,6 +119,7 @@ protected:
   nsIWidget*   mWindow;
   nsIWebShell* mWebShell;
   PRBool                  mContinueModalLoop;
+  PRBool                  mChromeInitialized;
 };
 
 
