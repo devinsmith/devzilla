@@ -16,6 +16,7 @@
  * Reserved.
  */
 
+#include <stdlib.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include "nsWidget.h"
@@ -37,6 +38,57 @@ static NS_DEFINE_IID(kIEventQueueServiceIID, NS_IEVENTQUEUESERVICE_IID);
 // don't have that luxury
 extern "C" int NS_TimeToNextTimeout(struct timeval *);
 extern "C" void NS_ProcessTimeouts(void);
+
+
+// For debugging.
+static const char *event_names[] = {
+  "",
+  "",
+  "KeyPress",
+  "KeyRelease",
+  "ButtonPress",
+  "ButtonRelease",
+  "MotionNotify",
+  "EnterNotify",
+  "LeaveNotify",
+  "FocusIn",
+  "FocusOut",
+  "KeymapNotify",
+  "Expose",
+  "GraphicsExpose",
+  "NoExpose",
+  "VisibilityNotify",
+  "CreateNotify",
+  "DestroyNotify",
+  "UnmapNotify",
+  "MapNotify",
+  "MapRequest",
+  "ReparentNotify",
+  "ConfigureNotify",
+  "ConfigureRequest",
+  "GravityNotify",
+  "ResizeRequest",
+  "CirculateNotify",
+  "CirculateRequest",
+  "PropertyNotify",
+  "SelectionClear",
+  "SelectionRequest",
+  "SelectionNotify",
+  "ColormapNotify",
+  "ClientMessage",
+  "MappingNotify"
+};
+
+#define ALL_EVENTS ( KeyPressMask | KeyReleaseMask | ButtonPressMask | \
+                     ButtonReleaseMask | EnterWindowMask | LeaveWindowMask | \
+                     PointerMotionMask | PointerMotionHintMask | Button1MotionMask | \
+                     Button2MotionMask | Button3MotionMask | \
+                     Button4MotionMask | Button5MotionMask | ButtonMotionMask | \
+                     KeymapStateMask | ExposureMask | VisibilityChangeMask | \
+                     StructureNotifyMask | ResizeRedirectMask | \
+                     SubstructureNotifyMask | SubstructureRedirectMask | \
+                     FocusChangeMask | PropertyChangeMask | \
+                     ColormapChangeMask | OwnerGrabButtonMask )
 
 NS_IMPL_ADDREF(nsAppShell)
 NS_IMPL_RELEASE(nsAppShell)
@@ -86,7 +138,7 @@ NS_METHOD nsAppShell::Create(int* argc, char ** argv)
     printf("nsAppShell:Create(): Warning: %d XVisualInfo structs were returned.\n", num_visuals);
   }
   // get the depth for this display
-  gDepth = DefaultDepth(gDisplay, gScreenNum);
+  gDepth = gVisualInfo->depth;
   // set up the color info for this display
   // set up the masks
   gRedMask = gVisualInfo->red_mask;
@@ -109,6 +161,7 @@ NS_METHOD nsAppShell::Create(int* argc, char ** argv)
 
 NS_METHOD nsAppShell::SetDispatchListener(nsDispatchListener* aDispatchListener) 
 {
+  mDispatchListener = aDispatchListener;
   return NS_OK;
 }
 
@@ -199,12 +252,17 @@ nsresult nsAppShell::Run()
     // xlib
     if (FD_ISSET(xlib_fd, &select_set)) {
       //printf("xlib data available.\n");
-      XNextEvent(gDisplay, &event);
+      //XNextEvent(gDisplay, &event);
+      while (XCheckMaskEvent(gDisplay, ALL_EVENTS, &event)) {
+        DispatchEvent(&event);
+      }
     }
     if (please_run_timer_queue) {
       //printf("Running timer queue...\n");
       NS_ProcessTimeouts();
     }
+    // make sure that any pending X requests are flushed.
+    XFlush(gDisplay);
   }
   return rv;
 }
@@ -239,6 +297,81 @@ nsAppShell::~nsAppShell()
 void* nsAppShell::GetNativeData(PRUint32 aDataType)
 {
   return nsnull;
+}
+
+void
+nsAppShell::DispatchEvent(XEvent *event)
+{
+  nsWidget *widget;
+  widget = nsWidget::getWidgetForWindow(event->xany.window);
+  // switch on the type of event
+  switch (event->type) {
+  case Expose:
+    HandleExposeEvent(event, widget);
+    break;
+#if 0
+  case ConfigureNotify:
+    HandleConfigureNotifyEvent(event, widget);
+    break;
+#endif
+#if 0
+  case ButtonPress:
+  case ButtonRelease:
+    HandleButtonEvent(event, widget);
+    break;
+  case MotionNotify:
+    HandleMotionNotifyEvent(event, widget);
+    break;
+#endif
+  default:
+    printf("Unhandled window event: Window 0x%lx Got a %s event\n",
+           event->xany.window, event_names[event->type]);
+    break;
+  }
+}
+
+void
+nsAppShell::HandleExposeEvent(XEvent *event, nsWidget *aWidget)
+{
+  printf("Expose event for window 0x%lx %d %d %d %d\n", event->xany.window,
+         event->xexpose.x, event->xexpose.y, event->xexpose.width, event->xexpose.height);
+  nsPaintEvent pevent;
+  pevent.message = NS_PAINT;
+  pevent.widget = aWidget;
+  pevent.eventStructType = NS_PAINT_EVENT;
+  pevent.rect = new nsRect (event->xexpose.x, event->xexpose.y,
+                            event->xexpose.width, event->xexpose.height);
+  // XXX fix this
+  pevent.time = 0;
+  NS_ADDREF(aWidget);
+  aWidget->OnPaint(pevent);
+  NS_RELEASE(aWidget);
+  delete pevent.rect;
+}
+
+void
+nsAppShell::HandleConfigureNotifyEvent(XEvent *event, nsWidget *aWidget)
+{
+  printf("ConfigureNotify event for window 0x%lx %d %d %d %d\n",
+         event->xconfigure.window,
+         event->xconfigure.x, event->xconfigure.y,
+         event->xconfigure.width, event->xconfigure.height);
+  nsSizeEvent sevent;
+  sevent.message = NS_SIZE;
+  sevent.widget = aWidget;
+  sevent.eventStructType = NS_SIZE_EVENT;
+  sevent.windowSize = new nsRect (event->xconfigure.x, event->xconfigure.y,
+                                  event->xconfigure.width, event->xconfigure.height);
+  sevent.point.x = event->xconfigure.x;
+  sevent.point.y = event->xconfigure.y;
+  sevent.mWinWidth = event->xconfigure.width;
+  sevent.mWinHeight = event->xconfigure.height;
+  // XXX fix this
+  sevent.time = 0;
+  NS_ADDREF(aWidget);
+  aWidget->OnResize(sevent);
+  NS_RELEASE(aWidget);
+  delete sevent.windowSize;
 }
 
 static PRUint8 convertMaskToCount(unsigned long val)

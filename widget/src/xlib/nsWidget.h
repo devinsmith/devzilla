@@ -23,6 +23,7 @@
 #include <X11/Xutil.h>
 #include <X11/Xos.h>
 #include "nsBaseWidget.h"
+#include "nsHashtable.h"
 
 class nsWidget : public nsBaseWidget
 {
@@ -46,7 +47,7 @@ public:
                     nsIToolkit *aToolkit = nsnull,
                     nsWidgetInitData *aInitData = nsnull);
 
-  virtual nsresult StandardWindowCreate(nsIWidget *aParent,
+  virtual nsresult StandardWidgetCreate(nsIWidget *aParent,
                                         const nsRect &aRect,
                                         EVENT_CALLBACK aHandleEventFunction,
                                         nsIDeviceContext *aContext,
@@ -96,10 +97,31 @@ public:
   NS_IMETHOD              SetPreferredSize(PRInt32 aWidth, PRInt32 aHeight);
   NS_IMETHOD              DispatchEvent(nsGUIEvent* event, nsEventStatus & aStatus);
 
+  PRBool                  OnPaint(nsPaintEvent &event);
+  PRBool                  OnResize(nsSizeEvent &event);
+
+  static nsWidget        *getWidgetForWindow(Window aWindow);
 protected:
+  // create the native window for this class
+  virtual void CreateNative(Window aParent, nsRect aRect);
+  virtual void DestroyNative(void);
+
+  static       nsHashtable *window_list;
   PRUint32 mPreferredWidth;
   PRUint32 mPreferredHeight;
-  Window mWindow;
+  nsIWidget   *parentWidget;
+
+  // private event functions
+  PRBool DispatchWindowEvent(nsGUIEvent* event);
+  PRBool ConvertStatus(nsEventStatus aStatus);
+
+  // All widgets have at least these items.
+  Window        mBaseWindow;
+  unsigned long bg_pixel;
+  PRUint32      border_rgb;
+  unsigned long border_pixel;
+  GC            mGC; // until we get gc pooling working...
+  const char   *name;  // name of the type of widget
 };
 
 extern Display         *gDisplay;
