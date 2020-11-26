@@ -5,19 +5,21 @@
 .PHONY: all clean
 
 # Shared components
-SRCS = nsColor.cpp nsColorNames.cpp nsColorNamesRGB.cpp nsFont.cpp \
+CPP_SRCS = nsColor.cpp nsColorNames.cpp nsColorNamesRGB.cpp nsFont.cpp \
 			 nsRect.cpp nsDeviceContext.cpp \
 			 nsTransform2D.cpp nsImageRenderer.cpp nsImageRequest.cpp
 
 # Platform specific components
 # XLIB sources
-XLIB_SRCS = xlib/nsDeviceContextSpecFactoryX.cpp xlib/nsDeviceContextXlib.cpp \
+XLIB_CPP_SRCS = xlib/nsDeviceContextSpecFactoryX.cpp xlib/nsDeviceContextXlib.cpp \
 	xlib/nsFontMetricsXlib.cpp xlib/nsImageXlib.cpp xlib/nsRenderingContextXlib.cpp \
 	xlib/nsDeviceContextSpecXlib.cpp xlib/nsDrawingSurfaceXlib.cpp \
 	xlib/nsGfxFactoryXlib.cpp xlib/nsRegionXlib.cpp
 
-OBJS = $(SRCS:.cpp=.o)
-DEPS = $(SRCS:.cpp=.d)
+XLIB_C_SRCS = xlib/xlibrgb.c
+
+OBJS = $(CPP_SRCS:.cpp=.o) $(C_SRCS:.c=.o)
+DEPS = $(CPP_SRCS:.cpp=.d) $(C_SRCS:.c=.d)
 
 TOOLKIT = xlib
 #TOOLKIT = motif
@@ -53,7 +55,8 @@ ifeq ($(OS),Windows_NT)
 		-lxpcom -lnspr -lwsock32
 else
 	CFLAGS += -fpic
-	SRCS += $(XLIB_SRCS)
+	CPP_SRCS += $(XLIB_CPP_SRCS)
+	C_SRCS += $(XLIB_C_SRCS)
 endif
 
 
@@ -64,7 +67,7 @@ $(SHARED_LIB): $(OBJS)
 	cp $(SHARED_LIB) ../../xpfe/bootstrap
 
 .c.o:
-	$(CC) $(CFLAGS) $(INCLUDES) -MMD -MP -MT $@ -o $@ -c $<
+	$(CC) $(CFLAGS) $(INCLUDES) $(DEFINES) -MMD -MP -MT $@ -o $@ -c $<
 
 .cpp.o:
 	$(CXX) $(CFLAGS) $(INCLUDES) $(DEFINES) -MMD -MP -MT $@ -o $@ -c $<
