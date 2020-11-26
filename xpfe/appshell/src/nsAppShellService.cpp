@@ -35,11 +35,13 @@
 #include "nsWidgetsCID.h"
 
 /* Define Class IDs */
-static NS_DEFINE_IID(kAppShellCID,         NS_APPSHELL_CID);
+static NS_DEFINE_IID(kAppShellCID,          NS_APPSHELL_CID);
+static NS_DEFINE_IID(kEventQueueServiceCID, NS_EVENTQUEUESERVICE_CID);
 
 /* Define Interface IDs */
 
 static NS_DEFINE_IID(kIFactoryIID,         NS_IFACTORY_IID);
+static NS_DEFINE_IID(kIEventQueueServiceIID, NS_IEVENTQUEUESERVICE_IID);
 static NS_DEFINE_IID(kIAppShellServiceIID, NS_IAPPSHELL_SERVICE_IID);
 static NS_DEFINE_IID(kIAppShellIID,          NS_IAPPSHELL_IID);
 static NS_DEFINE_IID(kIWebShellWindowIID,    NS_IWEBSHELL_WINDOW_IID);
@@ -100,6 +102,16 @@ NS_IMETHODIMP
 nsAppShellService::Initialize(void)
 {
   nsresult rv;
+
+  // Create the Event Queue for the UI thread...
+  nsIEventQueueService* eventQService;
+  rv = nsServiceManager::GetService(kEventQueueServiceCID,
+                                    kIEventQueueServiceIID,
+                                    (nsISupports **)&eventQService);
+  if (NS_OK == rv) {
+    // XXX: What if this fails?
+    rv = eventQService->CreateThreadEventQueue();
+  }
 
   rv = NS_NewISupportsArray(&mWindowList);
   if (NS_FAILED(rv)) {

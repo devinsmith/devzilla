@@ -24,6 +24,8 @@
 #include "nsISupports.h"
 
 class nsIContentViewer;
+class nsIURL;
+class nsIDocumentLoader;
 
 #define NS_ICONTENT_VIEWER_CONTAINER_IID \
  { 0xa6cf9055, 0x15b3, 0x11d2,{0x93, 0x2e, 0x00, 0x80, 0x5f, 0x8a, 0xdd, 0x32}}
@@ -35,12 +37,20 @@ class nsIContentViewer;
 class nsIContentViewerContainer : public nsISupports
 {
 public:
+  static const nsIID& GetIID() { static nsIID iid = NS_ICONTENT_VIEWER_CONTAINER_IID; return iid; }
 
   NS_IMETHOD QueryCapability(const nsIID &aIID, void** aResult) = 0;
 
   NS_IMETHOD Embed(nsIContentViewer* aDocViewer, 
                    const char* aCommand,
                    nsISupports* aExtraInfo) = 0;
+
+  NS_IMETHOD GetContentViewer(nsIContentViewer** aResult) = 0;
+
+  NS_IMETHOD HandleUnknownContentType(nsIDocumentLoader* aLoader,
+                                      nsIURL* aURL,
+                                      const char *aContentType,
+                                      const char *aCommand ) = 0;
 };
 
 #endif /* nsIContentViewerContainer_h___ */

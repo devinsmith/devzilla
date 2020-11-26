@@ -22,26 +22,43 @@
 
 #include "nsISupports.h"
 #include "nsIWebShellWindow.h"
+#include "nsIBrowserWindow.h"
 #include "nsGUIEvent.h"
 #include "nsIWebShell.h"  
 #include "nsIDocumentLoaderObserver.h"
 #include "nsIDocumentObserver.h"
 #include "nsVoidArray.h"
+#include "nsIMenu.h"
+
+// can't use forward class decl's because of template bugs on Solaris 
+#include "nsIDOMDocument.h"
+#include "nsIDOMNode.h"
 
 #include "nsCOMPtr.h"
 
 /* Forward declarations.... */
+struct PLEvent;
+
 class nsIURL;
 class nsIAppShell;
+class nsIContent;
+class nsIDocument;
+class nsIDOMCharacterData;
+class nsIDOMElement;
+class nsIDOMWindow;
+class nsIDOMHTMLImageElement;
+class nsIDOMHTMLInputElement;
+class nsIStreamObserver;
 class nsIWidget;
 class nsIWidgetController;
-class nsIStreamObserver;
 class nsIXULWindowCallbacks;
 class nsVoidArray;
 
 class nsWebShellWindow : public nsIWebShellWindow,
                          public nsIWebShellContainer,
-                         public nsIDocumentLoaderObserver
+			 public nsIBrowserWindow,
+                         public nsIDocumentLoaderObserver,
+                         public nsIDocumentObserver
 {
 public:
   nsWebShellWindow();

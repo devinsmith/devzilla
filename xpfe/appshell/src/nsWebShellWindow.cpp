@@ -23,6 +23,7 @@
 #include "nsIComponentManager.h"
 #include "nsIServiceManager.h"
 #include "nsIURL.h"
+#include "nsIPref.h"
 #include "nsVoidArray.h"
 
 #include "nsGUIEvent.h"
@@ -34,6 +35,12 @@
 #include "nsIAppShellService.h"
 #include "nsIWidgetController.h"
 #include "nsAppShellCIDs.h"
+
+#include "plevent.h"
+
+// XXX: Only needed for the creation of the widget controller...
+#include "nsIDocumentViewer.h"
+#include "nsIDocument.h"
 
 /* Define Class IDs */
 static NS_DEFINE_IID(kWindowCID,           NS_WINDOW_CID);
@@ -375,7 +382,7 @@ nsWebShellWindow::OnEndDocumentLoad(nsIDocumentLoader* loader,
     return NS_OK;
 
   mChromeInitialized = PR_TRUE;
-#if 0
+
   // register as document listener
   // this is needed for menus
   nsCOMPtr<nsIContentViewer> cv;
@@ -393,7 +400,7 @@ nsWebShellWindow::OnEndDocumentLoad(nsIDocumentLoader* loader,
 
     doc->AddObserver(NS_STATIC_CAST(nsIDocumentObserver*, this));
   }
-
+#if 0
   ExecuteStartupCode();
 
   ///////////////////////////////

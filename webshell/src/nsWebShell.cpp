@@ -47,9 +47,7 @@
 #include "nsString.h"
 #include "nsWidgetsCID.h"
 #include "nsGfxCIID.h"
-#if 0
 #include "plevent.h"
-#endif
 #include "prprf.h"
 #include "nsIPluginHost.h"
 #include "nsplugin.h"
@@ -69,6 +67,7 @@
 #include "nsIContent.h"
 #endif
 #include "prlog.h"
+#include "nsCOMPtr.h"
 
 #ifdef XP_PC
 #include <windows.h>
@@ -151,6 +150,8 @@ public:
   NS_IMETHOD Embed(nsIContentViewer* aDocViewer, 
                    const char* aCommand,
                    nsISupports* aExtraInfo);
+  NS_IMETHOD GetContentViewer(nsIContentViewer** aResult);
+
   // nsIWebShell
   NS_IMETHOD Init(nsNativeWidget aNativeParent,
                   PRInt32 x, PRInt32 y, PRInt32 w, PRInt32 h,
@@ -280,6 +281,10 @@ public:
                              nsIURL* aURL, nsString& aMsg);
   NS_IMETHOD OnEndURLLoad(nsIDocumentLoader* loader, 
                           nsIURL* aURL, PRInt32 aStatus);
+  NS_IMETHOD HandleUnknownContentType(nsIDocumentLoader* loader, 
+                                      nsIURL* aURL,
+                                      const char *aContentType,
+                                      const char *aCommand );
 
 
 #if 0
@@ -530,18 +535,21 @@ nsWebShell::nsWebShell()
 
 nsWebShell::~nsWebShell()
 {
-#if 0
   // Stop any pending document loads and destroy the loader...
   if (nsnull != mDocLoader) {
     mDocLoader->Stop();
     mDocLoader->RemoveObserver((nsIDocumentLoaderObserver*)this);
+    mDocLoader->SetContainer(nsnull);
     NS_RELEASE(mDocLoader);
   }
+#if 0
   // Cancel any timers that were set for this loader.
   CancelRefreshURLTimers();
 
   NS_IF_RELEASE(mWindow);
 
+  ++mRefCnt; // hack will come back to this (pinkerton, scc)
+  
   NS_IF_RELEASE(mContentViewer);
   NS_IF_RELEASE(mDeviceContext);
   NS_IF_RELEASE(mPrefs);
@@ -761,6 +769,30 @@ nsWebShell::Embed(nsIContentViewer* aContentViewer,
   return rv;
 #endif
   return NS_OK;
+}
+
+NS_IMETHODIMP
+nsWebShell::GetContentViewer(nsIContentViewer** aResult)
+{
+  nsresult rv = NS_OK;
+
+  if (nsnull == aResult) {
+    rv = NS_ERROR_NULL_POINTER;
+  } else {
+    *aResult = mContentViewer;
+    NS_IF_ADDREF(mContentViewer);
+  }
+  return rv;
+}
+
+NS_IMETHODIMP
+nsWebShell::HandleUnknownContentType(nsIDocumentLoader* loader, 
+                                     nsIURL* aURL,
+                                     const char *aContentType,
+                                     const char *aCommand ) {
+    // If we have a doc loader observer, let it respond to this.
+    return mDocLoaderObserver ? mDocLoaderObserver->HandleUnknownContentType( mDocLoader, aURL, aContentType, aCommand )
+                              : NS_ERROR_FAILURE;
 }
 
 NS_IMETHODIMP
@@ -1164,9 +1196,9 @@ nsWebShell::ChildAt(PRInt32 aIndex, nsIWebShell*& aResult)
 }
 
 NS_IMETHODIMP
-nsWebShell::GetName(PRUnichar** aName)
+nsWebShell::GetName(const PRUnichar** aName)
 {
-  *aName = mName;
+  *aName = mName.GetUnicode();
   return NS_OK;
 }
 
@@ -1566,14 +1598,14 @@ nsWebShell::GetHistoryIndex(PRInt32& aResult)
 }
 
 NS_IMETHODIMP
-nsWebShell::GetURL(PRInt32 aHistoryIndex, PRUnichar** aURLResult)
+nsWebShell::GetURL(PRInt32 aHistoryIndex, const PRUnichar** aURLResult)
 {
   nsresult rv = NS_ERROR_ILLEGAL_VALUE;
   if ((aHistoryIndex >= 0) &&
       (aHistoryIndex <= mHistory.Count() - 1)) {
     nsString* s = (nsString*) mHistory.ElementAt(aHistoryIndex);
     if (nsnull != s) {
-      *aURLResult = *s;
+      *aURLResult = s->GetUnicode();
     }
     rv = NS_OK;
   }
@@ -1630,9 +1662,9 @@ nsWebShell::SetTitle(const PRUnichar* aTitle)
 }
 
 NS_IMETHODIMP
-nsWebShell::GetTitle(PRUnichar** aResult)
+nsWebShell::GetTitle(const PRUnichar** aResult)
 {
-  *aResult = mTitle;
+  *aResult = mTitle.GetUnicode();
   return NS_OK;
 }
 
@@ -1666,21 +1698,24 @@ nsWebShell::ProgressLoadURL(nsIWebShell* aShell,
                             PRInt32 aProgress, 
                             PRInt32 aProgressMax)
 {
+  nsresult rv = NS_OK;
   if (nsnull != mContainer) {
-    return mContainer->ProgressLoadURL(aShell, aURL, aProgress, aProgressMax);
+    rv = mContainer->ProgressLoadURL(aShell, aURL, aProgress, aProgressMax);
   }
-  return NS_OK;
+  return rv;
 }
 
 NS_IMETHODIMP
 nsWebShell::EndLoadURL(nsIWebShell* aShell, const PRUnichar* aURL, PRInt32 aStatus)
 {
+  nsresult rv = NS_OK;
   if (nsnull != mContainer) {
     // XXX: do not propagate this notification up from any frames...
-//  return mContainer->EndLoadURL(aShell, aURL, aStatus);
+    return mContainer->EndLoadURL(aShell, aURL, aStatus);
   }
-  return NS_OK;
+  return rv;
 }
+
 
 NS_IMETHODIMP
 nsWebShell::NewWebShell(PRUint32 aChromeMask,
@@ -1719,8 +1754,7 @@ struct OnLinkClickEvent : public PLEvent {
   ~OnLinkClickEvent();
 
   void HandleEvent() {
-    mHandler->HandleLinkClickEvent(mContent, mVerb, *mURLSpec, *
-                                   mTargetSpec, mPostData);
+    mHandler->HandleLinkClickEvent(mContent, mVerb, mURLSpec->GetUnicode(), mTargetSpec->GetUnicode(), mPostData);
   }
 
   nsWebShell*  mHandler;
@@ -2221,7 +2255,7 @@ void refreshData::Notify(nsITimer *aTimer)
 {
   NS_PRECONDITION((nsnull != mShell), "Null pointer...");
   if (nsnull != mShell) {
-    mShell->LoadURL(mUrlSpec, nsnull, PR_TRUE, nsURLReload);
+    mShell->LoadURL(mUrlSpec.GetUnicode(), nsnull, PR_TRUE, nsURLReload);
   }
   /* 
    * LoadURL(...) will cancel all refresh timers... This causes the Timer and
@@ -2255,7 +2289,10 @@ nsWebShell::RefreshURL(nsIURL* aURL, PRInt32 millis, PRBool repeat)
   data->mShell = this;
   NS_ADDREF(data->mShell);
 
-  data->mUrlSpec = aURL->GetSpec();
+  const char* spec;
+  rv = aURL->GetSpec(&spec);
+
+  data->mUrlSpec  = spec;
   data->mDelay    = millis;
   data->mRepeat   = repeat;
 
@@ -2315,7 +2352,7 @@ nsWebShell::OnStartBinding(nsIURL* aURL, const char *aContentType)
 
 
 NS_IMETHODIMP
-nsWebShell::OnProgress(nsIURL* aURL, PRInt32 aProgress, PRInt32 aProgressMax)
+nsWebShell::OnProgress(nsIURL* aURL, PRUint32 aProgress, PRUint32 aProgressMax)
 {
   nsresult rv = NS_OK;
 
@@ -2343,7 +2380,7 @@ nsWebShell::OnProgress(nsIURL* aURL, PRInt32 aProgress, PRInt32 aProgressMax)
 
 
 NS_IMETHODIMP
-nsWebShell::OnStatus(nsIURL* aURL, const nsString &aMsg)
+nsWebShell::OnStatus(nsIURL* aURL, const PRUnichar* aMsg)
 {
   nsresult rv = NS_OK;
 
@@ -2365,7 +2402,7 @@ nsWebShell::OnStatus(nsIURL* aURL, const nsString &aMsg)
 
 
 NS_IMETHODIMP
-nsWebShell::OnStopBinding(nsIURL* aURL, PRInt32 aStatus, const nsString &aMsg)
+nsWebShell::OnStopBinding(nsIURL* aURL, nsresult aStatus, const PRUnichar* aMsg)
 {
   nsresult rv = NS_OK;
 
@@ -2627,6 +2664,7 @@ nsWebShellFactory::CreateInstance(nsISupports *aOuter,
     rv = NS_ERROR_NO_AGGREGATION;
     goto done;
   }
+
   NS_NEWXPCOM(inst, nsWebShell);
   if (inst == NULL) {
     rv = NS_ERROR_OUT_OF_MEMORY;

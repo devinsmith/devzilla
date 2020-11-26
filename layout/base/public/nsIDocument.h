@@ -18,16 +18,11 @@
 #ifndef nsIDocument_h___
 #define nsIDocument_h___
 
-#if 0
 #include "nslayout.h"
-#endif
 #include "nsISupports.h"
-#if 0
 #include "nsIUnicharInputStream.h"
-#endif
 #include "nsGUIEvent.h"
 
-#if 0
 class nsIAtom;
 class nsIArena;
 class nsIContent;
@@ -35,7 +30,6 @@ class nsIDocumentContainer;
 class nsIDocumentObserver;
 class nsIPresContext;
 class nsIPresShell;
-class nsICollection;
 
 class nsIStreamListener;
 class nsIStreamObserver;
@@ -54,7 +48,10 @@ class nsIParser;
 class nsIDOMNode;
 class nsXIFConverter;
 class nsINameSpaceManager;
-#endif
+class nsIDOMSelection;
+class nsIDOMDocumentFragment;
+class nsILineBreaker;
+class nsIWordBreaker;
 
 // IID for the nsIDocument interface
 #define NS_IDOCUMENT_IID      \
@@ -75,7 +72,6 @@ public:
   virtual const char*  GetData() = 0;    // get the file name or raw data
   virtual PRInt32      GetDataLength() = 0;
 };
-#if 0
 
 //----------------------------------------------------------------------
 
@@ -110,11 +106,31 @@ public:
   virtual nsIURLGroup* GetDocumentURLGroup() const = 0;
 
   /**
+   * Return the base URL for realtive URLs in the document. May return null (or the document URL).
+   */
+  NS_IMETHOD GetBaseURL(nsIURL*& aURL) const = 0;
+
+  /**
    * Return a standard name for the document's character set. This will
    * trigger a startDocumentLoad if necessary to answer the question.
    */
-  virtual nsCharSetID GetDocumentCharacterSet() const = 0;
-  virtual void SetDocumentCharacterSet(nsCharSetID aCharSetID) = 0;
+  NS_IMETHOD GetDocumentCharacterSet(nsString& oCharSetID) = 0;
+  NS_IMETHOD SetDocumentCharacterSet(const nsString& aCharSetID) = 0;
+
+  /**
+   * Return the Line Breaker for the document
+   */
+  NS_IMETHOD GetLineBreaker(nsILineBreaker** aResult) = 0;
+  NS_IMETHOD SetLineBreaker(nsILineBreaker* aLineBreaker) = 0;
+  NS_IMETHOD GetWordBreaker(nsIWordBreaker** aResult) = 0;
+  NS_IMETHOD SetWordBreaker(nsIWordBreaker* aWordBreaker) = 0;
+
+  /**
+   * Access HTTP header data (this may also get set from other sources, like
+   * HTML META tags).
+   */
+  NS_IMETHOD GetHeaderData(nsIAtom* aHeaderField, nsString& aData) const = 0;
+  NS_IMETHOD SetHeaderData(nsIAtom* aheaderField, const nsString& aData) = 0;
 
   /**
    * Create a new presentation shell that will use aContext for
@@ -146,11 +162,28 @@ public:
   virtual void SetRootContent(nsIContent* aRoot) = 0;
 
   /**
+   * Methods to append to the prolog and epilog of
+   * a document. The prolog is the content before the document
+   * element, the epilog after.
+   */
+  NS_IMETHOD AppendToProlog(nsIContent* aContent) = 0;
+  NS_IMETHOD AppendToEpilog(nsIContent* aContent) = 0;
+
+  /** 
+   * Get the direct children of the document - content in
+   * the prolog, the root content and content in the epilog.
+   */
+  NS_IMETHOD ChildAt(PRInt32 aIndex, nsIContent*& aResult) const = 0;
+  NS_IMETHOD IndexOf(nsIContent* aPossibleChild, PRInt32& aIndex) const = 0;
+  NS_IMETHOD GetChildCount(PRInt32& aCount) = 0;
+
+  /**
    * Get the style sheets owned by this document.
    * Style sheets are ordered, most significant last.
    */
   virtual PRInt32 GetNumberOfStyleSheets() = 0;
   virtual nsIStyleSheet* GetStyleSheetAt(PRInt32 aIndex) = 0;
+  virtual PRInt32 GetIndexOfStyleSheet(nsIStyleSheet* aSheet) = 0;
   virtual void AddStyleSheet(nsIStyleSheet* aSheet) = 0;
   virtual void SetStyleSheetDisabledState(nsIStyleSheet* aSheet,
                                           PRBool mDisabled) = 0;
@@ -191,6 +224,10 @@ public:
   NS_IMETHOD EndLoad() = 0;
   NS_IMETHOD ContentChanged(nsIContent* aContent,
                             nsISupports* aSubContent) = 0;
+  // notify that one or two content nodes changed state
+  // either may be nsnull, but not both
+  NS_IMETHOD ContentStatesChanged(nsIContent* aContent1,
+                                  nsIContent* aContent2) = 0;
   NS_IMETHOD AttributeChanged(nsIContent* aChild,
                               nsIAtom* aAttribute,
                               PRInt32 aHint) = 0; // See nsStyleConsts fot hint values
@@ -220,7 +257,7 @@ public:
   /**
     * Returns the Selection Object
    */
-  NS_IMETHOD GetSelection(nsICollection ** aSelection) = 0;
+  NS_IMETHOD GetSelection(nsIDOMSelection ** aSelection) = 0;
   /**
     * Selects all the Content
    */
@@ -239,7 +276,7 @@ public:
     * NOTE: we may way to place the result in a stream,
     * but we will use a string for now -- gpk
   */
-  virtual void CreateXIF(nsString & aBuffer, PRBool aUseSelection) = 0;
+  virtual void CreateXIF(nsString & aBuffer, nsIDOMSelection* aSelection = nsnull) = 0;
   virtual void ToXIF(nsXIFConverter& aConverter, nsIDOMNode* aNode) = 0;
   virtual void BeginConvertToXIF(nsXIFConverter& aConverter, nsIDOMNode* aNode) = 0;
   virtual void ConvertChildrenToXIF(nsXIFConverter& aConverter, nsIDOMNode* aNode) = 0;
@@ -248,7 +285,7 @@ public:
   /* Helper methods to help determine the logical positioning of content */
   virtual PRBool IsInRange(const nsIContent *aStartContent, const nsIContent* aEndContent, const nsIContent* aContent) const = 0;
   virtual PRBool IsBefore(const nsIContent *aNewContent, const nsIContent* aCurrentContent) const = 0;
-  virtual PRBool IsInSelection(const nsIContent *aContent) const = 0;
+  virtual PRBool IsInSelection(nsIDOMSelection* aSelection, const nsIContent *aContent) const = 0;
   virtual nsIContent* GetPrevContent(const nsIContent *aContent) const = 0;
   virtual nsIContent* GetNextContent(const nsIContent *aContent) const = 0;
   virtual void SetDisplaySelection(PRBool aToggle) = 0;
@@ -276,11 +313,14 @@ extern NS_LAYOUT nsresult
 extern NS_LAYOUT nsresult
    NS_NewImageDocument(nsIDocument** aInstancePtrResult);
 
+extern NS_LAYOUT nsresult
+   NS_NewDocumentFragment(nsIDOMDocumentFragment** aInstancePtrResult,
+                          nsIDocument* aOwnerDocument);
+
 // Note: The buffer passed into NewPostData(...) becomes owned by the IPostData
 //       instance and is freed when the instance is destroyed...
 //
 extern NS_LAYOUT nsresult
    NS_NewPostData(PRBool aIsFile, char *aData, nsIPostData** aInstancePtrResult);
-#endif
 
 #endif /* nsIDocument_h___ */

@@ -14,6 +14,7 @@ INTERNAL_CFLAGS = -Wall -g3 -DXP_UNIX -I../../../widget/public \
 	-I../../../include -I../../../js/src -I../../../webshell/public \
 	-I../../../nsprpub/lib/libc/include -I../../../gfx/public \
 	-I../../../view/public -I../../../network/module -I../public \
+	-I../../../dom/public -I../../../dom/public/coreDom \
 	-I../../../layout/base/public -I../../../network/public -fPIC
 
 CC? = gcc
